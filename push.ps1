@@ -1,9 +1,9 @@
 ﻿# push.ps1 - one-command commit + push for this repository.
 # Usage: .\push.cmd "your commit message"
 #        .\push.cmd                 (uses a timestamp message)
-#        .\push.cmd -Message "msg" -NoPush
+#        .\push.cmd "msg" -NoPush   (commit only, skip push)
 #
-# Run through push.cmd: this machine has PowerShell execution policy = Restricted,
+# Run it through push.cmd: this machine has PowerShell execution policy = Restricted,
 # which blocks .ps1 files. push.cmd supplies -ExecutionPolicy Bypass for us.
 
 [CmdletBinding()]
@@ -14,7 +14,11 @@ param(
   [int]$Retries = 3
 )
 
-$ErrorActionPreference = 'Stop'
+# NOTE: git writes its normal progress output to stderr. With
+# $ErrorActionPreference='Stop' PowerShell turns that into a terminating error and
+# would kill this script mid-push, so we deliberately stay on 'Continue' and judge
+# every git call by $LASTEXITCODE instead.
+$ErrorActionPreference = 'Continue'
 Set-Location -LiteralPath $PSScriptRoot
 $env:GIT_TERMINAL_PROMPT = '0'
 
@@ -24,20 +28,24 @@ function Write-Warn2($text){ Write-Host "   $text" -ForegroundColor Yellow }
 function Write-Err2($text) { Write-Host "   $text" -ForegroundColor Red }
 
 # ---------- 0. sanity checks ----------
-if (-not (Test-Path -LiteralPath '.git')) {
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+  Write-Err2 'git was not found on PATH.'
+  exit 1
+}
+if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.git'))) {
   Write-Err2 "Not a git repository: $PSScriptRoot"
   exit 1
 }
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-  Write-Err2 "git was not found on PATH."
-  exit 1
-}
 
-$branch = (git rev-parse --abbrev-ref HEAD).Trim()
-if ($LASTEXITCODE -ne 0 -or $branch -eq 'HEAD') {
-  Write-Err2 "Cannot determine the current branch (detached HEAD?)."
+# Do NOT pipe this through Select-Object: piping into a cmdlet overwrites
+# $LASTEXITCODE (it becomes -1 even on success), which made this check always fail.
+$branch = git rev-parse --abbrev-ref HEAD
+$branchExit = $LASTEXITCODE
+if ($branchExit -ne 0 -or [string]::IsNullOrWhiteSpace($branch) -or $branch -eq 'HEAD') {
+  Write-Err2 'Cannot determine the current branch (detached HEAD?).'
   exit 1
 }
+$branch = "$branch".Trim()
 
 Write-Step "Repository: $PSScriptRoot"
 Write-Ok "Branch: $branch"
@@ -52,8 +60,8 @@ $stagedFiles = @(git diff --cached --name-only)
 if ($stagedFiles.Count -gt 0) {
   $secretHits = @()
   foreach ($f in $stagedFiles) {
-    if ($f -match '\.env' -and (Test-Path -LiteralPath $f)) {
-      $hit = Select-String -LiteralPath $f -Pattern 'sk-[A-Za-z0-9_\-]{12,}' -ErrorAction SilentlyContinue
+    if ($f -match '\.env' -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot $f))) {
+      $hit = Select-String -LiteralPath (Join-Path $PSScriptRoot $f) -Pattern 'sk-[A-Za-z0-9_\-]{12,}' -ErrorAction SilentlyContinue
       if ($hit) { $secretHits += $f }
     }
   }
@@ -90,22 +98,22 @@ Write-Step "Pushing to origin/$branch"
 $pushed = $false
 for ($i = 1; $i -le $Retries; $i++) {
   Write-Host "   attempt $i/$Retries ..."
-  git push origin $branch 2>&1 | ForEach-Object { Write-Host "   $_" }
+  git push origin $branch
   if ($LASTEXITCODE -eq 0) { $pushed = $true; break }
-  Start-Sleep -Seconds 2
+  if ($i -lt $Retries) { Start-Sleep -Seconds 2 }
 }
 
 if (-not $pushed) {
   Write-Err2 'Push failed after all attempts. Common causes:'
   Write-Err2 '  - no network / GitHub unreachable'
-  Write-Err2 '  - remote has commits you do not have -> run:  git pull --rebase origin ' + $branch
+  Write-Err2 "  - remote has commits you do not have -> run:  git pull --rebase origin $branch"
   Write-Err2 '  - SSH key not loaded or removed from GitHub'
   exit 1
 }
 
-Write-Ok ''
-Write-Ok '=========================================='
-Write-Ok " Pushed successfully to origin/$branch"
-Write-Ok '=========================================='
+Write-Host ''
+Write-Host '==========================================' -ForegroundColor Green
+Write-Host " Pushed successfully to origin/$branch" -ForegroundColor Green
+Write-Host '==========================================' -ForegroundColor Green
 git log --oneline -3
 exit 0
