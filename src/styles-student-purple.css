@@ -1,0 +1,1012 @@
+/* =========================================================
+   Student theme v4 · Light lavender campus companion
+   Only scoped to .role-student / body.theme-student.
+   Counselor UI and login remain unchanged.
+   ========================================================= */
+
+body.theme-student,
+.role-student {
+  --paper: #f7f5ff;
+  --paper-2: #fbfaff;
+  --card: #ffffff;
+  --ink: #211b3a;
+  --ink-soft: #4d4765;
+  --muted: #837d99;
+  --muted-2: #aba6bc;
+  --line: rgba(74, 60, 128, 0.1);
+  --line-strong: rgba(74, 60, 128, 0.17);
+  --forest: #6c5ce7;
+  --forest-deep: #2e2364;
+  --forest-soft: #eeeafe;
+  --lime: #a78bfa;
+  --lime-soft: #f0ebff;
+  --lime-deep: #7c5cfa;
+  --coral: #f17878;
+  --coral-soft: #ffe6e3;
+  --peach: #f6b49c;
+  --peach-soft: #fff0e9;
+  --gold: #ddb05a;
+  --gold-soft: #fff4d9;
+  --blue: #7eb8ea;
+  --blue-soft: #eaf4ff;
+  --mint: #72c7b0;
+  --mint-soft: #e6f8f2;
+  --rose: #e5a5bd;
+  --rose-soft: #fdecf2;
+  --shadow-card: 0 12px 32px rgba(83, 66, 160, 0.08);
+}
+
+/* desktop stage */
+.app-stage.role-student {
+  background:
+    radial-gradient(circle at 15% 12%, rgba(108, 92, 231, 0.22), transparent 34%),
+    radial-gradient(circle at 84% 82%, rgba(126, 184, 234, 0.13), transparent 32%),
+    linear-gradient(145deg, #1b153c 0%, #0d0a20 58%, #16102e 100%);
+}
+
+.role-student .app-scroll {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(167, 139, 250, 0.13), transparent 28%),
+    var(--paper);
+}
+
+.role-student .device-chrome {
+  background: var(--paper);
+}
+
+.role-student .device-island {
+  background: #1a1430;
+}
+
+.role-student .stage-brand-copy h1::after {
+  background: #b8a5ff;
+}
+
+/* top greeting */
+.student-home-v4 {
+  padding-top: calc(18px + env(safe-area-inset-top));
+  background: linear-gradient(180deg, rgba(237, 232, 255, 0.8) 0%, rgba(247, 245, 255, 0) 310px);
+}
+
+.student-home-v4 .home-greeting {
+  padding-top: 3px;
+}
+
+.student-home-v4 .home-date-line {
+  color: #8a84a1;
+}
+
+.student-home-v4 .station-label i {
+  background: #8f7cf4;
+  box-shadow: 0 0 0 3px rgba(143, 124, 244, 0.13);
+}
+
+.student-home-v4 .home-greeting-row h1 {
+  color: var(--ink);
+  font-size: 30px;
+}
+
+.student-home-v4 .home-greeting-row p {
+  color: #706a86;
+}
+
+.student-home-v4 .glass-bell {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(108, 92, 231, 0.12);
+  color: var(--forest);
+  box-shadow: 0 6px 18px rgba(83, 66, 160, 0.08);
+}
+
+.student-home-v4 .avatar {
+  border-color: #fff;
+  box-shadow: 0 6px 18px rgba(83, 66, 160, 0.15);
+}
+
+/* hero */
+.role-student .simple-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(108, 92, 231, 0.1);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.85), transparent 27%),
+    radial-gradient(circle at 90% 30%, rgba(167, 139, 250, 0.32), transparent 33%),
+    linear-gradient(135deg, #f0ebff 0%, #ebe7ff 44%, #e7f5ff 100%);
+  color: var(--ink);
+  box-shadow: 0 18px 40px rgba(99, 80, 190, 0.14);
+}
+
+.role-student .simple-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: -58px;
+  top: -72px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #ffffff 0%, #e5dcff 36%, #c9b8ff 68%, rgba(201, 184, 255, 0) 72%);
+  opacity: 0.85;
+}
+
+.role-student .simple-hero > .hero-topline,
+.role-student .simple-hero > h2,
+.role-student .simple-hero > .hero-copy,
+.role-student .simple-hero > .hero-ask,
+.role-student .simple-hero > .hero-foot {
+  position: relative;
+  z-index: 2;
+}
+
+.role-student .simple-hero .hero-live {
+  border-color: rgba(108, 92, 231, 0.13);
+  background: rgba(255, 255, 255, 0.68);
+  color: #6454c9;
+  backdrop-filter: blur(8px);
+}
+
+.role-student .simple-hero .live-dot {
+  background: #71c6ad;
+  box-shadow: 0 0 0 3px rgba(113, 198, 173, 0.15);
+}
+
+.role-student .simple-hero .hero-orbit {
+  border-color: rgba(108, 92, 231, 0.12);
+}
+
+.role-student .simple-hero .hero-orbit-two {
+  border-color: rgba(108, 92, 231, 0.1);
+}
+
+.role-student .simple-hero .hero-node {
+  border-color: #8b72f6;
+  background: #fff;
+}
+
+.role-student .simple-hero h2 {
+  color: var(--ink);
+  font-size: 35px;
+}
+
+.role-student .simple-hero .hero-copy {
+  color: #706a86;
+}
+
+.role-student .simple-hero .hero-ask {
+  border-color: rgba(108, 92, 231, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  color: #4d4765;
+  box-shadow: 0 8px 20px rgba(83, 66, 160, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.role-student .simple-hero .hero-ask:hover {
+  background: #fff;
+}
+
+.role-student .simple-hero .hero-ask-icon {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(108, 92, 231, 0.25);
+}
+
+.role-student .simple-hero .hero-ask-arrow {
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .simple-hero .hero-foot {
+  border-top-color: rgba(108, 92, 231, 0.11);
+}
+
+.role-student .hero-dept-line {
+  color: #79728f;
+}
+
+.role-student .hero-dept-line i {
+  background: #8b72f6;
+  box-shadow: 0 0 0 3px rgba(139, 114, 246, 0.12);
+}
+
+/* quick launch card */
+.role-student .quick-start {
+  padding: 12px 10px 9px;
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 28px rgba(83, 66, 160, 0.07);
+}
+
+.role-student .quick-start-head {
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+
+.role-student .quick-start-head h2 {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.role-student .quick-tile-mini {
+  min-height: 70px;
+  gap: 5px;
+  padding: 3px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.role-student .quick-tile-mini:hover {
+  transform: translateY(-2px);
+  background: rgba(240, 235, 255, 0.55);
+}
+
+.role-student .quick-tile-mini .quick-tile-icon {
+  width: 33px;
+  height: 33px;
+  flex-basis: 33px;
+  border: 0;
+  background: #f0ebff;
+  color: #6c5ce7;
+}
+
+.role-student .quick-tile-mini:nth-child(2) .quick-tile-icon {
+  background: #fdecf3;
+  color: #c15c86;
+}
+
+.role-student .quick-tile-mini:nth-child(3) .quick-tile-icon {
+  background: #fff3d9;
+  color: #a77a2b;
+}
+
+.role-student .quick-tile-mini:nth-child(4) .quick-tile-icon {
+  background: #e9f5ff;
+  color: #4f8fc4;
+}
+
+.role-student .quick-tile-mini strong {
+  font-size: 9px;
+  color: var(--ink-soft);
+}
+
+/* stats */
+.role-student .echo-ledger-head > span {
+  color: var(--ink-soft);
+}
+
+.role-student .echo-ledger-head > span i {
+  background: #8b72f6;
+}
+
+.role-student .student-stats {
+  gap: 0;
+  border-color: rgba(108, 92, 231, 0.09);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(83, 66, 160, 0.06);
+}
+
+.role-student .student-stats button {
+  background: transparent;
+}
+
+.role-student .student-stats button + button {
+  border-left: 1px solid rgba(108, 92, 231, 0.09);
+}
+
+.role-student .student-stats strong {
+  color: var(--ink);
+}
+
+.role-student .student-stats span {
+  color: #817b95;
+}
+
+.role-student .stat-spark {
+  background: #f0ebff;
+}
+
+.role-student .stat-spark::after {
+  border-color: #8b72f6;
+}
+
+.role-student .stat-dot {
+  background: #f17878;
+}
+
+.role-student .ai-note-line {
+  border: 1px dashed #ddd3ff;
+  background: #f3efff;
+  color: #6d5ac7;
+}
+
+.role-student .ai-note-line > svg:last-child {
+  color: #8b7cdb;
+}
+
+/* active ticket */
+.role-student .simple-ticket {
+  border-color: rgba(108, 92, 231, 0.1);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(83, 66, 160, 0.08);
+}
+
+.role-student .simple-ticket:hover {
+  border-color: rgba(108, 92, 231, 0.24);
+  box-shadow: 0 16px 34px rgba(83, 66, 160, 0.12);
+}
+
+.role-student .simple-ticket-category {
+  color: #7a6ae0;
+}
+
+.role-student .simple-ticket h3 {
+  color: var(--ink);
+}
+
+.role-student .simple-ticket-depts > span {
+  color: #89839b;
+}
+
+.role-student .simple-ticket-progress {
+  background: #eeeaff;
+}
+
+.role-student .simple-ticket-progress > span {
+  background: linear-gradient(90deg, #a98cff, #6c5ce7);
+}
+
+.role-student .simple-ticket-foot > span {
+  color: #aaa4bb;
+}
+
+.role-student .simple-ticket-foot b {
+  color: var(--forest);
+}
+
+.role-student .simple-ticket-meta .sla-countdown {
+  color: #8c86a0;
+}
+
+/* knowledge */
+.role-student .knowledge-mini {
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  background: #fff;
+  box-shadow: 0 9px 22px rgba(83, 66, 160, 0.06);
+}
+
+.role-student .knowledge-mini .knowledge-icon {
+  border: 0;
+  background: #f0ebff;
+  color: #6c5ce7;
+}
+
+.role-student .knowledge-mini:nth-child(2) .knowledge-icon {
+  background: #e6f8f2;
+  color: #3c9d85;
+}
+
+.role-student .knowledge-mini:nth-child(3) .knowledge-icon {
+  background: #fff0e9;
+  color: #c06d4f;
+}
+
+.role-student .knowledge-mini:nth-child(4) .knowledge-icon {
+  background: #eaf4ff;
+  color: #4f8fc4;
+}
+
+.role-student .knowledge-mini .knowledge-cat {
+  color: #9993aa;
+}
+
+.role-student .knowledge-mini h3 {
+  color: var(--ink);
+}
+
+.role-student .knowledge-arrow {
+  background: #f0ebff;
+  color: #6c5ce7;
+}
+
+/* updates */
+.role-student .update-list {
+  border-color: rgba(108, 92, 231, 0.09);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(83, 66, 160, 0.05);
+}
+
+.role-student .compact-update .update-rail.latest i {
+  background: #7c5cfa;
+  box-shadow: 0 0 0 1px rgba(124, 92, 250, 0.3), 0 0 0 4px rgba(167, 139, 250, 0.15);
+}
+
+.role-student .compact-update .update-top strong {
+  color: var(--ink-soft);
+}
+
+.role-student .compact-update .update-ticket {
+  background: #f3efff;
+  color: #8175b6;
+}
+
+/* bottom navigation */
+.role-student .bottom-dock {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 42px rgba(60, 43, 120, 0.16), 0 0 0 1px rgba(108, 92, 231, 0.06);
+}
+
+.role-student .dock-item {
+  color: #9690a8;
+}
+
+.role-student .dock-item.active {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 7px 16px rgba(108, 92, 231, 0.24);
+}
+
+.role-student .dock-create-orb {
+  border-color: #fff;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.25), transparent 36%),
+    linear-gradient(145deg, #8070f0, #5b48d5);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(108, 92, 231, 0.32), 0 0 0 1px rgba(108, 92, 231, 0.06);
+}
+
+.role-student .dock-create-label {
+  color: var(--forest);
+}
+
+.role-student .dock-badge {
+  border-color: #fff;
+}
+
+.role-student .dock-item.active .dock-badge {
+  border-color: var(--forest);
+}
+
+/* ticket list page */
+.role-student .tickets-summary-line strong {
+  color: var(--ink);
+}
+
+.role-student .student-tickets-page .filter-bar button.active {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(108, 92, 231, 0.2);
+}
+
+.role-student .student-tickets-page .ticket-card {
+  border-color: rgba(108, 92, 231, 0.09);
+  background: #fff;
+  box-shadow: 0 7px 20px rgba(83, 66, 160, 0.05);
+}
+
+.role-student .student-tickets-page .ticket-card:hover {
+  border-color: rgba(108, 92, 231, 0.23);
+  box-shadow: 0 12px 26px rgba(83, 66, 160, 0.1);
+}
+
+.role-student .student-tickets-page .ticket-accent {
+  background: #a78bfa;
+}
+
+.role-student .student-tickets-page .ticket-accent.urgent {
+  background: #f17878;
+}
+
+.role-student .student-tickets-page .ticket-accent.high {
+  background: #ddb05a;
+}
+
+.role-student .student-tickets-page .ticket-category {
+  color: #88829b;
+}
+
+.role-student .student-tickets-page .ticket-card h3 {
+  color: var(--ink);
+}
+
+.role-student .student-tickets-page .empty-icon {
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .page-header-dot span {
+  background: var(--forest);
+}
+
+.role-student .filter-bar button.active {
+  background: var(--forest);
+  color: #fff;
+}
+
+/* new request */
+.role-student .new-ticket-page .wizard-step.active span {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #fff;
+}
+
+.role-student .new-ticket-page .wizard-step.done span {
+  border-color: #c9bbff;
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .new-ticket-page .hint-banner {
+  border-color: #ddd3ff;
+  background: #f3efff;
+  color: #6d5ac7;
+}
+
+.role-student .category-grid button.active {
+  border-color: var(--forest);
+  background: var(--forest);
+}
+
+.role-student .category-grid button.active strong {
+  color: #fff;
+}
+
+.role-student .category-grid button.active svg {
+  color: #fff;
+}
+
+.role-student .cat-check {
+  background: #fff;
+  color: var(--forest);
+}
+
+.role-student .composer:focus-within,
+.role-student .input-wrap:focus-within {
+  border-color: rgba(108, 92, 231, 0.42);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.07);
+}
+
+.role-student .location-chips button.active {
+  border-color: rgba(108, 92, 231, 0.24);
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .urgency-selector button.active {
+  border-color: rgba(108, 92, 231, 0.38);
+  background: #fbfaff;
+}
+
+.role-student .urgency-selector button.active .urgency-radio {
+  border-color: var(--forest);
+}
+
+.role-student .urgency-selector button.active .urgency-radio i {
+  background: var(--forest);
+}
+
+.role-student .urgency-selector button.urgent.active {
+  border-color: rgba(241, 120, 120, 0.42);
+  background: #fff5f3;
+}
+
+.role-student .attachment-add {
+  border-color: rgba(108, 92, 231, 0.22);
+}
+
+.role-student .voice-button {
+  background: #f3efff;
+  color: #7565c7;
+}
+
+.role-student .scan-core {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 0 45px rgba(108, 92, 231, 0.3);
+}
+
+.role-student .scan-ring {
+  border-color: rgba(108, 92, 231, 0.22);
+}
+
+.role-student .scan-line {
+  background: linear-gradient(90deg, transparent, rgba(108, 92, 231, 0.55), transparent);
+}
+
+.role-student .scan-node {
+  border-color: var(--forest);
+}
+
+.role-student .ai-result-hero {
+  background:
+    radial-gradient(circle at 100% 0, rgba(167, 139, 250, 0.35), transparent 38%),
+    linear-gradient(145deg, #362b78, #1e1748 72%);
+}
+
+.role-student .ai-result-hero.risk {
+  background:
+    radial-gradient(circle at 100% 0, rgba(241, 120, 120, 0.28), transparent 38%),
+    linear-gradient(145deg, #4a2838, #281827 72%);
+}
+
+.role-student .ai-result-hero .ai-badge {
+  border-color: rgba(199, 185, 255, 0.22);
+  background: rgba(167, 139, 250, 0.14);
+  color: #ddd3ff;
+}
+
+.role-student .ai-result-hero p {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.role-student .ai-result-hero .confidence {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.role-student .ai-result-hero .ai-tags span {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.role-student .knowledge-answer {
+  border-color: rgba(108, 92, 231, 0.14);
+  background: linear-gradient(135deg, #f2eeff, #ffffff);
+}
+
+.role-student .knowledge-answer-icon {
+  background: var(--forest);
+  color: #fff;
+}
+
+.role-student .knowledge-answer-head small {
+  color: #8175b6;
+}
+
+.role-student .self-solve-badge {
+  background: var(--forest);
+  color: #fff;
+}
+
+.role-student .answer-source button {
+  color: var(--forest);
+}
+
+.role-student .success-ring {
+  border-color: rgba(108, 92, 231, 0.28);
+}
+
+.role-student .success-core {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 0 55px rgba(108, 92, 231, 0.28);
+}
+
+.role-student .success-node {
+  border-color: var(--forest);
+}
+
+.role-student .resolved-icon {
+  background: var(--forest);
+  color: #fff;
+}
+
+.role-student .success-ticket {
+  border-color: rgba(108, 92, 231, 0.1);
+  box-shadow: 0 10px 24px rgba(83, 66, 160, 0.06);
+}
+
+/* detail */
+.role-student .detail-status-hero {
+  background:
+    radial-gradient(circle at 88% 6%, rgba(255, 255, 255, 0.8), transparent 28%),
+    radial-gradient(circle at 86% 24%, rgba(167, 139, 250, 0.34), transparent 34%),
+    linear-gradient(140deg, #f0ebff, #eaf5ff 72%);
+  color: var(--ink);
+  box-shadow: 0 16px 34px rgba(83, 66, 160, 0.12);
+}
+
+.role-student .detail-status-hero.risk {
+  background:
+    radial-gradient(circle at 88% 6%, rgba(255, 255, 255, 0.8), transparent 28%),
+    linear-gradient(140deg, #fff0ec, #fff7f2 72%);
+}
+
+.role-student .detail-status-hero .detail-nav > span {
+  color: #8e88a2;
+}
+
+.role-student .detail-status-hero .icon-button.on-dark {
+  border-color: rgba(108, 92, 231, 0.13);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  backdrop-filter: blur(10px);
+}
+
+.role-student .detail-status-hero .status-pill {
+  background: rgba(255, 255, 255, 0.78);
+  color: #625c78;
+}
+
+.role-student .detail-status-hero .status-pill i {
+  background: var(--forest);
+}
+
+.role-student .detail-status-hero .risk-badge {
+  color: #817b95;
+}
+
+.role-student .detail-hero-copy h1 {
+  color: var(--ink);
+}
+
+.role-student .detail-hero-copy > p {
+  color: #77718b;
+}
+
+.role-student .detail-sla-row .sla-countdown,
+.role-student .detail-sla-row > span {
+  color: #8c86a0;
+}
+
+.role-student .detail-hero-depts {
+  border-top-color: rgba(108, 92, 231, 0.11);
+}
+
+.role-student .detail-depts-label {
+  color: #8f89a3;
+}
+
+.role-student .detail-dept {
+  border-color: rgba(108, 92, 231, 0.1);
+  background: rgba(255, 255, 255, 0.62);
+  color: #5f5975;
+}
+
+.role-student .detail-dept em {
+  color: var(--forest);
+}
+
+.role-student .detail-hero-body .progress-ring .ring-track {
+  stroke: rgba(108, 92, 231, 0.13);
+}
+
+.role-student .detail-hero-body .ring-fill {
+  stroke: var(--forest);
+}
+
+.role-student .detail-hero-body .ring-label strong {
+  color: var(--ink);
+}
+
+.role-student .detail-hero-body .ring-label span {
+  color: #8d87a1;
+}
+
+.role-student .detail-simple-line {
+  background: rgba(108, 92, 231, 0.12);
+}
+
+.role-student .detail-simple-line span {
+  background: linear-gradient(90deg, #b7a4ff, #6c5ce7);
+}
+
+.role-student .detail-hero-glow {
+  border-color: rgba(108, 92, 231, 0.1);
+}
+
+.role-student .detail-hero-glow::after {
+  border-color: rgba(108, 92, 231, 0.08);
+}
+
+.role-student .detail-ai-card {
+  border-color: rgba(108, 92, 231, 0.09);
+  box-shadow: 0 8px 22px rgba(83, 66, 160, 0.05);
+}
+
+.role-student .detail-ai-card .ai-badge.dark {
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .rating-showcase {
+  border-color: rgba(108, 92, 231, 0.12);
+  background: linear-gradient(135deg, #f2eeff, #fbfaff);
+}
+
+.role-student .rating-quote {
+  color: #8b72f6;
+}
+
+.role-student .timeline-item.latest .timeline-icon {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #fff;
+}
+
+.role-student .timeline-item.type-completed .timeline-icon {
+  border-color: #c9bbff;
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+.role-student .live-label {
+  background: #f0ebff;
+  color: #6d5ac7;
+}
+
+.role-student .live-label i {
+  background: #7c5cfa;
+}
+
+.role-student .contact-call {
+  border-color: rgba(108, 92, 231, 0.14);
+  color: var(--forest);
+}
+
+.role-student .detail-action-bar {
+  border-top-color: rgba(108, 92, 231, 0.1);
+  background: rgba(251, 250, 255, 0.95);
+  box-shadow: 0 -12px 30px rgba(83, 66, 160, 0.07);
+}
+
+/* messages */
+.role-student .messages-summary strong {
+  color: var(--ink);
+}
+
+.role-student .message-item {
+  border-color: rgba(108, 92, 231, 0.08);
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(83, 66, 160, 0.04);
+}
+
+.role-student .message-item.unread {
+  border-color: rgba(108, 92, 231, 0.2);
+}
+
+.role-student .message-meta strong {
+  color: var(--ink-soft);
+}
+
+/* profile */
+.role-student .profile-hero {
+  border: 1px solid rgba(108, 92, 231, 0.09);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.85), transparent 28%),
+    radial-gradient(circle at 90% 30%, rgba(167, 139, 250, 0.32), transparent 36%),
+    linear-gradient(140deg, #efeaff, #e8f5ff 74%);
+  color: var(--ink);
+  box-shadow: 0 16px 36px rgba(83, 66, 160, 0.1);
+}
+
+.role-student .profile-hero-grid {
+  opacity: 0.1;
+}
+
+.role-student .profile-role-chip {
+  border-color: rgba(108, 92, 231, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--forest);
+}
+
+.role-student .profile-verified {
+  color: #817b95;
+}
+
+.role-student .profile-identity h1 {
+  color: var(--ink);
+}
+
+.role-student .profile-identity p {
+  color: #6f6984;
+}
+
+.role-student .profile-identity span {
+  color: #918ba4;
+}
+
+.role-student .profile-tags {
+  border-top-color: rgba(108, 92, 231, 0.1);
+}
+
+.role-student .profile-tags span {
+  background: rgba(255, 255, 255, 0.58);
+  color: #625c78;
+}
+
+.role-student .profile-hero-orbit {
+  border-color: rgba(108, 92, 231, 0.12);
+}
+
+.role-student .profile-stats {
+  border-color: rgba(108, 92, 231, 0.09);
+  background: #fff;
+  box-shadow: 0 9px 24px rgba(83, 66, 160, 0.06);
+}
+
+.role-student .profile-stats div {
+  background: #fff;
+}
+
+.role-student .profile-stats strong {
+  color: var(--ink);
+}
+
+.role-student .profile-stats span {
+  color: #817b95;
+}
+
+.role-student .menu-card {
+  border-color: rgba(108, 92, 231, 0.09);
+  box-shadow: 0 8px 22px rgba(83, 66, 160, 0.04);
+}
+
+.role-student .menu-copy strong {
+  color: var(--ink-soft);
+}
+
+.role-student .signout-button {
+  border-color: rgba(241, 120, 120, 0.18);
+  color: #c75d5d;
+}
+
+.role-student .profile-footer {
+  color: #aaa4bb;
+}
+
+/* sheets and toasts are portaled to body */
+body.theme-student .sheet-panel {
+  background: var(--paper-2);
+}
+
+body.theme-student .rating-orb {
+  background: var(--forest);
+  color: #fff;
+}
+
+body.theme-student .rating-tag-grid button.active {
+  border-color: rgba(108, 92, 231, 0.3);
+  background: #f0ebff;
+  color: var(--forest);
+}
+
+body.theme-student .primary-button {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(108, 92, 231, 0.22);
+}
+
+body.theme-student .primary-button:hover {
+  background: #5b49d8;
+  box-shadow: 0 14px 28px rgba(108, 92, 231, 0.26);
+}
+
+body.theme-student .toast {
+  background: rgba(40, 31, 82, 0.96);
+}
+
+body.theme-student .toast-icon {
+  background: rgba(167, 139, 250, 0.16);
+  color: #d8cdff;
+}
+
+body.theme-student .toast-error .toast-icon {
+  background: rgba(241, 120, 120, 0.16);
+  color: #ffb0b0;
+}
+
+/* smaller phones */
+@media (max-width: 370px) {
+  .role-student .simple-hero h2 {
+    font-size: 32px;
+  }
+
+  .role-student .quick-tile-mini strong {
+    font-size: 8.5px;
+  }
+
+  .role-student .student-home-v4 .home-greeting-row h1 {
+    font-size: 28px;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "zhihui-hub",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "智汇中枢 · 辅导员跨部门协同督办系统（学生端 / 辅导员端）",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB -c green,cyan \"node server/index.js\" \"vite --host 127.0.0.1 --port 5180\"",
+    "dev:api": "node --watch server/index.js",
+    "dev:web": "vite --host 127.0.0.1 --port 5180",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5180",
+    "start": "node server/index.js",
+    "seed": "node server/reset.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "msw": "^3.0.4",
+    "playwright": "^1.65.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}
