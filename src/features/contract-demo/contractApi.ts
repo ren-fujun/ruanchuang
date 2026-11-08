@@ -1,5 +1,5 @@
-import { buildQuery, http } from './http'
-import type { Ticket } from '../types'
+import { buildQuery, http } from '../../lib/http'
+import type { Ticket } from '../../types'
 
 export interface TicketListParams {
   status?: string

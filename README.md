@@ -91,28 +91,66 @@ npm run seed
 ```text
 .
 ├─ src/
-│  ├─ components/          通用 UI、工单卡片、导航与手机壳
-│  ├─ context/             登录态、全局 Toast
-│  ├─ lib/                 API 客户端、格式化、数据请求 Hook
-│  ├─ pages/
-│  │  ├─ student/          学生首页、诉求列表、提交向导、详情
-│  │  ├─ counselor/        中枢首页、工单台、工单详情、洞察
-│  │  ├─ Messages.tsx      双端消息中心
-│  │  ├─ Profile.tsx       双端个人中心
-│  │  └─ Login.tsx         身份选择与一键体验
-│  ├─ styles.css           基础设计系统、登录、桌面舞台
-│  ├─ styles-student.css   学生端页面样式
-│  ├─ styles-counselor.css 辅导员端页面样式
-│  └─ types.ts
+│  ├─ main.tsx              应用入口（挂载 React、按序引入样式、按需启动 MSW）
+│  ├─ App.tsx               路由与角色守卫
+│  ├─ types.ts              共享类型
+│  ├─ styles/               样式层（按导入顺序层叠）
+│  │  ├─ base.css             设计令牌、登录页、桌面舞台
+│  │  ├─ student.css          学生端页面样式
+│  │  ├─ student-purple.css   学生端紫色主题覆盖层（须在 student.css 之后）
+│  │  ├─ counselor.css        辅导员端页面样式
+│  │  └─ dorm.css             宿舍查寝样式
+│  ├─ components/           通用 UI、工单卡片、导航与手机壳
+│  │  └─ layout/             AppShell、底部导航
+│  ├─ context/              登录态、全局 Toast
+│  ├─ lib/                  API 客户端、格式化、请求 Hook
+│  ├─ features/
+│  │  └─ contract-demo/     前后端契约演示（页面 + 客户端 + 样式，独立可删）
+│  ├─ mocks/                MSW 模拟层（handlers / fixtures / browser / server）
+│  └─ pages/
+│     ├─ student/          学生首页、诉求列表、提交向导、详情
+│     ├─ counselor/        中枢首页、工单台、工单详情、洞察、查寝
+│     ├─ Messages.tsx      双端消息中心
+│     ├─ Profile.tsx       双端个人中心
+│     └─ Login.tsx         身份选择与一键体验
 ├─ server/
 │  ├─ index.js             REST API、权限、工单流转、统计
 │  ├─ ai.js                本地分类、风险、SLA、知识库检索
 │  ├─ llm.js               DeepSeek 可选增强层（失败自动回退）
+│  ├─ dorm.js / dormSeed.js 宿舍查寝逻辑与演示数据
 │  ├─ seed.js              6 个部门、27 张演示工单、知识库
 │  ├─ store.js             JSON 持久化
 │  └─ reset.js             重置演示数据
-└─ scripts/                提取需求、截图验收、API E2E 脚本
+├─ scripts/                验收与工具脚本（见 scripts/README.md）
+│  ├─ e2e/                 接口 / 界面 / 契约三套端到端校验
+│  ├─ screenshots/         各视口与主题的截图脚本
+│  ├─ tools/               一次性辅助工具（外部文档抽取、编码恢复）
+│  └─ archive/             历史恢复产物，仅留档
+├─ docs/                   备赛文档（见 docs/README.md）
+├─ public/                 静态资源、MSW worker
+├─ push.cmd / push.ps1     一键提交并推送
+└─ .env.example            大模型等可选配置样例
 ```
+
+### 根目录约定
+
+| 文件 | 说明 |
+| --- | --- |
+| `.env` | 本地真实密钥，**永不入库**（已被 `.gitignore` 忽略） |
+| `.env.example` | 配置样例，填入 `DEEPSEEK_API_KEY` 后可启用真实大模型 |
+| `.env.local.example` | 本地覆盖样例（覆盖 `.env`，不入库） |
+| `.env.development` / `.env.production` | 前端构建开关（是否启用 MSW），不含密钥 |
+| `push.cmd` / `push.ps1` | 一键 `add + commit + push` 并带密钥体检，见下方「日常提交」 |
+| `vite.config.ts` / `tsconfig.json` | 前端构建与类型配置，修改需评审 |
+
+### 日常提交
+
+```powershell
+push "本次改了什么"     # 在仓库根目录执行；省略说明则用时间戳
+push "说明" -NoPush     # 只提交不推送
+```
+
+脚本会自动暂存、提交、推送并在失败时重试，且会在检测到 `.env` 里出现真实 `sk-` 密钥时拦下确认。
 
 ## 7. 主要 API
 

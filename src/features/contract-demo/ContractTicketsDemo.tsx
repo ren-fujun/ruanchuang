@@ -10,11 +10,11 @@ import {
   Sparkles,
   WifiOff,
 } from 'lucide-react'
-import { contractApi } from '../lib/contractApi'
-import type { TicketListData } from '../lib/contractApi'
-import { ApiError } from '../lib/http'
-import type { Ticket } from '../types'
-import { BrandMark, DeptStack, RiskBadge, SlaCountdown, StatusPill } from '../components/ui'
+import { contractApi } from './contractApi'
+import type { TicketListData } from './contractApi'
+import { ApiError } from '../../lib/http'
+import type { Ticket } from '../../types'
+import { BrandMark, DeptStack, RiskBadge, SlaCountdown, StatusPill } from '../../components/ui'
 
 type FilterKey = 'all' | 'active' | 'completed'
 type HealthState = 'checking' | 'ok' | 'fail'

@@ -4,12 +4,14 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
-import './styles.css'
-import './styles-student.css'
-import './styles-student-purple.css'
-import './styles-counselor.css'
-import './styles-dorm.css'
-import './styles-contract-demo.css'
+// 样式按导入顺序层叠：base 是设计令牌与基础版式，其余为各端/主题覆盖层，
+// student-purple 必须排在 student 之后才能生效。
+import './styles/base.css'
+import './styles/student.css'
+import './styles/student-purple.css'
+import './styles/counselor.css'
+import './styles/dorm.css'
+import './features/contract-demo/contract-demo.css'
 
 async function bootstrap() {
   if (import.meta.env.VITE_USE_MOCK === 'true') {
