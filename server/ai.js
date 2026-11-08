@@ -3,53 +3,78 @@ import { departmentMap, knowledgeBase } from './seed.js'
 const CATEGORY_RULES = [
   {
     category: '宿舍生活',
-    keywords: ['宿舍', '寝室', '热水', '漏水', '门锁', '床板', '卫生间', '下水道', '阳台', '噪音', '门禁', '快递柜'],
+    keywords: ['宿舍', '寝室', '热水', '洗澡', '漏水', '门锁', '床板', '卫生间', '下水道', '阳台', '噪音', '门禁', '快递柜', '空调', '熄灯', '查寝', '室友', '调宿', '住宿'],
     departments: ['dorm', 'logistics'],
   },
   {
+    category: '餐饮服务',
+    keywords: ['食堂', '餐厅', '饭菜', '价格', '吃出', '异物', '变质', '不新鲜', '食品安全', '打卡机', '饭卡', '外卖', '超市', '夜宵', '窗口', '排队'],
+    departments: ['canteen', 'logistics'],
+  },
+  {
     category: '校园设施',
-    keywords: ['食堂', '操场', '电梯', '路灯', '充电桩', '快递', '空调', '饮水机', '座椅', '班车'],
+    keywords: ['操场', '电梯', '路灯', '充电桩', '快递', '饮水机', '座椅', '班车', '停车', '场馆', '体育场', '篮球场', '跑道', '健身', '浴室', '开水房', '维修', '报修'],
     departments: ['logistics'],
   },
   {
-    category: '学籍教务',
-    keywords: ['选课', '成绩', '证明', '学籍', '课程', '考试', '培养方案', '缓考', '重修', '辅修'],
+    category: '教务教学',
+    keywords: ['选课', '课程', '培养方案', '教学', '老师', '调课', '停课', '教室', '课表', '学分', '辅修', '转专业', '教材', '评教', '教学事故'],
+    departments: ['academic', 'office'],
+  },
+  {
+    category: '考试考务',
+    keywords: ['考试', '补考', '缓考', '重修', '四六级', '成绩', '分数', '挂科', '作弊', '监考', '考场', '等级考试', '作弊处理'],
+    departments: ['academic'],
+  },
+  {
+    category: '学籍证明',
+    keywords: ['学籍', '证明', '学生证', '在读', '成绩单', '盖章', '休学', '复学', '转学', '档案', '注册', '请假', '销假'],
     departments: ['academic', 'office'],
   },
   {
     category: '毕业就业',
-    keywords: ['毕业', '论文', '答辩', '三方', '档案', '就业', '实习', '学分', '学位', '离校'],
-    departments: ['career', 'academic'],
+    keywords: ['毕业', '论文', '答辩', '三方', '就业', '实习', '学位', '离校', '毕设', '开题', '查重', '招聘', '双选会', '简历', '求职', '报到证'],
+    departments: ['grad', 'career', 'academic'],
   },
   {
     category: '图书馆',
-    keywords: ['图书馆', '借书', '还书', '续借', '数据库', '自习室', '文献', '查重', '研讨间'],
+    keywords: ['图书馆', '借书', '还书', '续借', '数据库', '自习室', '文献', '研讨间', '占座', '闭馆'],
     departments: ['library'],
   },
   {
     category: '医疗健康',
-    keywords: ['校医院', '发烧', '受伤', '体检', '医保', '生病', '药品', '门诊', '疫苗', '过敏'],
+    keywords: ['校医院', '发烧', '受伤', '体检', '医保', '生病', '药品', '门诊', '疫苗', '过敏', '报销', '病假'],
     departments: ['clinic'],
   },
   {
     category: '奖助资助',
-    keywords: ['助学金', '奖学金', '资助', '贷款', '困难认定', '补助', '公示', '勤工助学'],
+    keywords: ['助学金', '奖学金', '资助', '贷款', '困难认定', '补助', '公示', '勤工助学', '绿色通道', '减免'],
     departments: ['office'],
   },
   {
+    category: '缴费财务',
+    keywords: ['学费', '住宿费', '缴费', '退款', '退费', '发票', '收据', '扣费', '银行卡', '助学贷款还款', '一卡通充值'],
+    departments: ['finance'],
+  },
+  {
     category: '心理支持',
-    keywords: ['情绪', '焦虑', '抑郁', '压力', '失眠', '睡不着', '心理咨询', '崩溃', '不想活', '轻生', '撑不住', '压抑', '室友关系', '关系紧张'],
+    keywords: ['情绪', '焦虑', '抑郁', '压力', '失眠', '睡不着', '心理咨询', '崩溃', '不想活', '轻生', '撑不住', '压抑', '室友关系', '关系紧张', '孤独', '想不开'],
     departments: ['psych'],
   },
   {
     category: '安全保卫',
-    keywords: ['诈骗', '可疑', '打架', '霸凌', '消防', '失窃', '安全', '骚扰', '威胁', '超速', '食品安全', '卫生'],
+    keywords: ['诈骗', '可疑', '打架', '霸凌', '消防', '失窃', '偷', '安全', '骚扰', '威胁', '超速', '隐患', '门禁卡', '陌生人', '酗酒'],
     departments: ['security'],
   },
   {
     category: '网络服务',
-    keywords: ['校园网', '网络', 'wifi', 'WiFi', '断网', '网速', '掉线', 'vpn', 'VPN', '系统', '账号', '密码'],
+    keywords: ['校园网', '网络', 'wifi', 'WiFi', '断网', '网速', '掉线', 'vpn', 'VPN', '系统', '账号', '密码', '教务系统', '登录不了', '一卡通', '校园卡'],
     departments: ['it'],
+  },
+  {
+    category: '团学活动',
+    keywords: ['社团', '团委', '志愿服务', '志愿', '社会实践', '活动', '报名', 'pu', '第二课堂', '素拓', '加分', '晚会', '比赛', '校运会'],
+    departments: ['youth', 'sports'],
   },
 ]
 
@@ -100,6 +125,16 @@ const MEDIUM_RISK = [
   '不想回寝室',
   '关系紧张',
   '情绪',
+  '打架',
+  '失窃',
+  '被偷',
+  '挂科',
+  '退学',
+  '延毕',
+  '占座',
+  '异物',
+  '变质',
+  '乱收费',
 ]
 
 const PSYCH_CRISIS_WORDS = [
@@ -115,25 +150,58 @@ const PSYCH_CRISIS_WORDS = [
   '撑不下去',
   '崩溃了',
   '跳楼',
+  '想不开',
 ]
 
 const SAFETY_HAZARD_WORDS = ['着火', '冒烟', '漏电', '触电', '煤气', '中毒', '消防', '跳楼']
 
-const URGENT_WORDS = ['紧急', '马上', '立刻', '现在', '严重', '危险', '救命', '很急', '尽快', '今天', '今晚']
+const URGENT_WORDS = ['紧急', '马上', '立刻', '现在', '严重', '危险', '救命', '很急', '尽快', '今天', '今晚', '马上要', '截止']
+
+/** 分类 → 主责部门。由 CATEGORY_RULES 派生，避免关键词表和部门表各写一份、改一处漏一处。 */
+const FALLBACK_DEPARTMENTS = ['office']
 
 const CATEGORY_DEPARTMENTS = {
-  宿舍生活: ['dorm', 'logistics'],
-  校园设施: ['logistics'],
-  学籍教务: ['academic', 'office'],
-  毕业就业: ['career', 'academic'],
-  图书馆: ['library'],
-  医疗健康: ['clinic'],
-  奖助资助: ['office'],
-  心理支持: ['psych'],
-  安全保卫: ['security'],
-  网络服务: ['it'],
-  其他: ['office'],
+  ...Object.fromEntries(
+    CATEGORY_RULES.map(({ category, departments }) => [category, departments]),
+  ),
+  其他: FALLBACK_DEPARTMENTS,
 }
+
+/**
+ * 关键场景的追加协同部门：只做「加人」不做「换人」。
+ * 例如食堂吃出异物，主责是饮食中心，但涉及食品安全必须同时叫上保卫处核查。
+ */
+const DEPARTMENT_SUPPLEMENTS = [
+  { keywords: ['吃出', '异物', '变质', '不新鲜', '食物中毒', '食品安全'], add: ['security'] },
+  { keywords: ['消防', '灭火器', '通道', '疏散'], add: ['security', 'dorm'] },
+  { keywords: ['打架', '斗殴', '霸凌', '欺凌', '威胁', '骚扰'], add: ['security', 'psych'] },
+  { keywords: ['诈骗', '被骗', '转账', '刷单'], add: ['security', 'finance'] },
+  { keywords: ['漏水', '热水', '门禁', '空调', '床板', '下水道'], add: ['dorm', 'logistics'] },
+  { keywords: ['室友', '关系紧张', '矛盾', '冲突'], add: ['psych'] },
+  { keywords: ['延毕', '学位', '答辩', '论文'], add: ['grad'] },
+  { keywords: ['退费', '退款', '扣费', '乱收费'], add: ['finance'] },
+  { keywords: ['一卡通', '校园卡', '教务系统', '系统登录'], add: ['it'] },
+  { keywords: ['电梯'], add: ['logistics', 'security'] },
+]
+
+/** 分类元数据：前端据此渲染全校服务入口，避免前后端各写一份 */
+export const CATEGORY_META = [
+  { name: '宿舍生活', icon: 'building', color: '#F3A987', soft: '#FBE9DF' },
+  { name: '餐饮服务', icon: 'utensils', color: '#DE9B72', soft: '#FBEDE3' },
+  { name: '校园设施', icon: 'wrench', color: '#88B7D9', soft: '#E4F0F8' },
+  { name: '教务教学', icon: 'book-open', color: '#9C8BE8', soft: '#EFEBFA' },
+  { name: '考试考务', icon: 'clipboard', color: '#8FA9E8', soft: '#E9EEFB' },
+  { name: '学籍证明', icon: 'file-text', color: '#B49ADB', soft: '#F0EAF8' },
+  { name: '毕业就业', icon: 'graduation-cap', color: '#D9B370', soft: '#FBF2DF' },
+  { name: '图书馆', icon: 'library', color: '#79BFAE', soft: '#E7F6F1' },
+  { name: '医疗健康', icon: 'stethoscope', color: '#E6A0A8', soft: '#FBEBEE' },
+  { name: '奖助资助', icon: 'credit-card', color: '#C9A6E8', soft: '#F3EBFB' },
+  { name: '缴费财务', icon: 'wallet', color: '#7FBFA8', soft: '#E6F5EF' },
+  { name: '心理支持', icon: 'heart', color: '#E6A4B4', soft: '#FAE8ED' },
+  { name: '安全保卫', icon: 'shield', color: '#E5BE65', soft: '#FAF1D9' },
+  { name: '网络服务', icon: 'wifi', color: '#83C5B0', soft: '#E3F4EE' },
+  { name: '团学活动', icon: 'users', color: '#C99BD8', soft: '#F4EAF8' },
+]
 
 export const STATUS_LABELS = {
   pending_review: '待审核',
@@ -242,23 +310,51 @@ const makeSummary = (text, category, location, risk) => {
   return `${hasLocation ? `学生在「${location}」反映：` : '学生反映：'}${firstSentence}${suffix} 已归类为「${category}」。${riskLine}`
 }
 
+/** 关键词命中工具，haystack 需先转小写 */
+const matchesKeywords = (haystack, keywords) =>
+  keywords.some((keyword) => haystack.includes(keyword.toLowerCase()))
+
+/**
+ * 分派覆盖规则（数据驱动）：按顺序匹配，第一条命中者决定主责部门。
+ * 顺序即优先级，语义等价于原来的嵌套三元；新增场景插一行即可，不用再动控制流。
+ *   keywords    命中任一即算匹配
+ *   when        额外条件（如同时要求分类），可选
+ *   departments 命中后取代分类默认部门
+ */
+const DISPATCH_OVERRIDES = [
+  { keywords: ['漏水', '热水', '门禁'], departments: ['dorm', 'logistics'] },
+  { keywords: ['消防'], departments: ['security', 'dorm'] },
+  { keywords: ['诈骗', '超速'], departments: ['security'] },
+  { keywords: ['食堂', '食品'], departments: ['logistics', 'security'] },
+  {
+    keywords: ['室友'],
+    when: ({ category }) => category === '心理支持',
+    departments: ['psych', 'dorm'],
+  },
+  { keywords: ['电梯'], departments: ['logistics', 'security'] },
+]
+
+/**
+ * 追加协同规则（数据驱动）：所有命中者的 add 全部并入，只做「加人」不做「换人」。
+ * 与上方 DEPARTMENT_SUPPLEMENTS 结构完全相同，需要启用时直接展开进来即可。
+ */
+const DISPATCH_ESCALATIONS = [
+  { keywords: SAFETY_HAZARD_WORDS, add: ['security'] },
+  // ...DEPARTMENT_SUPPLEMENTS,   ← 想启用现成的场景协同表，放开这一行
+]
+
 export const suggestDepartments = (text, category) => {
-  const base = text.includes('漏水') || text.includes('热水') || text.includes('门禁')
-    ? ['dorm', 'logistics']
-    : text.includes('消防') || text.includes('诈骗') || text.includes('超速')
-      ? text.includes('消防')
-        ? ['security', 'dorm']
-        : ['security']
-      : text.includes('食堂') || text.includes('食品')
-        ? ['logistics', 'security']
-        : text.includes('室友') && category === '心理支持'
-          ? ['psych', 'dorm']
-          : text.includes('电梯')
-            ? ['logistics', 'security']
-            : CATEGORY_DEPARTMENTS[category] || ['office']
-  const hazard = SAFETY_HAZARD_WORDS.find((word) => text.includes(word))
-  if (hazard) return [...new Set([...base, 'security'])]
-  return base
+  const haystack = String(text || '').toLowerCase()
+  const override = DISPATCH_OVERRIDES.find(
+    (rule) =>
+      matchesKeywords(haystack, rule.keywords) &&
+      (!rule.when || rule.when({ category, text: haystack })),
+  )
+  const base = override?.departments || CATEGORY_DEPARTMENTS[category] || FALLBACK_DEPARTMENTS
+  const escalated = DISPATCH_ESCALATIONS.filter((rule) =>
+    matchesKeywords(haystack, rule.keywords),
+  ).flatMap((rule) => rule.add)
+  return [...new Set([...base, ...escalated])]
 }
 
 export const analyzeRequest = ({ text = '', category: explicitCategory, location = '', urgency: explicitUrgency } = {}) => {
