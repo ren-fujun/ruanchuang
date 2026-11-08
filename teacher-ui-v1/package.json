@@ -1,0 +1,37 @@
+{
+  "name": "zhihui-counselor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "playwright test",
+    "docs:validate": "node scripts/validate-contract.mjs",
+    "format": "prettier --write src tests *.ts *.json *.html scripts/*.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "msw": "^2.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.5",
+    "recharts": "^3.0.0"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^13.1.0",
+    "@playwright/test": "^1.49.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "prettier": "^3.9.10",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.5"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

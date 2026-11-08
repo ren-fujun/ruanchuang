@@ -1,0 +1,2502 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "智汇中枢 教师端候选契约",
+    "version": "0.1.0-proposed",
+    "description": "以 PDF 优先的本地教师端实现补充。并非团队冻结版本，待 A/B/D 会签，见接口补充与交接.md。"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "登录",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "user"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "account",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "当前用户",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dicts/responsibility": {
+      "get": {
+        "summary": "权责字典",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Dictionaries"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/counselor/dashboard": {
+      "get": {
+        "summary": "中枢聚合统计",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Dashboard"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/counselor/tickets": {
+      "get": {
+        "summary": "授权范围工单列表",
+        "description": "PDF 未定义完整结构，本实现候选补充；待后端会签。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TicketPage"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "riskLevel",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isOverdue",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/pending": {
+      "get": {
+        "summary": "待审核工单",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TicketPage"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "riskLevel",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isOverdue",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}": {
+      "get": {
+        "summary": "工单详情",
+        "description": "PDF 未定义完整结构，本实现候选补充；待后端会签。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/review": {
+      "post": {
+        "summary": "review",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "approved": {
+                    "type": "boolean"
+                  },
+                  "remark": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "approved",
+                  "remark"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/assign": {
+      "post": {
+        "summary": "assign",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deptId": {
+                    "type": "string"
+                  },
+                  "handlerId": {
+                    "type": "string"
+                  },
+                  "remark": {
+                    "type": "string"
+                  },
+                  "slaHours": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 168
+                  }
+                },
+                "required": [
+                  "deptId",
+                  "handlerId",
+                  "remark",
+                  "slaHours"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/split": {
+      "post": {
+        "summary": "split",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "children": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 5,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "content": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "deptId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "content",
+                        "deptId"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "children"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/urge": {
+      "post": {
+        "summary": "urge",
+        "description": "PDF 已定义路径；详细响应为待会签补全。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "remark": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "remark"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/notes": {
+      "post": {
+        "summary": "notes",
+        "description": "PDF 未定义完整结构，本实现候选补充；待后端会签。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/remind-confirm": {
+      "post": {
+        "summary": "remind-confirm",
+        "description": "PDF 未定义完整结构，本实现候选补充；待后端会签。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/counselor/tickets/{ticketId}/archive": {
+      "post": {
+        "summary": "archive",
+        "description": "PDF 未定义完整结构，本实现候选补充；待后端会签。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Ticket"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "msg",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 错误，中文 msg 可展示",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "COUNSELOR"
+            ]
+          },
+          "college": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "role",
+          "college",
+          "scope"
+        ]
+      },
+      "Department": {
+        "type": "object",
+        "properties": {
+          "deptId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "short": {
+            "type": "string"
+          },
+          "slaHours": {
+            "type": "number"
+          },
+          "handlers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "handlerId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "handlerId",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "deptId",
+          "name",
+          "short",
+          "slaHours",
+          "handlers"
+        ]
+      },
+      "Dictionaries": {
+        "type": "object",
+        "properties": {
+          "departments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Department"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "label"
+              ]
+            }
+          }
+        },
+        "required": [
+          "departments",
+          "categories"
+        ]
+      },
+      "TicketLog": {
+        "type": "object",
+        "properties": {
+          "logId": {
+            "type": "string"
+          },
+          "ticketId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "fromStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING_REVIEW",
+              "ASSIGNED",
+              "PROCESSING",
+              "REJECTED",
+              "PENDING_CONFIRM",
+              "CONFIRMED",
+              "ARCHIVED"
+            ]
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING_REVIEW",
+              "ASSIGNED",
+              "PROCESSING",
+              "REJECTED",
+              "PENDING_CONFIRM",
+              "CONFIRMED",
+              "ARCHIVED"
+            ]
+          },
+          "operatorId": {
+            "type": "string"
+          },
+          "operatorRole": {
+            "type": "string"
+          },
+          "remark": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "logId",
+          "ticketId",
+          "action",
+          "fromStatus",
+          "toStatus",
+          "operatorId",
+          "operatorRole",
+          "remark",
+          "createdAt"
+        ]
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "noteId": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "noteId",
+          "text",
+          "actor",
+          "createdAt"
+        ]
+      },
+      "Permissions": {
+        "type": "object",
+        "properties": {
+          "canReview": {
+            "type": "boolean"
+          },
+          "canAssign": {
+            "type": "boolean"
+          },
+          "canSplit": {
+            "type": "boolean"
+          },
+          "canUrge": {
+            "type": "boolean"
+          },
+          "canNote": {
+            "type": "boolean"
+          },
+          "canRemind": {
+            "type": "boolean"
+          },
+          "canArchive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canReview",
+          "canAssign",
+          "canSplit",
+          "canUrge",
+          "canNote",
+          "canRemind",
+          "canArchive"
+        ]
+      },
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "studentId": {
+            "type": "string"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "college": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "counselorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "deptId": {
+            "type": "string",
+            "nullable": true
+          },
+          "handlerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentTicketId": {
+            "type": "string",
+            "nullable": true
+          },
+          "aiSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "aiRiskReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "slaDeadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "solution": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "urgency": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "URGENT",
+              "CRITICAL"
+            ]
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING_REVIEW",
+              "ASSIGNED",
+              "PROCESSING",
+              "REJECTED",
+              "PENDING_CONFIRM",
+              "CONFIRMED",
+              "ARCHIVED"
+            ]
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "overdueLevel": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "WARNING",
+              "SERIOUS"
+            ]
+          },
+          "reviewed": {
+            "type": "boolean"
+          },
+          "suggestedDeptIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketLog"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/Permissions"
+          }
+        },
+        "required": [
+          "ticketId",
+          "title",
+          "content",
+          "category",
+          "studentId",
+          "studentName",
+          "college",
+          "createdAt",
+          "updatedAt",
+          "location",
+          "counselorId",
+          "deptId",
+          "handlerId",
+          "parentTicketId",
+          "aiSummary",
+          "aiRiskReason",
+          "slaDeadline",
+          "solution",
+          "rejectReason",
+          "urgency",
+          "riskLevel",
+          "status",
+          "attachments",
+          "isOverdue",
+          "overdueLevel",
+          "reviewed",
+          "suggestedDeptIds",
+          "logs",
+          "notes",
+          "children",
+          "permissions"
+        ]
+      },
+      "TicketPage": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ticket"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "list",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "Dashboard": {
+        "type": "object",
+        "properties": {
+          "stats": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "integer"
+              },
+              "overdue": {
+                "type": "integer"
+              },
+              "highRisk": {
+                "type": "integer"
+              },
+              "completed": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "pending",
+              "active",
+              "overdue",
+              "highRisk",
+              "completed",
+              "total"
+            ]
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "submitted": {
+                  "type": "integer"
+                },
+                "completed": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "submitted",
+                "completed"
+              ]
+            }
+          },
+          "priority": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ticket"
+            }
+          },
+          "departments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deptId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "active": {
+                  "type": "integer"
+                },
+                "completed": {
+                  "type": "integer"
+                },
+                "total": {
+                  "type": "integer"
+                },
+                "onTime": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "avgHours": {
+                  "type": "number",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "deptId",
+                "name",
+                "active",
+                "completed",
+                "total",
+                "onTime",
+                "avgHours"
+              ]
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name",
+                "value"
+              ]
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name",
+                "value"
+              ]
+            }
+          }
+        },
+        "required": [
+          "stats",
+          "trend",
+          "priority",
+          "departments",
+          "categories",
+          "risks"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "data": {
+            "nullable": true,
+            "description": "错误时固定 null"
+          }
+        },
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ]
+      }
+    }
+  }
+}
