@@ -141,7 +141,7 @@ export function NewTicket() {
       setSubmitted(result.ticket)
       localStorage.removeItem(draftKey)
       setStep(3)
-      toast(result.message, 'success')
+      toast('诉求已提交，等待辅导员审核。', 'success')
       window.dispatchEvent(new CustomEvent('zhihui:refresh-unread'))
     } catch (err: any) {
       setError(err?.message || '提交失败，请稍后再试。')

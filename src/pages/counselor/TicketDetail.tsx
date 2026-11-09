@@ -133,8 +133,8 @@ export function CounselorTicketDetail() {
     }
     setActionLoading(true)
     try {
-      const result = await api.reviewTicket(ticket.id, { departmentIds: selectedDepts, note: reviewNote })
-      toast(result.message, 'success')
+      await api.reviewTicket(ticket.id, { departmentIds: selectedDepts, note: reviewNote })
+      toast('工单已审核分派。', 'success')
       setReviewOpen(false)
       reload()
       window.dispatchEvent(new CustomEvent('zhihui:refresh-unread'))
@@ -148,8 +148,8 @@ export function CounselorTicketDetail() {
   const submitUrge = async () => {
     setActionLoading(true)
     try {
-      const result = await api.urgeTicket(ticket.id, urgeNote)
-      toast(result.message, 'success')
+      await api.urgeTicket(ticket.id, urgeNote)
+      toast('催办已发送。', 'success')
       setUrgeOpen(false)
       reload()
     } catch (err: any) {
@@ -162,8 +162,8 @@ export function CounselorTicketDetail() {
   const acceptTicket = async () => {
     setActionLoading(true)
     try {
-      const result = await api.progressTicket(ticket.id, { action: 'accept' })
-      toast(result.message, 'success')
+      await api.progressTicket(ticket.id, { action: 'accept' })
+      toast('已记录接单。', 'success')
       setAcceptOpen(false)
       reload()
     } catch (err: any) {
@@ -180,8 +180,8 @@ export function CounselorTicketDetail() {
     }
     setActionLoading(true)
     try {
-      const result = await api.progressTicket(ticket.id, { action: 'resolve', result: resolveText })
-      toast(result.message, 'success')
+      await api.progressTicket(ticket.id, { action: 'resolve', result: resolveText })
+      toast('已录入处置结果，等待学生确认。', 'success')
       setResolveOpen(false)
       setResolveText('')
       reload()
@@ -199,8 +199,8 @@ export function CounselorTicketDetail() {
     }
     setActionLoading(true)
     try {
-      const result = await api.noteTicket(ticket.id, noteText)
-      toast(result.message, 'success')
+      await api.noteTicket(ticket.id, noteText)
+      toast('内部备注已保存。', 'success')
       setNoteOpen(false)
       setNoteText('')
       reload()
@@ -226,8 +226,8 @@ export function CounselorTicketDetail() {
     }
     setActionLoading(true)
     try {
-      const result = await api.splitTicket(ticket.id, items)
-      toast(result.message, 'success')
+      await api.splitTicket(ticket.id, items)
+      toast('工单已拆分。', 'success')
       setSplitOpen(false)
       reload()
     } catch (err: any) {
@@ -240,8 +240,8 @@ export function CounselorTicketDetail() {
   const remindConfirm = async () => {
     setActionLoading(true)
     try {
-      const result = await api.remindConfirm(ticket.id)
-      toast(result.message, 'success')
+      await api.remindConfirm(ticket.id)
+      toast('已提醒学生确认。', 'success')
       reload()
     } catch (err: any) {
       toast(err?.message || '提醒发送失败', 'error')

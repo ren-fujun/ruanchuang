@@ -85,29 +85,29 @@ export const api = {
     location: string
     urgency: string
     attachments?: { name: string; type: string; size: string }[]
-  }) => post<{ ticket: Ticket; message: string }>('/tickets', body),
+  }) => post<{ ticket: Ticket }>('/tickets', body),
   confirmTicket: (id: string, body: { score?: number; comment?: string; tags?: string[] }) =>
-    post<{ ticket: Ticket; message: string }>(`/tickets/${id}/confirm`, body),
+    post<{ ticket: Ticket }>(`/tickets/${id}/confirm`, body),
   rateTicket: (id: string, body: { score: number; comment: string; tags: string[] }) =>
-    post<{ ticket: Ticket; message: string }>(`/tickets/${id}/rate`, body),
+    post<{ ticket: Ticket }>(`/tickets/${id}/rate`, body),
   urgeStudent: (id: string, note?: string) =>
-    post<{ ticket: Ticket; message: string }>(`/tickets/${id}/urge-student`, { note }),
+    post<{ ticket: Ticket }>(`/tickets/${id}/urge-student`, { note }),
   notFound: () => Promise.reject(new ApiError('页面不存在', 404)),
   notifications: () => request<{ notifications: Notification[]; unread: number }>('/notifications'),
   readAll: () => post<{ ok: boolean }>('/notifications/read-all'),
   readNotification: (id: string) => post<{ ok: boolean }>(`/notifications/${id}/read`),
   reviewTicket: (id: string, body: { departmentIds: string[]; note?: string }) =>
-    patch<{ ticket: Ticket; message: string }>(`/tickets/${id}/review`, body),
+    patch<{ ticket: Ticket }>(`/tickets/${id}/review`, body),
   progressTicket: (id: string, body: { action: 'accept' | 'resolve'; result?: string }) =>
-    patch<{ ticket: Ticket; message: string }>(`/tickets/${id}/progress`, body),
+    patch<{ ticket: Ticket }>(`/tickets/${id}/progress`, body),
   urgeTicket: (id: string, note?: string) =>
-    patch<{ ticket: Ticket; message: string }>(`/tickets/${id}/urge`, { note }),
+    patch<{ ticket: Ticket }>(`/tickets/${id}/urge`, { note }),
   noteTicket: (id: string, text: string) =>
-    post<{ ticket: Ticket; message: string }>(`/tickets/${id}/note`, { text }),
+    post<{ ticket: Ticket }>(`/tickets/${id}/note`, { text }),
   splitTicket: (id: string, items: { title: string; departmentId: string; description?: string }[]) =>
-    post<{ parent: Ticket; children: Ticket[]; message: string }>(`/tickets/${id}/split`, { items }),
+    post<{ parent: Ticket; children: Ticket[] }>(`/tickets/${id}/split`, { items }),
   remindConfirm: (id: string) =>
-    patch<{ ticket: Ticket; message: string }>(`/tickets/${id}/remind-confirm`),
+    patch<{ ticket: Ticket }>(`/tickets/${id}/remind-confirm`),
   insights: () => request<InsightsData>('/counselor/insights'),
   dormCheck: () => request<DormCheckData>('/counselor/dorm-check'),
   submitDormCheck: (body: {

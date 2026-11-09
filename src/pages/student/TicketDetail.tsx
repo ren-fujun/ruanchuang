@@ -101,10 +101,8 @@ export function StudentTicketDetail() {
   const confirmTicket = async (withRating: boolean) => {
     setActionLoading(true)
     try {
-      const result = withRating
-        ? await api.confirmTicket(ticket.id, { score, comment, tags })
-        : await api.confirmTicket(ticket.id, {})
-      toast(result.message, 'success')
+      await api.confirmTicket(ticket.id, withRating ? { score, comment, tags } : {})
+      toast('已确认办结。', 'success')
       setRatingOpen(false)
       reload()
       window.dispatchEvent(new CustomEvent('zhihui:refresh-unread'))
@@ -118,8 +116,8 @@ export function StudentTicketDetail() {
   const submitRating = async () => {
     setActionLoading(true)
     try {
-      const result = await api.rateTicket(ticket.id, { score, comment, tags })
-      toast(result.message, 'success')
+      await api.rateTicket(ticket.id, { score, comment, tags })
+      toast('评价已提交。', 'success')
       setRatingOpen(false)
       reload()
     } catch (err: any) {
@@ -132,8 +130,8 @@ export function StudentTicketDetail() {
   const urge = async () => {
     setActionLoading(true)
     try {
-      const result = await api.urgeStudent(ticket.id, '想了解最新进展，辛苦老师帮忙看看。')
-      toast(result.message, 'success')
+      await api.urgeStudent(ticket.id, '想了解最新进展，辛苦老师帮忙看看。')
+      toast('催办已发送。', 'success')
       reload()
     } catch (err: any) {
       toast(err?.message || '催办失败，请稍后再试。', 'error')
