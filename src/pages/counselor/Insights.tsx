@@ -88,14 +88,14 @@ export function CounselorInsights() {
           <div>
             <span className="eyebrow">THIS WEEK</span>
             <h1><em>{summary.weekly}</em> 条新诉求</h1>
-            <p>闭环率 {summary.closureRate}% · 高风险 {summary.highRisk} 条已纳入督办。</p>
+            <p>累计闭环率 {summary.closureRate == null ? '暂无数据' : `${summary.closureRate}%`} · 高风险 {summary.highRisk} 条需要关注。</p>
           </div>
-          <ProgressRing value={summary.closureRate} size={106} stroke={8} label={`${summary.closureRate}%`} sublabel="闭环率" tone="lime" />
+          <ProgressRing value={summary.closureRate ?? 0} size={106} stroke={8} label={summary.closureRate == null ? '暂无' : `${summary.closureRate}%`} sublabel="累计闭环" tone="lime" />
         </div>
         <div className="insight-hero-stats">
-          <div><span>满意度</span><strong>{summary.satisfaction}<small>/5</small></strong></div>
-          <div><span>按时办结</span><strong>{summary.onTimeRate}<small>%</small></strong></div>
-          <div><span>平均响应</span><strong>{summary.avgResponse}<small>h</small></strong></div>
+          <div><span>满意度</span><strong>{summary.satisfaction == null ? '暂无' : summary.satisfaction}<small>{summary.satisfaction == null ? '' : '/5'}</small></strong></div>
+          <div><span>按时办结</span><strong>{summary.onTimeRate == null ? '暂无' : summary.onTimeRate}<small>{summary.onTimeRate == null ? '' : '%'}</small></strong></div>
+          <div><span>平均分派用时</span><strong>{summary.avgResponse == null ? '暂无' : summary.avgResponse}<small>{summary.avgResponse == null ? '' : 'h'}</small></strong></div>
           <div><span>高风险</span><strong className="coral-text">{summary.highRisk}<small>条</small></strong></div>
         </div>
         <span className="insight-orbit" />
@@ -130,7 +130,7 @@ export function CounselorInsights() {
         </div>
         <div className="chart-note">
           <TrendingUp size={14} />
-          晚间 18:00–24:00 是诉求提交高峰，占全部工单的 {Math.round(((timeSlots.find((slot) => slot.name === '晚间')?.value || 0) / summary.total) * 100)}%
+          晚间 18:00–24:00 的诉求占全部工单的 {summary.total ? Math.round(((timeSlots.find((slot) => slot.name === '晚间')?.value || 0) / summary.total) * 100) : 0}%
         </div>
       </section>
 
@@ -224,13 +224,13 @@ export function CounselorInsights() {
               <div className="dept-perf-main">
                 <div>
                   <strong>{department.short}</strong>
-                  <span>{department.total} 单 · 均响 {department.avgHours}h</span>
+                  <span>{department.total} 单 · 工单分派均时 {department.observedAvgHours == null ? '暂无' : `${department.observedAvgHours}h`}</span>
                 </div>
-                <div className="perf-bar"><i style={{ width: `${department.onTime}%`, background: department.color }} /></div>
+                <div className="perf-bar"><i style={{ width: `${department.observedOnTime ?? 0}%`, background: department.color }} /></div>
               </div>
               <div className="dept-perf-score">
-                <strong>{department.onTime}<small>%</small></strong>
-                <span>按时</span>
+                <strong>{department.observedOnTime == null ? '暂无' : department.observedOnTime}<small>{department.observedOnTime == null ? '' : '%'}</small></strong>
+                <span>关联工单按时率</span>
               </div>
             </div>
           ))}

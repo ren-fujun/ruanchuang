@@ -11,7 +11,12 @@ import { seedData } from './seed.js'
 test('协同记录仅辅导员可见，学生可查看工单进度', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'zhihui-test-'))
   const seed = seedData()
-  seed.tickets.forEach((ticket) => { ticket.risk = 'low'; ticket.dueAt = new Date(Date.now() + 24 * 60 * 60000).toISOString() })
+  seed.tickets.forEach((ticket) => {
+    ticket.risk = 'low'
+    ticket.dueAt = new Date(Date.now() + 24 * 60 * 60000).toISOString()
+    ticket.rating = null
+    ticket.timeline = ticket.timeline.filter((event) => event.type !== 'assigned')
+  })
   const dueSoon = { ...seed.tickets[0], id: 'TEST-DUE-SOON', risk: 'low', status: 'processing', dueAt: new Date(Date.now() + 30 * 60000).toISOString() }
   seed.tickets.unshift(dueSoon)
   await writeFile(path.join(dir, 'store.json'), JSON.stringify(seed))
@@ -47,10 +52,18 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
     assert.equal(precheck.engine, 'local-rules')
     const dashboard = await call('/counselor/dashboard', { token: counselor.token })
     assert.ok(dashboard.urgent.some((ticket) => ticket.id === 'TEST-DUE-SOON'), '临期工单应出现在督办列表')
+    assert.equal(dashboard.stats.closureRate, Math.round(seed.tickets.filter((ticket) => ticket.status === 'completed').length / seed.tickets.length * 100))
+    assert.equal(dashboard.stats.satisfaction, null)
+    assert.equal(dashboard.stats.avgResponse, null)
+    const insights = await call('/counselor/insights', { token: counselor.token })
+    assert.equal(insights.summary.closureRate, dashboard.stats.closureRate)
+    assert.equal(insights.summary.satisfaction, null)
+    assert.equal(insights.summary.avgResponse, null)
     const created = await call('/tickets', { token: student.token, body: { description: '图书馆空调故障持续影响同学', location: '图书馆二楼' } })
     const id = created.ticket.id
     const assigned = await call(`/tickets/${id}/review`, { method: 'PATCH', token: counselor.token, body: { departmentIds: ['library', 'logistics'], note: '私人审核备注' } })
     assert.equal(assigned.ticket.status, 'assigned')
+    await call(`/tickets/${id}/urge`, { method: 'PATCH', token: counselor.token, body: { note: '请及时跟进' } })
     await call(`/tickets/${id}/note`, { token: counselor.token, body: { text: '协同部门：后勤；沟通情况：内部跟进；下一步：明天核实' } })
     const counselorView = await call(`/tickets/${id}`, { token: counselor.token })
     assert.match(JSON.stringify(counselorView.ticket.notes), /内部跟进/)
@@ -61,6 +74,30 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
     const list = await call('/tickets', { token: student.token })
     const home = await call('/student/home', { token: student.token })
     assert.doesNotMatch(JSON.stringify({ list, home }), /私人审核备注|内部跟进/)
+  } finally {
+    child.kill()
+    await new Promise((resolve) => child.once('exit', resolve))
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('生产模式关闭一键演示登录', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhihui-auth-test-'))
+  const listener = net.createServer()
+  await new Promise((resolve) => listener.listen(0, '127.0.0.1', resolve))
+  const port = listener.address().port
+  await new Promise((resolve) => listener.close(resolve))
+  const child = spawn(process.execPath, ['server/index.js'], { env: { ...process.env, NODE_ENV: 'production', PORT: String(port), ZHIHUI_DATA_FILE: path.join(dir, 'store.json') }, stdio: 'ignore' })
+  const base = `http://127.0.0.1:${port}/api`
+  try {
+    let ready = false
+    for (let i = 0; i < 100; i++) {
+      try { if ((await fetch(`${base}/health`)).ok) { ready = true; break } } catch {}
+      await delay(50)
+    }
+    assert.ok(ready, '测试服务未启动')
+    const result = await fetch(`${base}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'counselor' }) })
+    assert.equal(result.status, 403)
   } finally {
     child.kill()
     await new Promise((resolve) => child.once('exit', resolve))

@@ -150,7 +150,7 @@ export function CounselorTicketDetail() {
     setActionLoading(true)
     try {
       await api.urgeTicket(ticket.id, urgeNote)
-      toast('催办已发送。', 'success')
+      toast('已记录督办并通知学生，请通过线下渠道联系部门。', 'success')
       setUrgeOpen(false)
       reload()
     } catch (err: any) {
@@ -478,7 +478,7 @@ export function CounselorTicketDetail() {
                 <div className="eyebrow">COLLABORATION</div>
                 <h2>协同部门</h2>
               </div>
-              <button className="text-action" onClick={() => setUrgeOpen(true)}>一键催办<ChevronRight size={13} /></button>
+              <button className="text-action" onClick={() => setUrgeOpen(true)}>记录督办<ChevronRight size={13} /></button>
             </div>
             {ticket.departments.map((department) => (
               <div className="collab-row" key={department.id}>
@@ -489,7 +489,7 @@ export function CounselorTicketDetail() {
                 </div>
                 <div className="collab-sla">
                   <span>SLA {department.sla / 60}h</span>
-                  <strong>{department.onTime}% 按时</strong>
+                  <strong>示例时限，待核实</strong>
                 </div>
               </div>
             ))}
@@ -634,7 +634,7 @@ export function CounselorTicketDetail() {
         footer={
           <>
             <button className="secondary-button" onClick={() => setUrgeOpen(false)}>取消</button>
-            <button className="primary-button" onClick={submitUrge} disabled={actionLoading}>{actionLoading ? '发送中…' : '发送催办'}</button>
+            <button className="primary-button" onClick={submitUrge} disabled={actionLoading}>{actionLoading ? '保存中…' : '记录督办'}</button>
           </>
         }
       >
@@ -645,7 +645,7 @@ export function CounselorTicketDetail() {
             <SlaCountdown ticket={ticket} />
           </div>
         </div>
-        <div className="form-label-row"><label>催办说明</label><span>将同步给学生</span></div>
+        <div className="form-label-row"><label>催办说明</label><span>通知学生；需线下联系部门</span></div>
         <div className="preset-notes">
           {urgePresets.map((preset) => (
             <button key={preset} className={urgeNote === preset ? 'active' : ''} onClick={() => setUrgeNote(preset)}>
@@ -701,8 +701,7 @@ export function CounselorTicketDetail() {
             maxLength={400}
           />
           <div className="resolve-check">
-            <span><Check size={12} />佐证材料已核验</span>
-            <span><Check size={12} />学生联系方式可见</span>
+            <span>请确认处理结果与相关材料后再提交。</span>
           </div>
         </div>
       </Sheet>
@@ -746,7 +745,7 @@ export function CounselorTicketDetail() {
           </button>
           <button onClick={() => { setMoreOpen(false); setUrgeOpen(true) }}>
             <span className="menu-icon peach"><BellRing size={17} /></span>
-            <span><strong>发起督办催办</strong><small>同步学生与经办部门</small></span>
+            <span><strong>记录督办</strong><small>通知学生，部门需线下联系</small></span>
             <ChevronRight size={16} />
           </button>
           <button onClick={() => { setMoreOpen(false); navigate('/counselor/insights') }}>

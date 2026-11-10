@@ -37,6 +37,8 @@ export interface Department {
   completed?: number
   total?: number
   load?: number
+  observedAvgHours?: number | null
+  observedOnTime?: number | null
 }
 
 export interface TimelineEvent {
@@ -160,10 +162,10 @@ export interface CounselorDashboard {
     active: number
     completed: number
     total: number
-    avgResponse: number
-    satisfaction: number
-    onTimeRate: number
-    closureRate: number
+    avgResponse: number | null
+    satisfaction: number | null
+    onTimeRate: number | null
+    closureRate: number | null
     dormPending: number
     dormChecked: number
   }
@@ -181,11 +183,11 @@ export interface InsightsData {
   summary: {
     total: number
     weekly: number
-    satisfaction: number
-    onTimeRate: number
-    closureRate: number
+    satisfaction: number | null
+    onTimeRate: number | null
+    closureRate: number | null
     highRisk: number
-    avgResponse: number
+    avgResponse: number | null
   }
   week: { key: string; label: string; date: string; created: number; completed: number }[]
   categories: { name: string; value: number; color: string }[]

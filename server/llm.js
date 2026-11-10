@@ -4,7 +4,7 @@ const CATEGORIES = ['宿舍生活', '校园设施', '学籍教务', '奖助资�
 const RISK_ORDER = { low: 0, medium: 1, high: 2 }
 const URGENCY_ORDER = { normal: 0, high: 1, urgent: 2 }
 
-const highest = (a, b, order) => (order[a] >= order[b] ? a : b)
+const highest = (a, b, order) => (Object.hasOwn(order, b) && order[b] > order[a] ? b : a)
 
 const parseJson = (content) => {
   const cleaned = String(content || '')

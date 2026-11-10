@@ -33,6 +33,29 @@ test('未配置模型时规则依据与建议保持一致', async () => {
   }
 })
 
+test('高风险不能被学生选择的较急等级下调', () => {
+  const result = analyzeRequest({ text: '宿舍插座漏电并且有人触电', urgency: 'high' })
+  assert.equal(result.risk, 'high')
+  assert.equal(result.urgency, 'urgent')
+})
+
+test('模型返回未知等级时保留规则结果', async () => {
+  const key = process.env.DEEPSEEK_API_KEY
+  const originalFetch = globalThis.fetch
+  process.env.DEEPSEEK_API_KEY = 'test-only'
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ risk: 'unknown', urgency: 'invalid' }) } }] }) })
+  try {
+    const base = analyzeRequest({ text: '宿舍插座漏电' })
+    const result = await refineAnalysis('宿舍插座漏电', base)
+    assert.equal(result.risk, base.risk)
+    assert.equal(result.urgency, base.urgency)
+  } finally {
+    globalThis.fetch = originalFetch
+    if (key === undefined) delete process.env.DEEPSEEK_API_KEY
+    else process.env.DEEPSEEK_API_KEY = key
+  }
+})
+
 test('普通宿舍报修识别类别并保留常规办理建议', () => {
   const result = analyzeRequest({ text: '宿舍热水无法使用', location: '学生公寓 3 号楼' })
   assert.equal(result.category, '宿舍生活')

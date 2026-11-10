@@ -87,7 +87,7 @@ export function CounselorHome() {
             <h1>{brief.headline}</h1>
             <p>{brief.detail}</p>
           </div>
-          <ProgressRing value={stats.closureRate} size={108} stroke={8} label={`${stats.closureRate}%`} sublabel="本周闭环" tone="lime" />
+          <ProgressRing value={stats.closureRate ?? 0} size={108} stroke={8} label={stats.closureRate == null ? '暂无' : `${stats.closureRate}%`} sublabel="累计闭环" tone="lime" />
         </div>
         <div className="command-stats">
           <button onClick={() => navigate('/counselor/tickets?status=pending_review')}>
@@ -278,14 +278,14 @@ export function CounselorHome() {
         <div className="week-legend">
           <span><i className="created" />受理</span>
           <span><i className="completed" />办结</span>
-          <span className="week-insight"><Sparkles size={11} />高峰集中在晚间</span>
+          <span className="week-insight"><Sparkles size={11} />按当前工单记录统计</span>
         </div>
       </section>
 
       <section className="home-section">
         <SectionHead
           eyebrow="COLLABORATION LOAD"
-          title="部门协同负载"
+          title="部门在办工单"
           action="查看权责"
           onAction={() => navigate('/counselor/profile')}
         />
@@ -301,10 +301,10 @@ export function CounselorHome() {
                   <span>{department.active} 个在办</span>
                 </div>
                 <div className="dept-load-bar">
-                  <i style={{ width: `${department.load || 30}%`, background: department.color }} />
+                  <i style={{ width: `${department.active / Math.max(...departments.map((item) => item.active), 1) * 100}%`, background: department.color }} />
                 </div>
               </div>
-              <span className="dept-load-avg">{department.avgHours}h</span>
+              <span className="dept-load-avg">{department.observedAvgHours == null ? '暂无分派数据' : `分派均时 ${department.observedAvgHours}h`}</span>
             </div>
           ))}
         </div>
@@ -314,10 +314,10 @@ export function CounselorHome() {
         <div>
           <span className="eyebrow">SERVICE PULSE</span>
           <h3>被认真对待的诉求，正在变成信任。</h3>
-          <p>近 30 天平均满意度 <strong>{stats.satisfaction}</strong> / 5.0，按时办结率 <strong>{stats.onTimeRate}%</strong>。</p>
+          <p>累计平均满意度 <strong>{stats.satisfaction == null ? '暂无数据' : `${stats.satisfaction} / 5.0`}</strong>，按时办结率 <strong>{stats.onTimeRate == null ? '暂无数据' : `${stats.onTimeRate}%`}</strong>。</p>
         </div>
         <div className="satisfaction-ring">
-          <ProgressRing value={stats.onTimeRate} size={80} stroke={6} label={`${stats.onTimeRate}%`} sublabel="按时" tone="coral" />
+          <ProgressRing value={stats.onTimeRate ?? 0} size={80} stroke={6} label={stats.onTimeRate == null ? '暂无' : `${stats.onTimeRate}%`} sublabel="按时" tone="coral" />
         </div>
       </section>
 

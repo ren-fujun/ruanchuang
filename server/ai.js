@@ -219,8 +219,8 @@ export const detectRisk = (text) => {
 }
 
 export const detectUrgency = (text, risk, explicitUrgency) => {
-  if (explicitUrgency && explicitUrgency !== 'normal') return explicitUrgency
   if (risk === 'high') return 'urgent'
+  if (['high', 'urgent'].includes(explicitUrgency)) return explicitUrgency
   const hits = URGENT_WORDS.filter((word) => text.includes(word))
   if (hits.length >= 2) return 'urgent'
   if (hits.length === 1) return 'high'

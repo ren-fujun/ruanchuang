@@ -266,15 +266,14 @@ const departmentStats = (tickets) => {
       .filter((value) => value !== null && Number.isFinite(value))
     const avgHours = responseSamples.length
       ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : department.avgHours
+      : null
     return {
       ...department,
       active: active.length,
       completed: completed.length,
       total: assigned.length,
-      avgHours,
-      onTime: department.onTime,
-      load: Math.min(100, 24 + active.length * 16),
+      observedAvgHours: avgHours,
+      observedOnTime: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : null,
     }
   })
 }
@@ -282,6 +281,21 @@ const departmentStats = (tickets) => {
 const isOnTime = (ticket) => {
   if (ticket.status !== 'completed') return false
   return new Date(completedAt(ticket)).getTime() <= new Date(ticket.dueAt).getTime()
+}
+
+const summaryMetrics = (tickets) => {
+  const completed = tickets.filter((ticket) => ticket.status === 'completed')
+  const ratings = tickets.map((ticket) => ticket.rating?.score).filter((score) => Number.isFinite(score) && score >= 1 && score <= 5)
+  const responses = tickets.map((ticket) => {
+    const assigned = ticket.timeline.find((event) => event.type === 'assigned')
+    return assigned ? hoursBetween(ticket.createdAt, assigned.at) : null
+  }).filter((value) => value !== null && Number.isFinite(value))
+  return {
+    satisfaction: ratings.length ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1)) : null,
+    avgResponse: responses.length ? Number((responses.reduce((sum, value) => sum + value, 0) / responses.length).toFixed(1)) : null,
+    onTimeRate: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : null,
+    closureRate: tickets.length ? Math.round(completed.length / tickets.length * 100) : null,
+  }
 }
 
 app.get('/api/health', (req, res) => {
@@ -312,6 +326,7 @@ app.post('/api/auth/login', (req, res) => {
 })
 
 app.post('/api/auth/demo', (req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.status(403).json({ message: '生产环境不开放一键演示登录。' })
   const role = req.body?.role === 'counselor' ? 'counselor' : 'student'
   const user = db.users.find((item) => item.role === role)
   if (!user) return res.status(404).json({ message: '演示账号暂未配置。' })
@@ -727,23 +742,7 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
   )
   const today = new Date()
   const todayNew = tickets.filter((ticket) => dayDiff(ticket.createdAt, today) === 0)
-  const responseSamples = tickets
-    .map((ticket) => {
-      const assignedEvent = ticket.timeline.find((event) => event.type === 'assigned')
-      return assignedEvent ? hoursBetween(ticket.createdAt, assignedEvent.at) : null
-    })
-    .filter((value) => value !== null && Number.isFinite(value))
-  const avgResponse =
-    responseSamples.length > 0
-      ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : 2.4
-  const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
-  const satisfaction = ratings.length
-    ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
-  const onTimeCount = completed.filter(isOnTime).length
-  const onTimeRate = Math.round(((onTimeCount + 18) / (completed.length + 19)) * 100)
-  const closureRate = Math.round(((completed.length + 16) / (tickets.length + 18)) * 100)
+  const { avgResponse, satisfaction, onTimeRate, closureRate } = summaryMetrics(tickets)
   const queue = [...pending]
     .sort((a, b) => {
       const priority = { high: 0, medium: 1, low: 2 }
@@ -908,13 +907,13 @@ app.patch('/api/tickets/:id/urge', requireAuth, requireRole('counselor'), (req, 
   addNotification({
     userId: ticket.studentId,
     type: 'ticket',
-    title: '老师已为你催办',
-    body: `「${ticket.title}」已发起督办，请留意最新进展。`,
+    title: '老师已记录督办',
+    body: `「${ticket.title}」已记录督办，请留意最新进展。`,
     ticketId: ticket.id,
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '催办已送达，工单 SLA 保持不变。' })
+  res.json({ ticket: decorateTicket(ticket), message: '已记录督办并通知学生，请通过线下渠道联系部门。' })
 })
 
 app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1029,10 +1028,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
   const tickets = db.tickets
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const completed = tickets.filter((ticket) => ticket.status === 'completed')
-  const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
-  const satisfaction = ratings.length
-    ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
+  const metrics = summaryMetrics(tickets)
   const categories = categoryStats(tickets)
   const tagCounts = new Map()
   tickets.forEach((ticket) => {
@@ -1066,11 +1062,8 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
     summary: {
       total: tickets.length,
       weekly: weeklyTotal,
-      satisfaction,
-      onTimeRate: Math.round(((completed.filter(isOnTime).length + 18) / (completed.length + 19)) * 100),
-      closureRate: Math.round(((completed.length + 16) / (tickets.length + 18)) * 100),
+      ...metrics,
       highRisk: active.filter((ticket) => ticket.risk === 'high').length,
-      avgResponse: 2.4,
     },
     week,
     categories,
@@ -1083,7 +1076,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
       low: active.filter((ticket) => ticket.risk === 'low').length,
     },
     suggestion: {
-      title: topCategory ? `「${topCategory.name}」是本周最集中的诉求类型` : '本周诉求分布平稳',
+      title: topCategory ? `「${topCategory.name}」是当前最集中的诉求类型` : '暂无诉求数据',
       body: topCategory
         ? `共 ${topCategory.value} 条，占全部诉求的 ${Math.round((topCategory.value / tickets.length) * 100)}%。建议联合${topDepartment?.short || '相关'}开展一次专项排查，把高频问题前置解决。`
         : '建议保持每周复盘，持续关注高风险与超时工单。',
