@@ -10,8 +10,10 @@ async function call(path, { token, method = 'GET', body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   })
   const payload = await response.json()
-  if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${payload.message}`)
-  return payload
+  if (!response.ok || payload?.code !== 0) {
+    throw new Error(`${method} ${path} -> ${response.status}: ${payload?.msg || '响应不符合 v1 契约'}`)
+  }
+  return payload.data
 }
 
 const student = await call('/auth/login', {

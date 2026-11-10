@@ -28,11 +28,7 @@ export const setToken = (token: string) => {
   else localStorage.removeItem(TOKEN_KEY)
 }
 
-/**
- * Shared API boundary. During the v1 backend rollout we accept the current raw
- * payload as well as the agreed { code, msg, data } envelope. Remove the raw
- * payload branch once the API service has completed its envelope migration.
- */
+/** Shared v1 API boundary. Every endpoint returns { code, msg, data }. */
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
@@ -46,19 +42,16 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     payload = null
   }
   const isEnvelope = payload && typeof payload === 'object' && typeof payload.code === 'number'
-  if (isEnvelope && (!response.ok || payload.code !== 0)) {
+  if (!isEnvelope) {
+    throw new ApiError('服务端响应格式不符合 v1 接口约定。', response.status || 500)
+  }
+  if (!response.ok || payload.code !== 0) {
     if ((payload.code === 40101 || response.status === 401) && !path.includes('/auth/')) {
       window.dispatchEvent(new CustomEvent('zhihui:auth-expired'))
     }
     throw new ApiError(payload?.msg || payload?.message || '网络不太稳定，请稍后再试。', response.status)
   }
-  if (!response.ok) {
-    if (response.status === 401 && !path.includes('/auth/')) {
-      window.dispatchEvent(new CustomEvent('zhihui:auth-expired'))
-    }
-    throw new ApiError(payload?.msg || payload?.message || '网络不太稳定，请稍后再试。', response.status)
-  }
-  return (isEnvelope ? payload.data : payload) as T
+  return payload.data as T
 }
 
 const post = <T>(path: string, body?: unknown) =>
@@ -74,7 +67,10 @@ export const api = {
   logout: () => post<{ ok: boolean }>('/auth/logout'),
   studentHome: () => request<StudentHomeData>('/student/home'),
   counselorDashboard: () => request<CounselorDashboard>('/counselor/dashboard'),
-  tickets: (params: string) => request<{ tickets: Ticket[]; counts: Record<string, number> }>(`/tickets?${params}`),
+  tickets: (params: string) =>
+    request<{ tickets: Ticket[]; counts: Record<string, number>; page: number; pageSize: number; total: number; hasMore: boolean }>(
+      `/tickets?${params}`,
+    ),
   ticket: (id: string) => request<TicketDetailData>(`/tickets/${id}`),
   precheck: (body: { text: string; category?: string; location?: string }) =>
     post<PrecheckResult>('/ai/precheck', body),
@@ -93,7 +89,8 @@ export const api = {
   urgeStudent: (id: string, note?: string) =>
     post<{ ticket: Ticket }>(`/tickets/${id}/urge-student`, { note }),
   notFound: () => Promise.reject(new ApiError('页面不存在', 404)),
-  notifications: () => request<{ notifications: Notification[]; unread: number }>('/notifications'),
+  notifications: () =>
+    request<{ notifications: Notification[]; unread: number; page: number; pageSize: number; total: number; hasMore: boolean }>('/notifications'),
   readAll: () => post<{ ok: boolean }>('/notifications/read-all'),
   readNotification: (id: string) => post<{ ok: boolean }>(`/notifications/${id}/read`),
   reviewTicket: (id: string, body: { departmentIds: string[]; note?: string }) =>

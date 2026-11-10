@@ -27,8 +27,49 @@ const PORT = Number(process.env.PORT || 8787)
 const app = express()
 
 app.use(express.json({ limit: '6mb' }))
+
+const errorCodes = {
+  400: 40001,
+  401: 40101,
+  403: 40301,
+  404: 40401,
+  409: 40901,
+  413: 41301,
+  500: 50001,
+}
+
+// v1 的唯一响应出口：路由只返回业务 data，统一在这里包装为 { code, msg, data }。
+// 这样不会让某个新路由意外回退成裸 JSON。
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  if (!req.path.startsWith('/api/')) return next()
+  const sendJson = res.json.bind(res)
+  res.json = (payload) => {
+    if (payload && typeof payload === 'object' && typeof payload.code === 'number') {
+      return sendJson(payload)
+    }
+    const success = res.statusCode < 400
+    const msg = success ? 'ok' : String(payload?.message || '中枢开小差了，请稍后再试。')
+    return sendJson({
+      code: success ? 0 : errorCodes[res.statusCode] || 50001,
+      msg,
+      data: success ? payload : null,
+    })
+  }
+  next()
+})
+
+const allowedOrigins = new Set(
+  String(process.env.CORS_ORIGINS || 'http://127.0.0.1:5180,http://localhost:5180,http://127.0.0.1:8787')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+)
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (origin && !allowedOrigins.has(origin)) {
+    return res.status(403).json({ message: '当前来源不在服务访问白名单中。' })
+  }
+  if (origin) res.setHeader('Access-Control-Allow-Origin', origin)
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS')
   if (req.method === 'OPTIONS') return res.sendStatus(204)
@@ -171,7 +212,7 @@ const weeklySeries = (tickets) => {
     days.push({
       key,
       label: offset === 0 ? '今天' : `周${labels[date.getDay()]}`,
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
+      date: key,
       created,
       completed,
     })
@@ -245,7 +286,11 @@ app.post('/api/auth/login', (req, res) => {
       (!role || item.role === role),
   )
   if (!user) {
-    return res.status(401).json({ message: '账号或密码不正确，请使用下方演示账号。' })
+    return res.status(401).json({
+      code: 40102,
+      msg: '账号或密码不正确，请使用下方演示账号。',
+      data: null,
+    })
   }
   const token = crypto.randomUUID()
   db.sessions = db.sessions.filter((session) => session.userId !== user.id).slice(-40)
@@ -412,8 +457,16 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     if (priority[a.risk] !== priority[b.risk]) return priority[a.risk] - priority[b.risk]
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
+
+  const page = Number(req.query.page || 1)
+  const pageSize = Number(req.query.pageSize || 20)
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 50) {
+    return res.status(400).json({ message: '分页参数不合法。' })
+  }
+  const total = list.length
+  const start = (page - 1) * pageSize
   res.json({
-    tickets: list.map(decorateTicket),
+    tickets: list.slice(start, start + pageSize).map(decorateTicket),
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -439,6 +492,10 @@ app.get('/api/tickets', requireAuth, (req, res) => {
           (req.user.role === 'counselor' || ticket.studentId === req.user.id),
       ).length,
     },
+    page,
+    pageSize,
+    total,
+    hasMore: start + pageSize < total,
   })
 })
 
@@ -773,7 +830,7 @@ app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (r
   const result = String(req.body?.result || '').trim()
 
   if (action === 'accept') {
-    if (!['assigned', 'processing'].includes(ticket.status)) {
+    if (ticket.status !== 'assigned') {
       return res.status(409).json({ message: '当前状态无法记录接单。' })
     }
     ticket.status = 'processing'
@@ -861,6 +918,12 @@ app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, r
 app.post('/api/tickets/:id/split', requireAuth, requireRole('counselor'), (req, res) => {
   const parent = getTicketOr404(req.params.id, res)
   if (!parent) return
+  if (parent.parentId || !['assigned', 'processing'].includes(parent.status)) {
+    return res.status(409).json({ message: '当前工单不允许拆分。' })
+  }
+  if (db.tickets.some((ticket) => ticket.parentId === parent.id)) {
+    return res.status(409).json({ message: '这张工单已经拆分过了。' })
+  }
   const items = Array.isArray(req.body?.items) ? req.body.items : []
   const valid = items
     .map((item) => ({
@@ -1055,7 +1118,20 @@ app.get('/api/notifications', requireAuth, (req, res) => {
   const items = db.notifications
     .filter((note) => note.userId === req.user.id)
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-  res.json({ notifications: items, unread: items.filter((note) => !note.read).length })
+  const page = Number(req.query.page || 1)
+  const pageSize = Number(req.query.pageSize || 20)
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 50) {
+    return res.status(400).json({ message: '分页参数不合法。' })
+  }
+  const start = (page - 1) * pageSize
+  res.json({
+    notifications: items.slice(start, start + pageSize),
+    unread: items.filter((note) => !note.read).length,
+    page,
+    pageSize,
+    total: items.length,
+    hasMore: start + pageSize < items.length,
+  })
 })
 
 app.post('/api/notifications/read-all', requireAuth, (req, res) => {
@@ -1080,6 +1156,9 @@ app.use('/api', (req, res) => {
 
 app.use((error, req, res, next) => {
   console.error(error)
+  if (error?.type === 'entity.too.large' || error?.status === 413) {
+    return res.status(413).json({ message: '请求内容过大，请减少附件或压缩后重试。' })
+  }
   res.status(500).json({ message: '中枢开小差了，请稍后再试。' })
 })
 
