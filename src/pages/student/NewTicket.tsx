@@ -447,7 +447,7 @@ export function NewTicket() {
                 <div className="ai-result-top">
                   <span className="ai-badge">
                     <Sparkles size={13} />
-                    AI 预检完成
+                    {precheck.engine === 'deepseek' ? '模型辅助预检完成' : '规则预检完成'}
                   </span>
                   <span className="confidence">初步建议，需人工复核</span>
                 </div>

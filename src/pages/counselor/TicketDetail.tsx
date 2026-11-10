@@ -85,6 +85,8 @@ export function CounselorTicketDetail() {
   const [resolveText, setResolveText] = useState('')
   const [noteOpen, setNoteOpen] = useState(false)
   const [noteText, setNoteText] = useState('')
+  const [noteDepartment, setNoteDepartment] = useState('')
+  const [noteNextStep, setNoteNextStep] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
   const [splitItems, setSplitItems] = useState<{ title: string; departmentId: string }[]>([])
@@ -198,10 +200,13 @@ export function CounselorTicketDetail() {
     }
     setActionLoading(true)
     try {
-      await api.noteTicket(ticket.id, noteText)
+      const entry = [noteDepartment.trim() && `协同部门：${noteDepartment.trim()}`, `沟通情况：${noteText.trim()}`, noteNextStep.trim() && `下一步：${noteNextStep.trim()}`].filter(Boolean).join('；')
+      await api.noteTicket(ticket.id, entry)
       toast('内部备注已保存。', 'success')
       setNoteOpen(false)
       setNoteText('')
+      setNoteDepartment('')
+      setNoteNextStep('')
       reload()
     } catch (err: any) {
       toast(err?.message || '备注保存失败', 'error')
@@ -520,7 +525,7 @@ export function CounselorTicketDetail() {
 
         <button className="add-note-button" onClick={() => setNoteOpen(true)}>
           <StickyNote size={15} />
-          添加一条内部跟进备注
+          记录部门协同与跟进
         </button>
 
         <footer className="detail-footer">
@@ -705,7 +710,7 @@ export function CounselorTicketDetail() {
       <Sheet
         open={noteOpen}
         onClose={() => setNoteOpen(false)}
-        title="添加跟进备注"
+        title="记录部门协同与跟进"
         eyebrow="INTERNAL NOTE"
         footer={
           <>
@@ -716,7 +721,9 @@ export function CounselorTicketDetail() {
       >
         <div className="note-sheet">
           <div className="note-warning"><StickyNote size={14} />该备注仅辅导员可见，不会同步给学生。</div>
-          <textarea className="review-note tall" placeholder="记录电话沟通、线下介入或部门反馈…" value={noteText} onChange={(event) => setNoteText(event.target.value)} maxLength={300} />
+          <label>协同部门（选填）<input className="review-note" value={noteDepartment} onChange={(event) => setNoteDepartment(event.target.value)} maxLength={80} placeholder="例如：后勤保障处" /></label>
+          <label>沟通情况与反馈<textarea className="review-note tall" placeholder="记录联系时间、方式及部门反馈…" value={noteText} onChange={(event) => setNoteText(event.target.value)} maxLength={300} /></label>
+          <label>下一步（选填）<input className="review-note" value={noteNextStep} onChange={(event) => setNoteNextStep(event.target.value)} maxLength={150} placeholder="例如：周五联系负责人确认进度" /></label>
         </div>
       </Sheet>
 

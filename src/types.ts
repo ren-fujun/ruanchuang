@@ -197,6 +197,7 @@ export interface InsightsData {
 }
 
 export interface PrecheckResult {
+  engine?: 'deepseek' | 'local-rules'
   analysis: {
     category: string
     urgency: 'normal' | 'high' | 'urgent'

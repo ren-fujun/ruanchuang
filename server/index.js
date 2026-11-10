@@ -5,7 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
-import { llmEnabled, refineAnalysis } from './llm.js'
+import { refineAnalysis } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import {
   STATUS_LABELS,
@@ -113,6 +113,18 @@ const decorateTicket = (ticket) => {
     overdue,
     minutesLeft,
     isHighRisk: ticket.risk === 'high',
+  }
+}
+
+const ticketForUser = (ticket, user) => {
+  const decorated = decorateTicket(ticket)
+  if (user.role === 'counselor') return decorated
+  return {
+    ...decorated,
+    notes: [],
+    timeline: (decorated.timeline || []).filter((event) => event.type !== 'note').map((event) =>
+      event.type === 'assigned' ? { ...event, desc: String(event.desc || '').split('。督办备注：')[0] } : event,
+    ),
   }
 }
 
@@ -363,7 +375,7 @@ app.post('/api/ai/precheck', requireAuth, async (req, res) => {
           : '这件事需要人工协同处理，建议直接提交给辅导员，由中枢协调对应部门。'
     }
   }
-  res.json({ ...result, engine: llmEnabled() ? 'deepseek' : 'local-rules' })
+  res.json({ ...result, engine: result.analysis.model ? 'deepseek' : 'local-rules' })
 })
 
 app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => {
@@ -384,7 +396,7 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
   const awaiting = mine.filter((ticket) => ticket.status === 'awaiting_confirm')
   const updates = mine
     .flatMap((ticket) =>
-      ticket.timeline.map((event) => ({
+      ticketForUser(ticket, req.user).timeline.map((event) => ({
         ...event,
         ticketId: ticket.id,
         ticketTitle: ticket.title,
@@ -406,8 +418,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
       completed: completed.length,
       total: mine.length,
     },
-    featured: featured ? decorateTicket(featured) : null,
-    activeTickets: active.slice(0, 3).map(decorateTicket),
+    featured: featured ? ticketForUser(featured, req.user) : null,
+    activeTickets: active.slice(0, 3).map((ticket) => ticketForUser(ticket, req.user)),
     updates,
     knowledge: knowledgeBase.filter((item) => item.hot).slice(0, 4),
     notifications: notes,
@@ -466,7 +478,7 @@ app.get('/api/tickets', requireAuth, (req, res) => {
   const total = list.length
   const start = (page - 1) * pageSize
   res.json({
-    tickets: list.slice(start, start + pageSize).map(decorateTicket),
+    tickets: list.slice(start, start + pageSize).map((ticket) => ticketForUser(ticket, req.user)),
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -505,7 +517,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   if (!canAccessTicket(req.user, ticket)) {
     return res.status(403).json({ message: '你只能查看自己的诉求工单。' })
   }
-  const decorated = decorateTicket(ticket)
+  const decorated = ticketForUser(ticket, req.user)
   const related = db.tickets
     .filter(
       (item) =>
@@ -514,7 +526,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
         (item.category === ticket.category || item.status !== 'completed'),
     )
     .slice(0, 3)
-    .map(decorateTicket)
+    .map((item) => ticketForUser(item, req.user))
   res.json({
     ticket: decorated,
     related,
@@ -613,7 +625,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
   })
 
   save()
-  res.status(201).json({ ticket: decorateTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
+  res.status(201).json({ ticket: ticketForUser(ticket, req.user), message: '诉求已提交，辅导员会尽快查看。' })
 })
 
 app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, res) => {
@@ -658,7 +670,7 @@ app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, 
     tone: 'mint',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已确认办结，谢谢你的反馈。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已确认办结，谢谢你的反馈。' })
 })
 
 app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res) => {
@@ -677,7 +689,7 @@ app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('rated', '收到新的服务评价', `${score} 星 · ${ticket.rating.comment || '未填写评价'}`, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
 })
 
 app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (req, res) => {
@@ -701,7 +713,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已提醒辅导员，请耐心等待最新进展。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已提醒辅导员，请耐心等待最新进展。' })
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
@@ -743,10 +755,10 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
     .filter(
       (ticket) =>
         ticket.risk === 'high' ||
-        (ticket.status !== 'awaiting_confirm' && new Date(ticket.dueAt).getTime() < Date.now()),
+        (ticket.status !== 'awaiting_confirm' && new Date(ticket.dueAt).getTime() <= Date.now() + 60 * 60000),
     )
     .sort((a, b) => {
-      if (a.risk !== b.risk) return a.risk === 'high' ? -1 : 1
+      if ((a.risk === 'high') !== (b.risk === 'high')) return a.risk === 'high' ? -1 : 1
       return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()
     })
     .slice(0, 4)
@@ -910,6 +922,7 @@ app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, r
   if (!ticket) return
   const text = String(req.body?.text || '').trim()
   if (!text) return res.status(400).json({ message: '请填写跟进备注。' })
+  if (text.length > 600) return res.status(400).json({ message: '跟进备注不能超过 600 字。' })
   ticket.notes.push({ id: `note-${crypto.randomUUID().slice(0, 6)}`, text, at: nowIso(), actor: req.user.name })
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('note', '新增跟进备注', text, req.user.name))

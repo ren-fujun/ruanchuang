@@ -387,11 +387,13 @@ export const generateCounselorBrief = (tickets) => {
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const high = active.filter((ticket) => ticket.risk === 'high')
   const pending = active.filter((ticket) => ticket.status === 'pending_review')
-  const overdue = active.filter((ticket) => new Date(ticket.dueAt).getTime() < Date.now())
+  const overdue = active.filter((ticket) => ticket.status !== 'awaiting_confirm' && new Date(ticket.dueAt).getTime() < Date.now())
   return {
     headline: high.length
       ? `有 ${high.length} 条高风险诉求需要优先介入`
-      : pending.length
+      : overdue.length
+        ? `有 ${overdue.length} 条工单已超时，需要跟进`
+        : pending.length
         ? `有 ${pending.length} 条新诉求等待审核`
         : '当前工单均在时限内平稳推进',
     detail: `今日待审核 ${pending.length} 条 · 超时 ${overdue.length} 条 · 高风险 ${high.length} 条`,

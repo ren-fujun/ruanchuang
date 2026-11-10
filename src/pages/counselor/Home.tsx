@@ -49,7 +49,7 @@ export function CounselorHome() {
   if (!data || !user) return null
 
   const { stats, brief, urgent, queue, week, departments, unread } = data
-  const topRisk = urgent.find((ticket) => ticket.risk === 'high') || urgent[0]
+  const topRisk = urgent.find((ticket) => ticket.risk === 'high')
   const weekMax = Math.max(...week.map((day) => Math.max(day.created, day.completed)), 1)
   const weekTotal = week.reduce((sum, day) => sum + day.created, 0)
 
