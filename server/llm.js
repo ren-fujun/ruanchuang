@@ -66,9 +66,7 @@ export const refineAnalysis = async (text, base, location) => {
     const risk = highest(base.risk, result.risk, RISK_ORDER)
     const urgency = highest(base.urgency, result.urgency, URGENCY_ORDER)
     const category = CATEGORIES.includes(result.category) ? result.category : base.category
-    const suggested = Array.isArray(result.suggestedDepartments)
-      ? result.suggestedDepartments.filter((id) => departmentMap[id]).slice(0, 4)
-      : []
+    const suggested = base.suggestedDepartments
     const tags = Array.isArray(result.tags)
       ? result.tags.filter((tag) => typeof tag === 'string').slice(0, 5)
       : base.tags
@@ -89,7 +87,7 @@ export const refineAnalysis = async (text, base, location) => {
       suggestedDepartmentNames: (suggested.length ? suggested : base.suggestedDepartments).map(
         (id) => departmentMap[id]?.name || id,
       ),
-      draft: typeof result.draft === 'string' && result.draft.trim() ? result.draft.trim().slice(0, 260) : base.draft,
+      draft: base.draft,
       slaMinutes: risk === 'high' ? 60 : urgency === 'urgent' ? 120 : base.slaMinutes,
       model: model,
     }

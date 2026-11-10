@@ -41,7 +41,6 @@ import {
   Avatar,
   DeptAvatar,
   EmptyState,
-  ProgressRing,
   RiskBadge,
   Sheet,
   SkeletonPage,
@@ -311,11 +310,11 @@ export function CounselorTicketDetail() {
         </div>
         <div className="counselor-hero-metrics">
           <div><span>SLA 剩余</span><strong><SlaCountdown ticket={ticket} compact /></strong></div>
-          <div><span>AI 置信度</span><strong>{Math.round(ticket.ai.confidence * 100)}%</strong></div>
+          <div><span>建议状态</span><strong>待人工复核</strong></div>
           <div><span>提交时间</span><strong>{formatDate(ticket.createdAt)} {formatTime(ticket.createdAt)}</strong></div>
         </div>
         <div className="counselor-hero-progress">
-          {['待审核', '已分派', '协同处理', '待确认', '已归档'].map((label, index) => (
+          {['待审核', '已分派', '协同处理', '待确认', '已办结'].map((label, index) => (
             <span className={stepIndex >= index ? 'done' : ''} key={label}><i />{label}</span>
           ))}
         </div>
@@ -343,12 +342,11 @@ export function CounselorTicketDetail() {
                 <h2>AI 研判摘要</h2>
               </div>
             </div>
-            <div className="brief-confidence">
-              <ProgressRing value={Math.round(ticket.ai.confidence * 100)} size={48} stroke={4} label={`${Math.round(ticket.ai.confidence * 100)}`} />
-              <span>置信度</span>
-            </div>
+            <span>仅供辅导员复核</span>
           </div>
           <p className="brief-summary">{ticket.ai.summary}</p>
+          <p>{ticket.ai.coordinationReason || '部门建议请结合原始诉求人工核实。'}</p>
+          {Boolean(ticket.ai.missingInfo?.length) && <p>建议补充：{ticket.ai.missingInfo?.join('、')}</p>}
           <div className="brief-risk-line">
             <ShieldLine risk={ticket.risk} />
             <span>{ticket.ai.riskReason}</span>

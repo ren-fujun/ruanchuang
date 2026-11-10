@@ -231,7 +231,7 @@ export function StudentTicketDetail() {
         <section className="detail-ai-card">
           <div className="detail-ai-head">
             <span className="ai-badge dark"><Sparkles size={13} /> AI 诉求摘要</span>
-            <span className="confidence">置信度 {Math.round(ticket.ai.confidence * 100)}%</span>
+            <span className="confidence">初步建议，需人工复核</span>
           </div>
           <p className={`detail-ai-summary ${detailsOpen ? '' : 'clamped'}`}>{ticket.ai.summary}</p>
           <div className="ai-tags">

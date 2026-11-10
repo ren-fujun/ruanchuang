@@ -68,6 +68,8 @@ export interface TicketAI {
   sentiment: string
   confidence: number
   suggestedDepartments: string[]
+  coordinationReason?: string
+  missingInfo?: string[]
   tags: string[]
   draft: string
 }

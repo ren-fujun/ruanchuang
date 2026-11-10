@@ -256,9 +256,11 @@ export const suggestDepartments = (text, category) => {
           : text.includes('电梯')
             ? ['logistics', 'security']
             : CATEGORY_DEPARTMENTS[category] || ['office']
-  const hazard = SAFETY_HAZARD_WORDS.find((word) => text.includes(word))
-  if (hazard) return [...new Set([...base, 'security'])]
-  return base
+  const result = [...base]
+  if (text.includes('图书馆')) result.push('library')
+  if (['空调', '漏水', '充电桩', '电梯'].some((word) => text.includes(word))) result.push('logistics')
+  if (SAFETY_HAZARD_WORDS.some((word) => text.includes(word))) result.push('security')
+  return [...new Set(result)]
 }
 
 export const analyzeRequest = ({ text = '', category: explicitCategory, location = '', urgency: explicitUrgency } = {}) => {
@@ -269,6 +271,13 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
   const departments = suggestDepartments(text, category)
   const summary = makeSummary(text, category, location, risk.level)
   const deptNames = departments.map((id) => departmentMap[id]?.short || id).join('、')
+  const signals = ['图书馆', '空调', '漏水', '充电桩', '电梯', '消防', '诈骗', '宿舍', '热水'].filter((word) => text.includes(word))
+  const coordinationReason = signals.length
+    ? `文本提到${signals.map((word) => `「${word}」`).join('、')}，建议核实后协调${deptNames}。`
+    : `根据诉求类型「${category}」建议核实是否由${deptNames}跟进。`
+  const missingInfo = []
+  if (!location || ['线上', '线上咨询', '未填写地点'].includes(location)) missingInfo.push('具体地点（如适用）')
+  if (!/(今天|昨天|明天|近期|近日|本周|上周|\d+\s*[年月日点时])/u.test(text)) missingInfo.push('发生时间或持续时长')
 
   const tags = [category]
   if (location) tags.push(location.replace(/学生公寓|教学楼|图书馆/g, (m) => m))
@@ -279,7 +288,7 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
   const draft =
     risk.level === 'high'
       ? '同学你好，我看到你的消息了，谢谢你愿意告诉我。我现在马上联系你，我们先确认你此刻是安全的，好吗？'
-      : `同学你好，已收到你关于「${category}」的反馈。我们已联系${deptNames}跟进，有进展会第一时间同步给你。`
+      : `同学你好，已收到你关于「${category}」的反馈。我们会核实情况并安排跟进，有进展会及时同步给你。`
 
   return {
     category,
@@ -290,6 +299,8 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
     sentiment: risk.sentiment,
     summary,
     tags: [...new Set(tags)].slice(0, 5),
+    coordinationReason,
+    missingInfo,
     suggestedDepartments: departments,
     suggestedDepartmentNames: departments.map((id) => departmentMap[id]?.name || id),
     confidence: Number((0.88 + Math.min(text.length, 120) / 1200).toFixed(2)),
@@ -337,7 +348,7 @@ export const precheckRequest = ({ text, category, location }) => {
   } else {
     selfServiceAnswer =
       analysis.risk === 'high'
-        ? '听起来你现在很不容易。请先不要独自承受，可以拨打 24 小时心理援助热线 0571-8820 8125；如果情况紧急，请立即联系辅导员或拨打 120。你也可以直接提交诉求，我们会尽快找到你。'
+        ? '听起来你现在很不容易。请立即联系身边可信任的人或辅导员；如有迫在眉睫的危险，请联系当地紧急救援服务。'
         : '暂时没有完全匹配的自助答案，建议把具体情况提交给辅导员，由中枢协调对应部门处理。'
   }
 

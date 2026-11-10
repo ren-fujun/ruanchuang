@@ -441,7 +441,7 @@ export function NewTicket() {
                 </button>
               </div>
             </section>
-          ) : (
+          ) : precheck && (
             <>
               <section className={`ai-result-hero ${precheck.analysis.risk === 'high' ? 'risk' : ''}`}>
                 <div className="ai-result-top">
@@ -449,7 +449,7 @@ export function NewTicket() {
                     <Sparkles size={13} />
                     AI 预检完成
                   </span>
-                  <span className="confidence">置信度 {Math.round(precheck.analysis.confidence * 100)}%</span>
+                  <span className="confidence">初步建议，需人工复核</span>
                 </div>
                 <h2>
                   {precheck.analysis.risk === 'high'

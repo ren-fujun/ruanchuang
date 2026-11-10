@@ -585,6 +585,8 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
       sentiment: analysis.sentiment,
       confidence: analysis.confidence,
       suggestedDepartments: analysis.suggestedDepartments,
+      coordinationReason: analysis.coordinationReason,
+      missingInfo: analysis.missingInfo,
       tags: analysis.tags,
       draft: analysis.draft,
     },
