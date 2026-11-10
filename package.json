@@ -14,7 +14,10 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5180",
     "start": "node server/index.js",
-    "seed": "node server/reset.js"
+    "seed": "node server/reset.js",
+    "e2e": "node scripts/e2e/fullchain.mjs",
+    "e2e:critical": "node scripts/e2e/critical-checks.mjs",
+    "e2e:all": "npm run e2e && npm run e2e:critical"
   },
   "dependencies": {
     "express": "^4.21.2",

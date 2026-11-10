@@ -1,6 +1,7 @@
 node_modules/
 dist/
 screenshots/
+artifacts/
 server/data/
 .tmp/
 *.log
