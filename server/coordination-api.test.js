@@ -78,6 +78,13 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
     const list = await call('/tickets', { token: student.token })
     const home = await call('/student/home', { token: student.token })
     assert.doesNotMatch(JSON.stringify({ list, home }), /私人审核备注|内部跟进/)
+    const accepted = await call(`/tickets/${id}/progress`, { method: 'PATCH', token: counselor.token, body: { action: 'accept' } })
+    assert.equal(accepted.ticket.status, 'processing')
+    const resolved = await call(`/tickets/${id}/progress`, { method: 'PATCH', token: counselor.token, body: { action: 'resolve', result: '设备已修复' } })
+    assert.equal(resolved.ticket.status, 'awaiting_confirm')
+    const confirmed = await call(`/tickets/${id}/confirm`, { token: student.token, body: { score: 5, comment: '已确认' } })
+    assert.equal(confirmed.ticket.status, 'completed')
+    assert.doesNotMatch(JSON.stringify(confirmed), /私人审核备注|内部跟进/)
   } finally {
     child.kill()
     await new Promise((resolve) => child.once('exit', resolve))
