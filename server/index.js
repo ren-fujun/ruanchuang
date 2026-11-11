@@ -122,9 +122,11 @@ const ticketForUser = (ticket, user) => {
   return {
     ...decorated,
     notes: [],
-    timeline: (decorated.timeline || []).filter((event) => event.type !== 'note').map((event) =>
-      event.type === 'assigned' ? { ...event, desc: String(event.desc || '').split('。督办备注：')[0] } : event,
-    ),
+    timeline: (decorated.timeline || []).filter((event) => event.type !== 'note').map((event) => {
+      if (event.type === 'assigned') return { ...event, desc: String(event.desc || '').split('。督办备注：')[0] }
+      if (event.type === 'urge' && event.title === '辅导员发起督办催办') return { ...event, desc: '辅导员已记录督办，请留意后续进展。' }
+      return event
+    }),
   }
 }
 
