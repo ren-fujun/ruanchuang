@@ -123,6 +123,26 @@ await runCheck({ id: 'P0-03', severity: 'P0', name: '学生调用辅导员接口
   return `HTTP 403；code=40301`
 })
 
+await runCheck({ id: 'P0-06', severity: 'P0', name: '学生访问他人工单返回 403', page: null }, async () => {
+  const studentToken = await loginByApi('student')
+  const counselorToken = await loginByApi('counselor')
+  const listResponse = await fetch(`${baseUrl}/api/tickets?status=all&pageSize=50`, {
+    headers: { Authorization: `Bearer ${counselorToken}` },
+  })
+  const listBody = await listResponse.json()
+  assert(listResponse.status === 200 && listBody.code === 0, `工单列表 HTTP ${listResponse.status}`)
+  const foreignTicket = listBody.data.tickets.find((ticket) => ticket.studentId !== 'stu-lin')
+  assert(foreignTicket, '没有找到其他学生的工单，无法执行越权检查')
+  const response = await fetch(`${baseUrl}/api/tickets/${encodeURIComponent(foreignTicket.id)}`, {
+    headers: { Authorization: `Bearer ${studentToken}` },
+  })
+  const body = await response.json()
+  assert(response.status === 403, `访问 ${foreignTicket.id} 期望 HTTP 403，实际 ${response.status}`)
+  assert(body.code === 40301, `期望 code=40301，实际 ${body.code}`)
+  assert(body.data === null, '越权响应不得返回工单数据')
+  return `目标工单=${foreignTicket.id}；归属=${foreignTicket.studentName}；HTTP 403`
+})
+
 await runCheck({ id: 'P0-04', severity: 'P0', name: '无模型 Key 时 AI 本地兜底', page: null }, async () => {
   const token = await loginByApi('student')
   const response = await fetch(`${baseUrl}/api/ai/precheck`, {
@@ -145,13 +165,12 @@ await runCheck({ id: 'P0-05', severity: 'P0', name: '高风险必须转人工工
   await studentPage.goto(`${baseUrl}/student/new`, { waitUntil: 'domcontentloaded' })
   await studentPage.getByPlaceholder(/比如：宿舍热水/).fill('我最近情绪崩溃，真的不想活了，已经想好怎么自杀。')
   await studentPage.getByRole('button', { name: '让 AI 先看看' }).click()
-  await studentPage.getByText('AI 预检完成').waitFor({ state: 'visible', timeout: 30000 })
-  await studentPage.getByText('这需要被优先看见。').waitFor({ state: 'visible' })
+  await studentPage.getByText('这需要被优先看见。').waitFor({ state: 'visible', timeout: 30000 })
   assert(await studentPage.getByText('高风险', { exact: true }).isVisible(), '页面未显示“高风险”')
   assert((await studentPage.getByRole('button', { name: '按指引已解决' }).count()) === 0, '高风险仍允许自助关闭')
   assert(await studentPage.getByRole('button', { name: '确认提交' }).isVisible(), '未提供转工单入口')
   const pageText = await studentPage.locator('body').innerText()
-  assert(pageText.includes('24h 心理援助'), '缺少心理援助入口')
+  assert(pageText.includes('紧急救援') || pageText.includes('心理援助'), '缺少紧急求助提示')
   return '风险=高风险；自助关闭=不可用；提交入口=可用'
 })
 

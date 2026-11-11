@@ -1,17 +1,22 @@
 # Day 5 第一次集成 E2E 报告
 
-> 执行人：D  
-> 执行时间：2026-11-10 21:18（Asia/Shanghai）  
-> 测试分支：本地 `test/day5-integration`（A 的 `feat/a-v1-fullchain` + C 的教师端分支，仅本地合并，未推送）
+> 执行人：D
+>
+> 首次执行：2026-11-10 21:18（Asia/Shanghai）
+>
+> 最近复测：2026-11-12 01:15（Asia/Shanghai；A 的 `feat/a-v2-collaboration`，本地独立工作树）
+>
+> 测试分支：A 分支本地预演；未手工修改业务数据
 
 ## 结论
 
-**主应用的学生→辅导员完整主链路已跑通，但“团队第一次集成完成”还不能成立。**
+**A 的最新代码可以跑通学生→辅导员完整主链路；团队正式集成仍未完成。**
 
 - 主链路：8/8 通过，全程通过页面操作，没有手工改数据。
 - 接口冒烟：5/5 通过，确认 `health`、学生/辅导员登录、工单列表与分页字段。
 - 关键风险检查：P0 全部通过；P1 发现 1 个重复提交缺陷。
-- 项目级 P0 仍有 2 个：A 的代码没有合入 `main`；C 的教师端仍是独立 Mock 项目，未接入真实后端。
+- A 最新分支复测：A 自带后端测试 14/14 通过，D 的完整 E2E 8/8 通过。
+- 项目级 P0 仍在：A 没有 PR、没有合入 `main`；B/C 与 A 存在冲突；C 的独立教师端仍未真正并入主应用。
 
 ## 主链路结果
 
@@ -41,6 +46,7 @@
 | 无 Token 访问接口 | 已通 | HTTP 401，`code=40101`，`data=null` |
 | 未登录访问受保护页面 | 已通 | 自动跳转 `/login` |
 | 学生调用辅导员接口 | 已通 | HTTP 403，`code=40301` |
+| 学生访问他人工单 | 已通 | 使用学生 Token 访问许清和的 `ZX20261107015`，HTTP 403，未返回工单数据 |
 | 无模型 Key 的 AI 兜底 | 已通 | `engine=local-rules` |
 | 高风险强制转人工工单 | 已通 | 显示高风险、不可自助关闭、可提交工单 |
 | 360px 学生端 | 已通 | 首页、提交页、列表页均无横向溢出 |
@@ -50,11 +56,11 @@
 
 ## P0 阻塞
 
-### P0-1：A 的修复没有合入 `main`
+### P0-1：A 的修复没有创建 PR，也没有合入 `main`
 
-- 远端 `main` 仍是 `81fd051`，`feat/a-v1-fullchain` 提交 `5cf1104` 尚未合并。
+- A 最新推送为 `feat/a-v2-collaboration`，提交 `4764adc`，比 `main` 多 9 个提交。
 - GitHub 上没有 A 的 PR；D 无法替 A 评审或合并。
-- 本次接口冒烟和 E2E 是在 A 分支的本地集成预演上通过，**不能写成 `main` 已通过**。
+- 该分支 14/14 后端测试、D 的 8/8 主链路 E2E 均通过；这是“代码可集成”的证据，不等于“已经合并”。
 - 处理人：A。要求：发起 PR、评审、合并到 `main`，然后通知 D 复跑。
 
 ### P0-2：C 的教师端没有接入主应用
@@ -63,7 +69,13 @@
 - 默认启用 MSW Mock（`VITE_USE_MOCK=true`），演示数据不等于真实联调。
 - 契约不兼容：教师端请求 `/api/auth/me`、`/api/counselor/tickets`、`POST /api/counselor/tickets/:id/review|assign`；当前后端对应实际为 `/api/me`、`/api/tickets`、`PATCH /api/tickets/:id/review`，不存在 `/assign`。
 - 对真实后端实测上述三个路径均返回 HTTP 404。
+- C 的 `feat/c-teacher-v1-adapter` 仍与 A 冲突：`server/index.js`、`src/pages/counselor/TicketDetail.tsx`。
 - 处理人：A/B/C。要求先冻结接口契约，再把教师页面并入主应用；不能用 Mock 结果作为第一次集成通过证据。
+
+### P0-3：B 与 A 的合并冲突
+
+- `feat/b-graphrag-risk-agent` 与 A 的最新分支冲突文件：`server/ai.js`、`server/ai/knowledge.js`、`server/index.js`、`server/llm.js`。
+- 处理人：B。要求基于 A 的最新分支 rebase，解决冲突后再提 PR。
 
 ## P1 缺陷
 
@@ -73,10 +85,10 @@
 - 建议由后端增加幂等或短时间重复检测：同一 `studentId` + 规范化描述 + 未办结工单，建议返回 `409` 并提示“请勿重复提交”。
 - 负责人：A。
 
-### P1-2：缺少第二个学生测试账号
+### 已补充的越权覆盖
 
-- 种子数据只有 `stu-lin` 一个学生账号，无法自动验证“学生 A 访问学生 B 工单”的越权场景。
-- 建议 B/C 或 A 补固定学生 B 账号与工单，之后补跑 E2E-06。
+- `scripts/e2e/critical-checks.mjs` 已增加 P0-06：学生 Token 访问其他学生的真实工单。
+- 实测使用 `ZX20261107015`（归属许清和）返回 HTTP 403，`data=null`。
 
 ## 复现方式
 
