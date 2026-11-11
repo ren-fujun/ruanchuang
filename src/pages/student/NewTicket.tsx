@@ -17,7 +17,6 @@ import {
   MapPin,
   Mic,
   MoreHorizontal,
-  Phone,
   Shield,
   ShieldAlert,
   Sparkles,
@@ -475,8 +474,7 @@ export function NewTicket() {
                     <strong>你不需要一个人扛着</strong>
                     <p>{precheck.analysis.riskReason}</p>
                     <div className="risk-alert-actions">
-                      <a href="tel:057188208125"><Phone size={13} /> 24h 心理援助</a>
-                      <span>提交后辅导员会优先联系你</span>
+                      <span>请联系辅导员或身边可信任的人；如有紧急危险，请联系当地紧急救援服务。</span>
                     </div>
                   </div>
                 </section>

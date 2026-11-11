@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { analyzeRequest } from './ai.js'
+import { analyzeRequest, precheckRequest } from './ai.js'
 import { refineAnalysis } from './llm.js'
 
 test('图书馆设施问题建议相关部门并给出可核对的依据', () => {
@@ -54,6 +54,13 @@ test('模型返回未知等级时保留规则结果', async () => {
     if (key === undefined) delete process.env.DEEPSEEK_API_KEY
     else process.env.DEEPSEEK_API_KEY = key
   }
+})
+
+test('知识库仅对足够明确且低风险的查询建议自助', () => {
+  assert.equal(precheckRequest({ text: '宿舍' }).canSelfSolve, false)
+  assert.equal(precheckRequest({ text: '校园卡丢了，补办需要带什么材料？' }).canSelfSolve, true)
+  assert.equal(precheckRequest({ text: '校园卡丢了，宿舍漏电了怎么办？' }).canSelfSolve, false)
+  assert.equal(precheckRequest({ text: '宿舍漏水和校园卡丢了怎么处理' }).canSelfSolve, false)
 })
 
 test('普通宿舍报修识别类别并保留常规办理建议', () => {

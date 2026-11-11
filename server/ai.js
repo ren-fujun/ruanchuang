@@ -1,4 +1,5 @@
 import { departmentMap, knowledgeBase } from './seed.js'
+import { searchKnowledgeDetailed } from './ai/knowledge.js'
 
 const CATEGORY_RULES = [
   {
@@ -335,16 +336,17 @@ export const searchKnowledge = (text) => {
 
 export const precheckRequest = ({ text, category, location }) => {
   const analysis = analyzeRequest({ text, category, location })
-  const knowledge = searchKnowledge(text)
+  const match = searchKnowledgeDetailed(text)
+  const knowledge = match.item ? { ...match.item, matchScore: match.score, related: match.related } : null
   const riskBlocksSelfService = analysis.risk !== 'low'
   const urgentBlocksSelfService = analysis.urgency === 'urgent' || analysis.urgency === 'high'
-  const canSelfSolve = Boolean(knowledge) && !riskBlocksSelfService && !urgentBlocksSelfService
+  const canSelfSolve = Boolean(knowledge) && match.tier === 'confident' && !riskBlocksSelfService && !urgentBlocksSelfService
 
   let selfServiceAnswer = ''
   if (knowledge) {
     selfServiceAnswer = canSelfSolve
       ? knowledge.answer
-      : `知识库里有相关信息，但你的情况涉及${analysis.risk === 'high' ? '需要优先关注的风险' : '需要人工协调的事项'}，建议直接提交工单，由辅导员跟进。`
+      : '知识库中有可能相关的信息，但需要结合具体情况由辅导员核实，建议提交工单。'
   } else {
     selfServiceAnswer =
       analysis.risk === 'high'
@@ -363,6 +365,7 @@ export const precheckRequest = ({ text, category, location }) => {
           departmentId: knowledge.departmentId,
           updatedAt: knowledge.updatedAt,
           matchScore: knowledge.matchScore,
+          matchTier: match.tier,
           related: knowledge.related,
         }
       : null,
