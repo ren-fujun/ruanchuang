@@ -2922,3 +2922,29 @@
   background: var(--lime-soft);
   color: #6a7a2a;
 }
+
+.teacher-sidebar { display: none; }
+@media (min-width: 960px) {
+  .app-stage.role-counselor {
+    --paper: #f5f3fa; --paper-2: #faf8ff; --card: #fff;
+    --ink: #30273e; --forest: #594082; --forest-deep: #342644;
+    --forest-soft: #eee8f8; --ink-soft: #635671;
+    display: grid; grid-template-columns: 220px minmax(0, 1fr);
+    gap: 0; padding: 0; background: var(--paper);
+  }
+  .role-counselor > :is(.stage-brand, .stage-status, .stage-aurora),
+  .role-counselor .device-chrome, .role-counselor .bottom-dock { display: none; }
+  .teacher-sidebar { display: block; align-self: stretch; padding: 32px 18px; background: #261c36; color: #fff; }
+  .teacher-brand { display: flex; gap: 12px; align-items: center; font-size: 22px; font-weight: 700; }
+  .teacher-brand small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: #d8cbe8; }
+  .teacher-sidebar nav { display: grid; gap: 8px; margin-top: 38px; }
+  .teacher-sidebar a { padding: 13px 18px; border-radius: 10px; text-decoration: none; color: #d8cbe8; }
+  .teacher-sidebar a.active, .teacher-sidebar a:hover { color: white; background: #7855a9; }
+  .role-counselor .app-device { width: 100%; max-width: none; height: 100dvh; border-radius: 0; box-shadow: none; }
+  .role-counselor .app-scroll > .page { max-width: 1200px; margin: 0 auto; padding-inline: 30px; }
+  .role-counselor .counselor-ticket-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+  .role-counselor .counselor-home { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 20px; align-items: start; }
+  .role-counselor .counselor-home > :is(header,.counselor-date-line,.command-hero,.quick-command-grid,.risk-radar-card,footer) { grid-column: 1 / -1; }
+  .role-counselor .command-hero { background: linear-gradient(115deg,#352347,#65518b); }
+  .role-counselor .counselor-action-bar { left: 220px; right: 0; bottom: 0; width: auto; transform: none; border-radius: 0; }
+}

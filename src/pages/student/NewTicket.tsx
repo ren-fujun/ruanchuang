@@ -424,7 +424,7 @@ export function NewTicket() {
               <h2>正在读懂你的诉求…</h2>
               <p>识别类型、风险与可协助的部门。</p>
             </section>
-          ) : precheckUnavailable ? (
+          ) : precheckUnavailable || !precheck ? (
             <section className="precheck-unavailable card">
               <div className="ai-badge"><Sparkles size={13} /> AI 暂时未能完成预检</div>
               <h2>你的描述已经为你保留</h2>

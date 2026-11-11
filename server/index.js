@@ -116,6 +116,14 @@ const decorateTicket = (ticket) => {
   }
 }
 
+// Keep counselor follow-up notes out of every student-facing ticket representation.
+const studentTimeline = (ticket) => ticket.timeline.filter((event) => event.type !== 'note')
+const studentTicket = (ticket) => ({
+  ...decorateTicket(ticket),
+  notes: [],
+  timeline: studentTimeline(ticket),
+})
+
 const publicUser = (user) => {
   if (!user) return null
   const { password, ...safe } = user
@@ -384,7 +392,7 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
   const awaiting = mine.filter((ticket) => ticket.status === 'awaiting_confirm')
   const updates = mine
     .flatMap((ticket) =>
-      ticket.timeline.map((event) => ({
+      studentTimeline(ticket).map((event) => ({
         ...event,
         ticketId: ticket.id,
         ticketTitle: ticket.title,
@@ -406,8 +414,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
       completed: completed.length,
       total: mine.length,
     },
-    featured: featured ? decorateTicket(featured) : null,
-    activeTickets: active.slice(0, 3).map(decorateTicket),
+    featured: featured ? studentTicket(featured) : null,
+    activeTickets: active.slice(0, 3).map(studentTicket),
     updates,
     knowledge: knowledgeBase.filter((item) => item.hot).slice(0, 4),
     notifications: notes,
@@ -466,7 +474,7 @@ app.get('/api/tickets', requireAuth, (req, res) => {
   const total = list.length
   const start = (page - 1) * pageSize
   res.json({
-    tickets: list.slice(start, start + pageSize).map(decorateTicket),
+    tickets: list.slice(start, start + pageSize).map(req.user.role === 'student' ? studentTicket : decorateTicket),
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -505,7 +513,8 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   if (!canAccessTicket(req.user, ticket)) {
     return res.status(403).json({ message: '你只能查看自己的诉求工单。' })
   }
-  const decorated = decorateTicket(ticket)
+  const present = req.user.role === 'student' ? studentTicket : decorateTicket
+  const decorated = present(ticket)
   const related = db.tickets
     .filter(
       (item) =>
@@ -514,7 +523,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
         (item.category === ticket.category || item.status !== 'completed'),
     )
     .slice(0, 3)
-    .map(decorateTicket)
+    .map(present)
   res.json({
     ticket: decorated,
     related,
@@ -611,7 +620,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
   })
 
   save()
-  res.status(201).json({ ticket: decorateTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
+  res.status(201).json({ ticket: studentTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
 })
 
 app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, res) => {
@@ -656,7 +665,7 @@ app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, 
     tone: 'mint',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已确认办结，谢谢你的反馈。' })
+  res.json({ ticket: studentTicket(ticket), message: '已确认办结，谢谢你的反馈。' })
 })
 
 app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res) => {
@@ -675,7 +684,7 @@ app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('rated', '收到新的服务评价', `${score} 星 · ${ticket.rating.comment || '未填写评价'}`, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
+  res.json({ ticket: studentTicket(ticket), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
 })
 
 app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (req, res) => {
@@ -699,7 +708,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已提醒辅导员，请耐心等待最新进展。' })
+  res.json({ ticket: studentTicket(ticket), message: '已提醒辅导员，请耐心等待最新进展。' })
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
@@ -810,7 +819,7 @@ app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req
       req.user.name,
     ),
   )
-  ticket.notes.push({ id: `note-${crypto.randomUUID().slice(0, 6)}`, text: note, at: nowIso(), actor: req.user.name })
+  if (note) ticket.notes.push({ id: `note-${crypto.randomUUID().slice(0, 6)}`, text: note, at: nowIso(), actor: req.user.name })
   addNotification({
     userId: ticket.studentId,
     type: 'ticket',
@@ -852,8 +861,8 @@ app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (r
       tone: 'mint',
     })
   } else if (action === 'resolve') {
-    if (!['assigned', 'processing'].includes(ticket.status)) {
-      return res.status(409).json({ message: '当前状态无法录入办结结果。' })
+    if (ticket.status !== 'processing') {
+      return res.status(409).json({ message: '请先记录部门接单，再录入处置结果。' })
     }
     if (!result) return res.status(400).json({ message: '请填写部门的处置结果。' })
     ticket.status = 'awaiting_confirm'

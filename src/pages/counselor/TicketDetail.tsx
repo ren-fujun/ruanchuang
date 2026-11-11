@@ -32,7 +32,7 @@ import {
   Video,
   Zap,
 } from 'lucide-react'
-import { api } from '../../lib/api'
+import { api, ApiError } from '../../lib/api'
 import { useApi } from '../../lib/useApi'
 import { useToast } from '../../context/ToastContext'
 import { formatDate, formatDateTime, formatTime, relativeTime } from '../../lib/format'
@@ -139,6 +139,7 @@ export function CounselorTicketDetail() {
       reload()
       window.dispatchEvent(new CustomEvent('zhihui:refresh-unread'))
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '审核失败，请稍后再试。', 'error')
     } finally {
       setActionLoading(false)
@@ -153,6 +154,7 @@ export function CounselorTicketDetail() {
       setUrgeOpen(false)
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '催办失败，请稍后再试。', 'error')
     } finally {
       setActionLoading(false)
@@ -167,6 +169,7 @@ export function CounselorTicketDetail() {
       setAcceptOpen(false)
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '操作失败，请稍后再试。', 'error')
     } finally {
       setActionLoading(false)
@@ -186,6 +189,7 @@ export function CounselorTicketDetail() {
       setResolveText('')
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '录入失败，请稍后再试。', 'error')
     } finally {
       setActionLoading(false)
@@ -205,6 +209,7 @@ export function CounselorTicketDetail() {
       setNoteText('')
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '备注保存失败', 'error')
     } finally {
       setActionLoading(false)
@@ -231,6 +236,7 @@ export function CounselorTicketDetail() {
       setSplitOpen(false)
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '拆分失败，请稍后再试。', 'error')
     } finally {
       setActionLoading(false)
@@ -244,6 +250,7 @@ export function CounselorTicketDetail() {
       toast('已提醒学生确认。', 'success')
       reload()
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) reload()
       toast(err?.message || '提醒发送失败', 'error')
     } finally {
       setActionLoading(false)
@@ -475,7 +482,7 @@ export function CounselorTicketDetail() {
                 <div className="eyebrow">COLLABORATION</div>
                 <h2>协同部门</h2>
               </div>
-              <button className="text-action" onClick={() => setUrgeOpen(true)}>一键催办<ChevronRight size={13} /></button>
+              {data.permissions.canUrge && <button className="text-action" onClick={() => setUrgeOpen(true)}>一键催办<ChevronRight size={13} /></button>}
             </div>
             {ticket.departments.map((department) => (
               <div className="collab-row" key={department.id}>
@@ -697,10 +704,7 @@ export function CounselorTicketDetail() {
             onChange={(event) => setResolveText(event.target.value)}
             maxLength={400}
           />
-          <div className="resolve-check">
-            <span><Check size={12} />佐证材料已核验</span>
-            <span><Check size={12} />学生联系方式可见</span>
-          </div>
+
         </div>
       </Sheet>
 
@@ -739,7 +743,7 @@ export function CounselorTicketDetail() {
             <span><strong>添加内部备注</strong><small>记录线下沟通与介入过程</small></span>
             <ChevronRight size={16} />
           </button>
-          <button onClick={() => { setMoreOpen(false); setUrgeOpen(true) }}>
+          <button disabled={!data.permissions.canUrge} onClick={() => { setMoreOpen(false); setUrgeOpen(true) }}>
             <span className="menu-icon peach"><BellRing size={17} /></span>
             <span><strong>发起督办催办</strong><small>同步学生与经办部门</small></span>
             <ChevronRight size={16} />

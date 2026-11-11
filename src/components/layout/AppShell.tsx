@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bell, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { BottomNav } from './BottomNav'
@@ -23,6 +23,16 @@ export function AppShell({ role }: { role: Role }) {
     <div className={`app-stage role-${role}`}>
       <div className="stage-aurora aurora-one" />
       <div className="stage-aurora aurora-two" />
+      {role === 'counselor' && (
+        <aside className="teacher-sidebar">
+          <div className="teacher-brand"><BrandMark size={40} tone="light" /><div>智汇中枢<small>教师工作台</small></div></div>
+          <nav aria-label="教师桌面导航">
+            {[['home', '中枢总览'], ['tickets', '工单工作台'], ['insights', '数据洞察'], ['dorm-check', '宿舍查寝'], ['messages', '消息中心'], ['profile', '个人中心']].map(([path, label]) => (
+              <NavLink key={path} to={`/counselor/${path}`}>{label}</NavLink>
+            ))}
+          </nav>
+        </aside>
+      )}
       <aside className="stage-brand">
         <div className="stage-brand-top">
           <BrandMark size={46} tone="light" />
