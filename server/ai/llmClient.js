@@ -7,7 +7,7 @@
  *
  * 环境变量（全部可选，未配置时用默认值；每次调用时读取，便于脚本内临时覆盖）：
  *   DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL
- *   LLM_TIMEOUT_MS          单次请求超时，默认 9000
+ *   LLM_TIMEOUT_MS          单次请求及排队等待各自的超时，默认 9000
  *   LLM_MAX_RETRIES         失败重试次数，默认 1
  *   LLM_CIRCUIT_FAILURES    熔断阈值（连续失败次数），默认 3
  *   LLM_CIRCUIT_COOLDOWN_MS 熔断冷却时间，默认 60000
@@ -23,20 +23,22 @@ const DEFAULT_MAX_CONCURRENCY = 4
 const DEFAULT_CACHE_TTL_MS = 600000
 const CACHE_LIMIT = 200
 
-const num = (value, fallback) => {
+const num = (value, fallback, minimum = 0) => {
   const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback
+  return value?.trim() && Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= 2 ** 31 - 1
+    ? parsed
+    : fallback
 }
 
 const config = () => ({
   apiKey: process.env.DEEPSEEK_API_KEY || '',
   model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
   baseUrl: (process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, ''),
-  timeoutMs: num(process.env.LLM_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
+  timeoutMs: num(process.env.LLM_TIMEOUT_MS, DEFAULT_TIMEOUT_MS, 1),
   maxRetries: num(process.env.LLM_MAX_RETRIES, DEFAULT_MAX_RETRIES),
-  circuitFailures: num(process.env.LLM_CIRCUIT_FAILURES, DEFAULT_CIRCUIT_FAILURES),
+  circuitFailures: num(process.env.LLM_CIRCUIT_FAILURES, DEFAULT_CIRCUIT_FAILURES, 1),
   circuitCooldownMs: num(process.env.LLM_CIRCUIT_COOLDOWN_MS, DEFAULT_CIRCUIT_COOLDOWN_MS),
-  maxConcurrency: num(process.env.LLM_MAX_CONCURRENCY, DEFAULT_MAX_CONCURRENCY),
+  maxConcurrency: num(process.env.LLM_MAX_CONCURRENCY, DEFAULT_MAX_CONCURRENCY, 1),
   cacheTtlMs: num(process.env.LLM_CACHE_TTL_MS, DEFAULT_CACHE_TTL_MS),
 })
 
@@ -44,9 +46,10 @@ const config = () => ({
 const runtime = {
   /** 熔断状态：closed 正常 / open 熔断中 / half-open 试探恢复 */
   breaker: 'closed',
-  /** 连续失败计数与窗口内失败时间戳 */
+  /** 用代数隔离熔断前仍在途的请求，半开时只允许一次试探 */
+  breakerGeneration: 0,
+  probing: false,
   consecutiveFailures: 0,
-  failureTimes: [],
   openedAt: 0,
   /** 并发控制 */
   inFlight: 0,
@@ -91,12 +94,10 @@ const countReason = (reason) => {
   runtime.metrics.reasonCounts[reason] = (runtime.metrics.reasonCounts[reason] || 0) + 1
 }
 
-const cacheKeyOf = (promptId, payload) => `${config().model}|${promptId}|${JSON.stringify(payload)}`
-
 const readCache = (key) => {
   const hit = runtime.cache.get(key)
   if (!hit) return null
-  if (hit.expireAt < Date.now()) {
+  if (hit.expireAt <= Date.now()) {
     runtime.cache.delete(key)
     return null
   }
@@ -107,8 +108,8 @@ const readCache = (key) => {
   return hit.value
 }
 
-const writeCache = (key, value) => {
-  runtime.cache.set(key, { value, expireAt: Date.now() + config().cacheTtlMs })
+const writeCache = (key, value, ttlMs) => {
+  runtime.cache.set(key, { value, expireAt: Date.now() + ttlMs })
   while (runtime.cache.size > CACHE_LIMIT) {
     const oldest = runtime.cache.keys().next().value
     runtime.cache.delete(oldest)
@@ -124,50 +125,69 @@ const breakerState = () => {
   return runtime.breaker
 }
 
-const onSuccess = () => {
-  runtime.consecutiveFailures = 0
-  runtime.failureTimes = []
-  runtime.breaker = 'closed'
+const circuitAvailable = () => {
+  const state = breakerState()
+  return state === 'closed' || (state === 'half-open' && !runtime.probing)
 }
 
-const onFailure = () => {
-  const { circuitFailures } = config()
+const onSuccess = (generation) => {
+  if (generation !== runtime.breakerGeneration) return
+  runtime.consecutiveFailures = 0
+  if (runtime.breaker === 'half-open') runtime.breakerGeneration += 1
+  runtime.breaker = 'closed'
+  runtime.probing = false
+}
+
+const onFailure = (generation, circuitFailures) => {
+  if (generation !== runtime.breakerGeneration) return
   runtime.consecutiveFailures += 1
-  runtime.failureTimes.push(Date.now())
-  if (runtime.consecutiveFailures >= circuitFailures) {
+  if (runtime.breaker === 'half-open' || runtime.consecutiveFailures >= circuitFailures) {
     runtime.breaker = 'open'
+    runtime.breakerGeneration += 1
+    runtime.probing = false
     runtime.openedAt = Date.now()
   }
 }
 
 // ── 并发限流 ────────────────────────────────────────────────
-const acquire = () =>
+const acquire = ({ maxConcurrency, timeoutMs }) =>
   new Promise((resolve) => {
-    const run = () => {
+    let timer
+    const enter = () => {
+      clearTimeout(timer)
       runtime.inFlight += 1
       resolve(() => {
         runtime.inFlight -= 1
-        const next = runtime.queue.shift()
-        if (next) next()
+        runtime.queue.shift()?.()
       })
     }
-    if (runtime.inFlight < config().maxConcurrency) run()
-    else runtime.queue.push(run)
+    if (runtime.inFlight < maxConcurrency) {
+      enter()
+      return
+    }
+    timer = setTimeout(() => {
+      runtime.queue.splice(runtime.queue.indexOf(enter), 1)
+      resolve(null)
+    }, timeoutMs)
+    runtime.queue.push(enter)
   })
 
 // ── 单次请求 ────────────────────────────────────────────────
 const parseJson = (content) => {
   const cleaned = String(content || '')
+    .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '')
     .trim()
-  return JSON.parse(cleaned)
+  const data = JSON.parse(cleaned)
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new SyntaxError('期望 JSON 对象')
+  return data
 }
 
 const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504])
 
-const callOnce = async ({ prompt, payload, temperature, timeoutMs }) => {
-  const { apiKey, baseUrl, model } = config()
+const callOnce = async ({ prompt, payload, temperature, cfg }) => {
+  const { apiKey, baseUrl, model, timeoutMs } = cfg
   const built = prompt.build(payload)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
@@ -192,11 +212,11 @@ const callOnce = async ({ prompt, payload, temperature, timeoutMs }) => {
       error.retryable = RETRYABLE_STATUS.has(response.status)
       throw error
     }
-    const body = await response.json()
-    const raw = body?.choices?.[0]?.message?.content
     try {
-      return { data: parseJson(raw), raw }
-    } catch {
+      const body = await response.json()
+      return parseJson(body?.choices?.[0]?.message?.content)
+    } catch (cause) {
+      if (!(cause instanceof SyntaxError)) throw cause
       const error = new Error('LLM 返回内容不是合法 JSON')
       error.retryable = true
       error.badJson = true
@@ -264,7 +284,8 @@ const applyFault = async ({ timeoutMs }) => {
 export const chatJson = async ({ prompt, payload, temperature, cacheable = true, cacheKey } = {}) => {
   const started = Date.now()
   runtime.metrics.calls += 1
-  const { apiKey, timeoutMs, maxRetries } = config()
+  const cfg = config()
+  const { apiKey, timeoutMs, maxRetries, circuitFailures, cacheTtlMs, baseUrl, model } = cfg
 
   const fail = (reason, error) => {
     runtime.metrics.failure += 1
@@ -277,13 +298,19 @@ export const chatJson = async ({ prompt, payload, temperature, cacheable = true,
     return { ok: false, reason, error: error?.message || '', degraded: true, meta: { latencyMs } }
   }
 
-  if (!prompt?.build) return fail('bad-prompt')
+  if (typeof prompt?.build !== 'function') return fail('bad-prompt')
   if (!apiKey) return fail('no-api-key')
 
-  const state = breakerState()
-  if (state === 'open') return fail('circuit-open')
+  if (!circuitAvailable()) return fail('circuit-open')
 
-  const key = cacheable ? cacheKey || cacheKeyOf(prompt.id, payload) : null
+  let key
+  try {
+    if (cacheable && cacheTtlMs > 0 && !runtime.faultMode) {
+      key = JSON.stringify([baseUrl, model, prompt.id, prompt.version, temperature ?? prompt.temperature, cacheKey ?? payload])
+    }
+  } catch (error) {
+    return fail('bad-payload', error)
+  }
   if (key) {
     const cached = readCache(key)
     if (cached) {
@@ -292,38 +319,44 @@ export const chatJson = async ({ prompt, payload, temperature, cacheable = true,
     }
   }
 
-  const release = await acquire()
+  const release = await acquire(cfg)
+  if (!release) return fail('queue-timeout')
   let attempts = 0
   let lastError = null
   try {
+    if (!circuitAvailable()) return fail('circuit-open')
+    const generation = runtime.breakerGeneration
+    const probe = runtime.breaker === 'half-open'
+    if (probe) runtime.probing = true
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      if (generation !== runtime.breakerGeneration) break
       attempts += 1
       const fault = await applyFault({ timeoutMs })
       if (fault) {
         lastError = fault
       } else {
         try {
-          const { data } = await callOnce({ prompt, payload, temperature, timeoutMs })
-          onSuccess()
+          const data = await callOnce({ prompt, payload, temperature, cfg })
+          onSuccess(generation)
           runtime.metrics.success += 1
           runtime.metrics.lastSuccessAt = new Date().toISOString()
           const latencyMs = Date.now() - started
           recordLatency(latencyMs)
-          if (key) writeCache(key, data)
-          return { ok: true, data, attempts, meta: { latencyMs, model: config().model, source: 'model' } }
+          if (key) writeCache(key, data, cacheTtlMs)
+          return { ok: true, data, attempts, meta: { latencyMs, model, source: 'model' } }
         } catch (error) {
           lastError = error
         }
       }
       if (lastError?.timeout) runtime.metrics.timeouts += 1
-      if (attempt < maxRetries && (lastError?.retryable || state === 'half-open')) {
+      if (attempt < maxRetries && lastError?.retryable && !probe && generation === runtime.breakerGeneration) {
         runtime.metrics.retries += 1
         await sleep(120 * 2 ** attempt + Math.floor(Math.random() * 60))
         continue
       }
       break
     }
-    onFailure()
+    onFailure(generation, circuitFailures)
     const reason = lastError?.timeout
       ? 'timeout'
       : lastError?.badJson
@@ -333,7 +366,7 @@ export const chatJson = async ({ prompt, payload, temperature, cacheable = true,
           : runtime.faultMode === 'offline'
             ? 'offline'
             : 'network-error'
-    return { ...fail(reason, lastError), attempts: attempts }
+    return { ...fail(reason, lastError), attempts }
   } finally {
     release()
   }
@@ -383,8 +416,9 @@ export const llmStatus = () => {
 /** 演练/测试用：把熔断、缓存与指标恢复到初始状态 */
 export const resetLlmRuntime = () => {
   runtime.breaker = 'closed'
+  runtime.breakerGeneration += 1
+  runtime.probing = false
   runtime.consecutiveFailures = 0
-  runtime.failureTimes = []
   runtime.openedAt = 0
   runtime.cache.clear()
   runtime.cacheHits = 0

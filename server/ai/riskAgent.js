@@ -10,6 +10,7 @@
  */
 
 import { departmentMap } from '../seed.js'
+import { guardAnswerText } from './guard.js'
 import { chatJson } from './llmClient.js'
 import { PROMPTS } from './prompts.js'
 
@@ -167,35 +168,52 @@ export const analyzeEmotion = (text) => {
   }
 }
 
+const CAMPUS_HOUR = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', hour: '2-digit', hourCycle: 'h23' })
+const HOUR_MS = 3600000
+const RESOLVED_STATUSES = new Set(['awaiting_confirm', 'completed', 'archived'])
+
 /**
  * 行为时序特征：全部由工单历史推导，不依赖额外埋点。
- * history: [{ createdAt, category, risk, status, dueAt, updatedAt }]
+ * history: [{ createdAt, category, risk, status, dueAt, updatedAt, resolvedAt }]
  */
 export const analyzeBehavior = (history = [], { now = Date.now() } = {}) => {
-  const list = Array.isArray(history) ? history.filter((item) => item && item.createdAt) : []
-  const times = list.map((item) => new Date(item.createdAt).getTime()).filter((value) => Number.isFinite(value)).sort((a, b) => a - b)
-  const within = (hours) => times.filter((time) => now - time <= hours * 3600000)
-  const submits24h = within(24).length
-  const submits72h = within(72).length
-  const submits7d = within(24 * 7).length
-  const nightSubmits = times.filter((time) => {
-    const hour = new Date(time).getHours()
+  const list = (Array.isArray(history) ? history : [])
+    .filter((item) => item?.createdAt)
+    .map((item) => ({ item, created: new Date(item.createdAt).getTime() }))
+    .filter(({ created }) => Number.isFinite(created) && created <= now)
+  const recent = list.filter(({ created }) => now - created <= 7 * 24 * HOUR_MS)
+  const submits24h = recent.filter(({ created }) => now - created <= 24 * HOUR_MS).length
+  const submits72h = recent.filter(({ created }) => now - created <= 72 * HOUR_MS).length
+  const submits7d = recent.length
+  const nightSubmits = recent.filter(({ created }) => {
+    const hour = Number(CAMPUS_HOUR.format(created))
     return hour >= 22 || hour < 6
   }).length
-  const nightRatio = times.length ? Number((nightSubmits / times.length).toFixed(2)) : 0
-  const intervals = times.slice(1).map((time, index) => (time - times[index]) / 60000)
-  const minIntervalMinutes = intervals.length ? Math.round(Math.min(...intervals)) : null
-  const categories7d = list
-    .filter((item) => now - new Date(item.createdAt).getTime() <= 7 * 24 * 3600000)
-    .map((item) => item.category)
-  const repeatCategory7d = categories7d.length
-    ? Math.max(...Object.values(categories7d.reduce((acc, item) => ({ ...acc, [item]: (acc[item] || 0) + 1 }), {})))
-    : 0
-  const overdueCount = list.filter(
-    (item) => item.dueAt && new Date(item.updatedAt || item.createdAt).getTime() > new Date(item.dueAt).getTime(),
-  ).length
+  const nightRatio = submits7d ? Number((nightSubmits / submits7d).toFixed(2)) : 0
+  const times = recent.map(({ created }) => created).sort((a, b) => a - b)
+  let minInterval = Infinity
+  for (let index = 1; index < times.length; index += 1) {
+    minInterval = Math.min(minInterval, times[index] - times[index - 1])
+  }
+  const minIntervalMinutes = Number.isFinite(minInterval) ? Math.round(minInterval / 60000) : null
+  const categoryCounts = new Map()
+  let repeatCategory7d = 0
+  for (const { item } of recent) {
+    if (typeof item.category !== 'string' || !item.category.trim()) continue
+    const count = (categoryCounts.get(item.category) || 0) + 1
+    categoryCounts.set(item.category, count)
+    repeatCategory7d = Math.max(repeatCategory7d, count)
+  }
+  const overdueCount = list.filter(({ item, created }) => {
+    if (!item.dueAt) return false
+    const due = new Date(item.dueAt).getTime()
+    const end = RESOLVED_STATUSES.has(item.status) || !item.status
+      ? new Date(item.resolvedAt || item.updatedAt || item.createdAt).getTime()
+      : now
+    return due >= created && end <= now && end > due
+  }).length
   const priorHighRisk30d = list.filter(
-    (item) => item.risk === 'high' && now - new Date(item.createdAt).getTime() <= 30 * 24 * 3600000,
+    ({ item, created }) => item.risk === 'high' && now - created <= 30 * 24 * HOUR_MS,
   ).length
 
   const signals = []
@@ -207,16 +225,16 @@ export const analyzeBehavior = (history = [], { now = Date.now() } = {}) => {
     score += 1
     signals.push({ type: 'behavior', label: '24 小时内再次提交', weight: 1, evidence: `24h 内 ${submits24h} 单` })
   }
-  if (minIntervalMinutes !== null && minIntervalMinutes <= 30) {
+  if (minInterval <= 30 * 60000) {
     score += 1.5
     signals.push({ type: 'behavior', label: '极短间隔连续提交', weight: 1.5, evidence: `最短间隔 ${minIntervalMinutes} 分钟` })
-  } else if (minIntervalMinutes !== null && minIntervalMinutes <= 120) {
+  } else if (minInterval <= 120 * 60000) {
     score += 0.8
     signals.push({ type: 'behavior', label: '短时间内连续提交', weight: 0.8, evidence: `最短间隔 ${minIntervalMinutes} 分钟` })
   }
-  if (nightSubmits >= 2 && nightRatio >= 0.5) {
+  if (nightSubmits >= 2 && nightSubmits * 2 >= submits7d) {
     score += 1.2
-    signals.push({ type: 'behavior', label: '夜间高频提交', weight: 1.2, evidence: `夜间占比 ${Math.round(nightRatio * 100)}%` })
+    signals.push({ type: 'behavior', label: '夜间高频提交', weight: 1.2, evidence: `7 天内夜间占比 ${Math.round(nightRatio * 100)}%` })
   }
   if (repeatCategory7d >= 3) {
     score += 1
@@ -224,7 +242,7 @@ export const analyzeBehavior = (history = [], { now = Date.now() } = {}) => {
   }
   if (overdueCount >= 2) {
     score += 0.8
-    signals.push({ type: 'behavior', label: '历史多次超时未办结', weight: 0.8, evidence: `历史超时 ${overdueCount} 单` })
+    signals.push({ type: 'behavior', label: '历史工单多次超时', weight: 0.8, evidence: `历史超时 ${overdueCount} 单` })
   }
   if (priorHighRisk30d >= 1) {
     score += 1.5
@@ -277,7 +295,7 @@ const INTERVENTIONS = {
       '联动保卫处与后勤到现场封控、断电或停用相关设施',
       '处置过程留证（照片、检修单），并邮件同步责任部门',
     ],
-    script: '同学你好，这件事有安全风险，我们已经通知保卫处和后勤马上到场核查，请先远离危险区域，注意自身安全。',
+    script: '同学你好，这件事需要优先核查。我会联系相关部门确认情况，请先远离危险区域，注意自身安全。',
     followUp: ['核查完成 2 小时内回填处置结果', '一周内回访确认隐患未复现'],
     resources: ['保卫处 0571-8820 7110', '火警 119 / 急救 120'],
   },
@@ -319,14 +337,37 @@ const INTERVENTIONS = {
     followUp: ['办结后 3 日内确认满意度'],
     resources: [],
   },
+  urgentReview: {
+    level: 'high',
+    deadline: '按高风险 SLA',
+    channels: ['电话', '站内通知'],
+    notify: ['office'],
+    actions: ['尽快联系学生核实当前情况及安全状态', '根据核实结果决定需要协同的部门'],
+    script: '同学你好，我看到你的诉求了，想尽快和你确认一下具体情况。现在方便通话吗？',
+    followUp: ['记录核实结果并按需复评风险'],
+    resources: [],
+  },
+  followUp: {
+    level: 'medium',
+    deadline: '24 小时内',
+    channels: ['电话', '站内通知'],
+    notify: ['office'],
+    actions: ['联系学生核实问题是否仍在发生', '检查历史工单的办理进度并协调跟进'],
+    script: '同学你好，我来了解一下目前的情况和之前的办理进度，看看还有哪些问题需要协调。',
+    followUp: ['跟进处理结果并通知学生'],
+    resources: [],
+  },
 }
 
-const pickIntervention = (level, dominantDimension) => {
-  if (dominantDimension === 'crisis') return INTERVENTIONS.crisis
-  if (dominantDimension === 'safety') return INTERVENTIONS.safety
-  if (level === 'high') return INTERVENTIONS.crisis
+const pickIntervention = (level, emotion) => {
+  if (emotion.crisisHits.length) return INTERVENTIONS.crisis
+  if (emotion.safetyHits.length) return INTERVENTIONS.safety
+  if (level === 'high') return INTERVENTIONS.urgentReview
+  const { dominantDimension } = emotion
   if (dominantDimension === 'conflict') return INTERVENTIONS.conflict
-  if (level === 'medium') return INTERVENTIONS.distress
+  if (level === 'medium') {
+    return ['distress', 'anxiety'].includes(dominantDimension) ? INTERVENTIONS.distress : INTERVENTIONS.followUp
+  }
   return INTERVENTIONS.routine
 }
 
@@ -382,8 +423,8 @@ export const scanRisk = ({ text = '', history = [], category = '', location = ''
     reasons.push('存在人际冲突信号，建议 24 小时内主动跟进核实')
   }
 
-  const intervention = pickIntervention(level, emotion.dominantDimension || (emotion.safetyHits.length ? 'safety' : null))
-  const notifyDepartments = [...new Set([...(intervention.notify || []), ...(level === 'high' ? ['psych'] : [])])]
+  const intervention = pickIntervention(level, emotion)
+  const notifyDepartments = intervention.notify
     .filter((id) => departmentMap[id])
     .map((id) => ({ id, name: departmentMap[id].name, short: departmentMap[id].short, phone: departmentMap[id].phone }))
 
@@ -451,9 +492,20 @@ export const refineRiskScan = async (scan, { text } = {}) => {
   })
   if (!result.ok) return { ...scan, model: { applied: false, reason: result.reason } }
   const data = result.data || {}
-  const suggestion = String(data.suggestion || '').replace(/\s+/g, ' ').trim().slice(0, 120)
-  const behaviorNote = String(data.behaviorNote || '').replace(/\s+/g, ' ').trim().slice(0, 120)
-  const label = String(data.emotion?.label || '').replace(/\s+/g, ' ').trim().slice(0, 12)
+  const sources = [scan.intervention.deadline, ...scan.intervention.resources, ...scan.intervention.actions]
+  const guardedText = (value, limit, facts = []) => {
+    if (typeof value !== 'string') return undefined
+    const text = value.replace(/\s+/g, ' ').trim()
+    if (!text || text.length > limit) return undefined
+    const guard = guardAnswerText({ answer: text, sources: facts })
+    return guard.ok ? guard.answer : undefined
+  }
+  const suggestion = guardedText(data.suggestion, 120, sources)
+  const behaviorNote = guardedText(data.behaviorNote, 120)
+  const label = guardedText(data.emotion?.label, 12)
+  if (!suggestion && !behaviorNote && !label) {
+    return { ...scan, model: { applied: false, reason: 'guard-rejected' } }
+  }
   return {
     ...scan,
     dimensions: {

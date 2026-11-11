@@ -4,8 +4,8 @@
  * 相比最初的「关键词命中即返回」，这里做了三件事：
  *   1. 打分：中文 bigram + 字段加权 + BM25，长关键词额外加权，避免「宿舍」命中就抢答。
  *   2. 同义词扩展：一卡通/校园卡/饭卡 这类同一实体的不同叫法先归一，再检索。
- *   3. 分层阈值：confident / probable / weak 三档，只有 confident 才允许「自助解决」，
- *      probable 给参考但建议转人工，weak 直接不给答案 —— 用阈值换准确率。
+ *   3. 分层阈值：只有高分且覆盖查询意图的条目才能进入 confident，允许自助办理。
+ *      probable 供参考并建议转人工，none 不返回条目。
  *
  * 环境变量（可选）：KB_MIN_SCORE（默认 2.4）、KB_CONFIDENT_SCORE（默认 4.5）、KB_AMBIGUITY_RATIO（默认 0.85）
  */
@@ -31,14 +31,14 @@ export const kbConfig = () => ({
 
 /** 同义词归一：同一件事的不同叫法，命中任意一个即当作命中整组 */
 export const SYNONYM_GROUPS = [
-  ['一卡通', '校园卡', '饭卡', '卡'],
+  ['一卡通', '校园卡', '饭卡'],
   ['断电', '停电', '跳闸', '没电', '断电了'],
-  ['漏水', '渗水', '跑水', '水龙头'],
+  ['漏水', '渗水', '跑水'],
   ['断网', '没网', '连不上网', '网络故障', '网断了'],
-  ['热水', '洗澡水', '开水'],
+  ['热水', '洗澡水'],
   ['报修', '维修', '修理'],
   ['心理咨询', '心理辅导', '心理中心', '看心理'],
-  ['在读证明', '学籍证明', '在籍证明', '证明'],
+  ['在读证明', '学籍证明', '在籍证明', '在校证明'],
   ['助学金', '奖学金', '资助', '困难认定', '补助'],
   ['补办', '挂失', '补卡'],
   ['延期毕业', '延毕', '延迟毕业'],
@@ -53,9 +53,7 @@ const SYNONYM_LOOKUP = (() => {
   return map
 })()
 
-const PUNCTUATION = /[\s，。！？、；：,.!?;:（）()【】\[\]「」“”"'’‘~～·—\-_/\\|@#$%^&*+=<>]/g
-
-export const normalize = (text) => String(text || '').toLowerCase().replace(PUNCTUATION, '')
+export const normalize = (text) => String(text || '').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]+/gu, ' ').trim()
 
 /**
  * 泛化词（无效检索词）：几乎所有诉求都会出现，几乎每篇知识库也都含有。
@@ -102,11 +100,12 @@ export const tokenize = (text) => {
   return tokens.filter((token) => token.trim() && !GENERIC_TERMS.has(token))
 }
 
-const expandSynonyms = (tokens) => {
+const expandSynonyms = (tokens, normalizedText) => {
   const expanded = new Set(tokens)
-  for (const token of tokens) {
-    const group = SYNONYM_LOOKUP.get(token)
-    if (group) group.forEach((word) => expanded.add(word))
+  for (const group of SYNONYM_GROUPS) {
+    if (group.some((word) => normalizedText.includes(word))) {
+      group.flatMap(tokenize).forEach((token) => expanded.add(token))
+    }
   }
   return [...expanded]
 }
@@ -121,18 +120,36 @@ const FIELD_WEIGHTS = [
   { field: 'category', weight: 1.5 },
 ]
 
+// 每篇指引有明确的办理范围。通用动作和场所可以影响排名，不能单独放行自助办理。
+const SELF_SERVICE_EVIDENCE = {
+  'kb-card': [/校园卡|一卡通|饭卡/, /丢|遗失|挂失|补办|补卡|找回|找不到|解挂/],
+  'kb-dorm': [
+    /宿舍|寝室|学生公寓/,
+    /漏水|渗水|跑水|没热水|没有热水|床坏|灯坏|断电|停电|跳闸|没电|不制冷|堵塞|设施报修|宿舍报修|寝室报修|(?:水龙头|热水|门锁|空调|床板|灯泡|照明|卫生间|下水道|插座).{0,12}(?:坏|维修|报修|故障|不亮|失灵)/,
+  ],
+  'kb-proof': [/在读证明|学籍证明|在籍证明|在校证明/],
+  'kb-psych': [/心理咨询|心理辅导|心理中心|看心理/],
+  'kb-aid': [/助学金|奖学金|奖助|困难认定/, /材料|申请|提交|认定|补交|截止/],
+  'kb-net': [/断网|断连|掉线|没网|连不上(?:网|校园网|wifi|无线网)|网络故障|网络太慢|网络很慢|网速.{0,3}慢|(?:校园网|wifi|无线网|路由器).{0,8}(?:连不上|上不了|没信号|卡顿|太卡|不稳定|不通)/],
+  'kb-library': [
+    /图书馆|借书|还书|续借|借阅|借的书/,
+    /借书|还书|续借|借阅|借的书|开放时间|开放到|几点开|几点关|开门|关门|闭馆/,
+  ],
+  'kb-safety': [/诈骗|可疑短信|冒充|可疑链接|陌生链接|不明链接|诱导转账|索要验证码|钓鱼短信/],
+}
+
 const buildIndex = () => {
   const docs = knowledgeBase.map((item) => {
-    const tokens = []
+    const tf = new Map()
+    let length = 0
     for (const { field, weight } of FIELD_WEIGHTS) {
       const value = item[field]
       const text = Array.isArray(value) ? value.join(' ') : String(value || '')
       const fieldTokens = tokenize(text)
-      for (let i = 0; i < weight; i += 1) tokens.push(...fieldTokens)
+      length += fieldTokens.length * weight
+      for (const token of fieldTokens) tf.set(token, (tf.get(token) || 0) + weight)
     }
-    const tf = new Map()
-    for (const token of tokens) tf.set(token, (tf.get(token) || 0) + 1)
-    return { item, tf, length: tokens.length }
+    return { item, tf, length }
   })
   const df = new Map()
   for (const doc of docs) {
@@ -183,45 +200,41 @@ const keywordBonus = (doc, normalizedText, tokens) => {
   }
   // 领域词（如「报修」）出现在标题里再补一点，提升可解释性
   const titleTokens = new Set(tokenize(doc.item.title))
-  const overlap = tokens.filter((token) => titleTokens.has(token)).length
+  const overlap = [...new Set(tokens)].filter((token) => titleTokens.has(token)).length
   bonus += Math.min(0.8, overlap * 0.12)
-  // 强证据：命中关键词，或与标题共享 ≥2 个多字词。
-  // 只有单字重合（如「卡住」撞上「校园卡」）不足以给出高置信结论。
-  const multiCharOverlap = tokens.filter((token) => token.length >= 2 && doc.tf.has(token)).length
-  const strongEvidence = matched.length > 0 || multiCharOverlap >= 2
-  return { bonus, matched, strongEvidence }
-}
-
-const tierOf = (score, confidentScore) => {
-  if (score >= confidentScore) return 'confident'
-  return 'probable'
+  return { bonus, matched }
 }
 
 /**
  * 详细检索结果：供 precheck、评测脚本与 /api/ai/kb/search 使用。
- * @returns {{ item: object|null, score: number, tier: 'confident'|'probable'|'weak'|'none', confidence: number, matchedTerms: string[], related: string[], ambiguous: boolean, threshold: object }}
+ * @returns {{ item: object|null, score: number, tier: 'confident'|'probable'|'none', confidence: number, matchedTerms: string[], related: string[], ambiguous: boolean, threshold: object }}
  */
 export const searchKnowledgeDetailed = (text, options = {}) => {
   const config = { ...kbConfig(), ...options }
   const normalizedText = normalize(text)
   const baseTokens = tokenize(text)
-  const tokens = expandSynonyms(baseTokens)
+  const tokens = expandSynonyms(baseTokens, normalizedText)
   const ranked = index.docs
     .map((doc) => {
-      const { bonus, matched, strongEvidence } = keywordBonus(doc, normalizedText, baseTokens)
+      const { bonus, matched } = keywordBonus(doc, normalizedText, baseTokens)
+      const criteria = SELF_SERVICE_EVIDENCE[doc.item.id]
+      const strongEvidence = Boolean(criteria?.every((pattern) => pattern.test(normalizedText)))
       const score = bm25(doc, tokens) * 0.35 + bonus
       return { item: doc.item, score: Number(score.toFixed(3)), matchedTerms: matched, strongEvidence }
     })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score)
 
-  const best = ranked[0]
-  const runnerUp = ranked[1]
+  const candidates = ranked.filter((entry) => entry.strongEvidence && entry.score >= config.minScore)
+  const best = candidates[0] ?? ranked[0]
+  const relatedEntries = ranked.filter((entry) => entry !== best)
+  const runnerUp = candidates[1] ?? relatedEntries[0]
   const ambiguous = Boolean(
-    best && runnerUp && runnerUp.score / best.score >= config.ambiguityRatio && runnerUp.item.id !== best.item.id,
+    best && runnerUp && (!best.strongEvidence || runnerUp.strongEvidence) &&
+    runnerUp.score / best.score >= config.ambiguityRatio,
   )
   // 诉求过短时信息量不足，即便分数高也不给「可自助」结论（阈值调优的兜底规则）
-  const shortQuery = normalizedText.length < 4
+  const shortQuery = stripGeneric(normalizedText).replace(/\s/g, '').length < 4
 
   const threshold = {
     minScore: config.minScore,
@@ -243,10 +256,8 @@ export const searchKnowledgeDetailed = (text, options = {}) => {
     }
   }
 
-  let tier = tierOf(best.score, config.confidentScore)
-  if (ambiguous && tier === 'confident') tier = 'probable'
-  if (!best.strongEvidence && tier === 'confident') tier = 'probable'
-  if (shortQuery && tier === 'confident') tier = 'probable'
+  const canAnswer = best.score >= config.confidentScore && best.strongEvidence && !ambiguous && !shortQuery
+  const tier = canAnswer ? 'confident' : 'probable'
   const confidence = Number(
     Math.min(0.96, 0.42 + best.score / 14 - (ambiguous ? 0.12 : 0) + (tier === 'confident' ? 0.06 : 0)).toFixed(2),
   )
@@ -257,7 +268,7 @@ export const searchKnowledgeDetailed = (text, options = {}) => {
     tier,
     confidence,
     matchedTerms: best.matchedTerms,
-    related: ranked.slice(1, 3).map((entry) => entry.item.title),
+    related: relatedEntries.slice(0, 2).map((entry) => entry.item.title),
     ambiguous,
     shortQuery,
     strongEvidence: best.strongEvidence,

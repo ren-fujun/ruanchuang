@@ -78,7 +78,7 @@
 
 ### 3.1 兼容既有接口：`POST /api/ai/precheck`
 
-请求（未变）：
+原有请求仍可使用。调用方可选传 `urgency`（`normal`、`high`、`urgent`），让预检按提交时的紧急度判断自助资格。
 
 ```json
 { "text": "宿舍阳台天花板漏水，已经滴到插线板附近", "location": "学生公寓 5 号楼 208", "category": "宿舍生活", "useLlm": true }
@@ -96,7 +96,7 @@
 | `graph` | **新增** | GraphRAG 检索结果（见 3.4） |
 | `risk` | **新增** | 风险筛查结果（见 3.4） |
 | `trace` | **新增** | 链路轨迹 `[{ agent, degraded, ms, warnings, notes? }]` |
-| `latencyMs` / `engine` | **新增** | 链路耗时；`local-rules` 或 `deepseek+rules` |
+| `latencyMs` / `engine` | **新增** | 链路耗时。模型输出实际参与时为 `deepseek+rules`，其余为 `local-rules` |
 
 ### 3.2 新增接口一览
 
@@ -104,12 +104,12 @@
 | --- | --- | --- | --- |
 | GET | `/api/ai/health` | 登录 | AI 健康度：Agent 版本、引擎、LLM 熔断与指标、知识库索引、图谱规模、风险词典、护栏规则、提示词版本 |
 | GET | `/api/ai/agents` | 登录 | Agent 清单与 I/O 约定（A 侧编排参考） |
-| POST | `/api/ai/agents/:name` | 登录（`attribution` 仅辅导员） | 统一 Agent 调用入口，返回信封协议；`risk` 未传 `history` 时自动取该生历史 |
+| POST | `/api/ai/agents/:name` | 登录（`attribution` 仅辅导员） | 统一 Agent 调用入口，`output` 直接包含 Agent 结果。学生调用 `risk` 时，服务端使用当前账号的工单历史 |
 | GET | `/api/ai/graph` | 登录 | 图谱总览；`?full=1` 追加完整 `nodes` / `edges`（供 C 大屏渲染） |
 | GET | `/api/ai/graph/duty/:id` | 登录 | 单条权责子图（入边/出边，含来源节点），找不到返回 404 |
 | POST | `/api/ai/graph/query` | 登录 | 任意文本的图谱检索：`{ text, category?, preferredDepts?, riskLevel?, limit? }` |
 | GET | `/api/ai/kb/search` | 登录 | 知识库检索详情 `?q=`，返回分层与阈值，用于阈值调优观察 |
-| POST | `/api/ai/risk-scan` | 登录 | 风险筛查：`{ text, history?, studentId?, category?, location?, baseRisk? }` |
+| POST | `/api/ai/risk-scan` | 登录 | 规则风险筛查。学生使用当前账号的工单历史；辅导员可传 `studentId` 查询历史，也可传 `history` 和 `baseRisk` 做模拟 |
 | POST | `/api/ai/attribution` | 辅导员 | 复盘归因：卡点排序 + 一句话结论 + 改进建议 |
 | POST | `/api/ai/llm/fault` | 辅导员 | **演练用**：注入 `timeout` / `offline` / `bad-json` / `http-500` |
 | POST | `/api/ai/llm/reset` | 辅导员 | **演练用**：复位熔断、缓存与指标 |
@@ -210,9 +210,9 @@
 ### 4.2 检索流程
 
 1. **文本归一** → 权责关键词打分（长关键词权重更高，记录全部命中词作为证据）。
-2. **分类先验**：`preferredDepts`（来自意图 Agent 的建议部门）给对应权责加权。
+2. **分类先验**：`preferredDepts` 给已有实质关键词命中的权责加权。部门先验、地点和泛化词单独出现时，无法触发权责命中。
 3. **阈值门槛**：`score < 1.4` 视为未命中 → `complexity='unknown'`，提示人工确认归属（**不硬派单**）。
-4. **复合工单判定**：次优权责 `score ≥ 最优 × 0.55` 且主责部门不同，**或**文本含并列连接词（和/同时/还有/以及/另外/并且/加上/一方面/而且/又/也）且存在第二候选 → 判定 `compound`。
+4. **复合工单判定**：第二项权责须有独立关键词且主责部门不同。无并列连接词时，第二项分数还须达到首项的 55%。
 5. **会签判定**：会签规则带 `trigger` 触发词，命中才生成会签节点；会签部门与主办部门去重，避免「自己会签自己」。
 6. **证据链**：沿 `duty` 入边/出边收集多跳证据（会签只保留本次触发的），供前端做「为什么这样派单」的解释。
 7. **派单路径**：受理 → 派单（联合主办时列出全部权责）→ 会签（逐条）→ 处置 → 反馈归档，每步带时限。
@@ -312,10 +312,10 @@
 | --- | --- | --- |
 | 超时 | `AbortController`，错误标记 `timeout` | `LLM_TIMEOUT_MS=9000` |
 | 重试 | 指数退避 `120×2^n + jitter`，仅重试可重试错误（408/409/425/429/5xx 与网络错误） | `LLM_MAX_RETRIES=1` |
-| 熔断 | 连续失败达阈值 → `open`，冷却后半开试探，成功后 `closed` | `LLM_CIRCUIT_FAILURES=3`、`LLM_CIRCUIT_COOLDOWN_MS=60000` |
-| 并发闸门 | 排队 + 上限，防止批量预检打爆上游 | `LLM_MAX_CONCURRENCY=4` |
+| 熔断 | 连续失败达阈值后打开，冷却后仅放行一次半开探测，成功后关闭 | `LLM_CIRCUIT_FAILURES=3`、`LLM_CIRCUIT_COOLDOWN_MS=60000` |
+| 并发闸门 | 请求超过并发上限时排队，等待超过 `LLM_TIMEOUT_MS` 后回退规则 | `LLM_MAX_CONCURRENCY=4` |
 | 缓存 | LRU + TTL，命中直接返回（`cached:true`） | `LLM_CACHE_TTL_MS=600000` |
-| JSON 容错 | 剥离 ```json 围栏、截取首个平衡 `{}`，失败标记 `bad-json` | — |
+| JSON 容错 | 剥离 Markdown 代码围栏后解析，模型返回值须为 JSON 对象，失败标记 `bad-json` | — |
 | 故障注入 | `timeout` / `offline` / `bad-json` / `http-500` | 默认关闭 |
 | 指标 | `calls/success/failure/degraded/retries/timeouts/avgLatencyMs/p95LatencyMs/reasonCounts` | `/api/ai/health` |
 
@@ -365,11 +365,11 @@
 
 | 交付标准 | 实现 | 验证方式 | 通过标准 |
 | --- | --- | --- | --- |
-| AI 服务稳定 | 超时/重试/熔断/并发/缓存 + 三层降级 | `node scripts/ai/drill-degrade.mjs` | 35/35 通过；4 种故障下业务结论与基线**零差异** |
-| 幻觉可控 | 四道护栏 | `drill-degrade.mjs` 步骤 4 与 `eval-b.mjs` 护栏用例 | 捏造电话/金额/时限、过度承诺、注入残留全部拦截（10/10 + 3/3） |
-| GraphRAG 检索匹配演示样例 | 权责流程图谱 + 子图检索 + 事件图谱 | `node scripts/ai/demo-graphrag.mjs` | 8 条样例给出权责、会签、复合判定、派单路径、证据链；产物 `out/graphrag-demo.json` |
-| 风险预警 Demo，可稳定触发风险标签 | 情绪 + 行为融合 | `node scripts/ai/demo-risk.mjs` | 9 条样例标签与预期完全一致；每条 3 次复跑标签一致 |
-| 认知链路正确性回归 | 15 条链路用例 + 3 条护栏用例 | `node scripts/ai/eval-b.mjs` | 18/18 通过，退出码 0 |
+| AI 服务稳定 | 超时、重试、熔断、并发、缓存与规则降级 | `node scripts/ai/drill-degrade.mjs` | 47/47 通过，四种注入故障的业务结论与规则基线一致 |
+| 幻觉可控 | 模型输出护栏 | `drill-degrade.mjs` 步骤 4 与 `eval-b.mjs` 护栏用例 | 16 项护栏演练和 3 项回归用例通过 |
+| GraphRAG 检索匹配演示样例 | 权责流程图谱、子图检索与事件图谱 | `node scripts/ai/demo-graphrag.mjs` | 10 条样例覆盖权责、会签、复合判定、派单路径和证据链 |
+| 风险预警 Demo，可稳定触发风险标签 | 情绪与行为融合 | `node scripts/ai/demo-risk.mjs --repeat 5` | 11 条样例标签与预期一致，每条复跑 5 次 |
+| 认知链路正确性回归 | 23 条链路用例与 3 条护栏用例 | `node scripts/ai/eval-b.mjs` | 26/26 通过，退出码 0 |
 | 不影响既有业务 | 预检契约只增不改、工单状态机不动 | `node scripts/e2e/api.mjs` | 全链路用例通过 |
 
 ---
@@ -378,7 +378,7 @@
 
 ### 给 A（后端与架构）
 
-- `POST /api/ai/precheck` **请求体未变**，响应只增字段；如需开关可传 `useLlm:false` 强制走规则链路。
+- `POST /api/ai/precheck` 兼容原有请求体，支持可选 `urgency`。传 `useLlm:false` 可强制走规则链路。
 - Agent 编排请走 `POST /api/ai/agents/:name` 或直接 `import { invokeAgent } from './ai/agents.js'`，**不要**在 `index.js` 里重新实现链路。
 - `server/ai.js` 的 `analyzeRequest` / `precheckRequest` 对外行为保持兼容；`searchKnowledge` 仍是原签名（内部改为调用新检索）。
 - 演练接口 `/api/ai/llm/fault`、`/api/ai/llm/reset` 仅限辅导员角色，**上线前建议加环境开关**。

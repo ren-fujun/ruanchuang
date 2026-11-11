@@ -10,7 +10,7 @@
  * 兼容：对外仍导出 refineAnalysis / llmEnabled，index.js 与脚本无需改动。
  */
 
-import { departmentMap, knowledgeBase } from './seed.js'
+import { departmentMap } from './seed.js'
 import { chatJson, llmEnabled as clientEnabled, llmStatus, resetLlmRuntime, setFaultMode, getFaultMode } from './ai/llmClient.js'
 import { PROMPTS } from './ai/prompts.js'
 import { guardAnalysis } from './ai/guard.js'
@@ -18,11 +18,6 @@ import { CATEGORY_META } from './ai.js'
 
 const CATEGORIES = CATEGORY_META.map((item) => item.name).concat('其他')
 const DEPT_IDS = Object.keys(departmentMap)
-
-/** 从知识库里收集所有校内号码，作为护栏的合法来源池（模型引用这些号码不算幻觉） */
-const KB_FACT_SOURCES = knowledgeBase
-  .map((item) => `${item.answer} ${(item.steps || []).join(' ')}`)
-  .join(' ')
 
 export const refineAnalysis = async (text, base, location) => {
   if (!llmEnabled()) return base
@@ -38,7 +33,8 @@ export const refineAnalysis = async (text, base, location) => {
   }
 
   const { analysis, applied, rejected } = guardAnalysis({
-    llm: { ...result.data, sourceText: `${text} ${KB_FACT_SOURCES}` },
+    llm: result.data,
+    sourceText: [text, location].filter(Boolean).join('\n'),
     base,
     categories: CATEGORIES,
     deptIds: DEPT_IDS,
@@ -46,6 +42,7 @@ export const refineAnalysis = async (text, base, location) => {
 
   return {
     ...analysis,
+    suggestedDepartmentNames: analysis.suggestedDepartments?.map((id) => departmentMap[id]?.name || id),
     slaMinutes: analysis.risk === 'high' ? 60 : analysis.urgency === 'urgent' ? 120 : base.slaMinutes,
     model: result.meta?.model || undefined,
     cached: Boolean(result.cached),

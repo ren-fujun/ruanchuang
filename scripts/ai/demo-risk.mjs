@@ -29,28 +29,22 @@ const REPEAT = repeatArg > -1 ? Math.max(1, Number(process.argv[repeatArg + 1]) 
 const line = (char = '─', width = 92) => char.repeat(width)
 const deptName = (id) => departmentMap[id]?.name || id
 
-const hoursAgo = (hours) => new Date(Date.now() - hours * 3600000).toISOString()
-/** 指定「昨天/今天」的某个钟点，用来构造夜间提交 */
-const atHour = (dayOffset, hour) => {
-  const date = new Date()
-  date.setDate(date.getDate() - dayOffset)
-  date.setHours(hour, 15, 0, 0)
-  return date.toISOString()
-}
+const REFERENCE_TIME = Date.parse('2026-11-12T12:00:00+08:00')
+const hoursAgo = (hours) => new Date(REFERENCE_TIME - hours * 3600000).toISOString()
 
-/** 行为时序样例 A：24 小时内 3 单、其中 2 单夜间、最短间隔 4 小时 */
+/** 行为时序样例 A：24 小时内 3 单、其中 2 单为北京时间夜间提交 */
 const busyHistory = [
-  { id: 'H-01', category: '宿舍生活', risk: 'low', status: 'completed', createdAt: atHour(1, 23), updatedAt: atHour(1, 8), dueAt: atHour(1, 12) },
-  { id: 'H-02', category: '宿舍生活', risk: 'medium', status: 'processing', createdAt: atHour(0, 2), updatedAt: atHour(0, 3), dueAt: atHour(0, 8) },
-  { id: 'H-03', category: '宿舍生活', risk: 'high', status: 'pending_review', createdAt: hoursAgo(6), updatedAt: hoursAgo(5), dueAt: hoursAgo(4) },
+  { id: 'H-01', category: '宿舍生活', risk: 'low', status: 'completed', createdAt: hoursAgo(13), updatedAt: hoursAgo(12), dueAt: hoursAgo(11) },
+  { id: 'H-02', category: '宿舍生活', risk: 'medium', status: 'processing', createdAt: hoursAgo(10), updatedAt: hoursAgo(9), dueAt: hoursAgo(4) },
+  { id: 'H-03', category: '宿舍生活', risk: 'high', status: 'pending_review', createdAt: hoursAgo(5), updatedAt: hoursAgo(4), dueAt: hoursAgo(3) },
 ]
 
-/** 行为时序样例 B：一个月内多次同类超时 + 历史高风险（白天提交，避开夜间权重干扰） */
+/** 行为时序样例 B：一个月内有逾期完成、未完成逾期和历史高风险 */
 const chronicHistory = [
-  { id: 'C-01', category: '宿舍生活', risk: 'high', status: 'completed', createdAt: atHour(26, 10), updatedAt: atHour(24, 16), dueAt: atHour(25, 10) },
-  { id: 'C-02', category: '宿舍生活', risk: 'medium', status: 'completed', createdAt: atHour(18, 11), updatedAt: atHour(15, 15), dueAt: atHour(17, 11) },
-  { id: 'C-03', category: '宿舍生活', risk: 'low', status: 'completed', createdAt: atHour(9, 14), updatedAt: atHour(8, 9), dueAt: atHour(8, 14) },
-  { id: 'C-04', category: '宿舍生活', risk: 'medium', status: 'processing', createdAt: atHour(3, 9), updatedAt: atHour(2, 9), dueAt: atHour(2, 9) },
+  { id: 'C-01', category: '宿舍生活', risk: 'high', status: 'completed', createdAt: hoursAgo(624), updatedAt: hoursAgo(590), dueAt: hoursAgo(600) },
+  { id: 'C-02', category: '宿舍生活', risk: 'medium', status: 'completed', createdAt: hoursAgo(432), updatedAt: hoursAgo(384), dueAt: hoursAgo(408), resolvedAt: hoursAgo(415) },
+  { id: 'C-03', category: '宿舍生活', risk: 'low', status: 'completed', createdAt: hoursAgo(216), updatedAt: hoursAgo(200), dueAt: hoursAgo(192) },
+  { id: 'C-04', category: '宿舍生活', risk: 'medium', status: 'processing', createdAt: hoursAgo(60), updatedAt: hoursAgo(52), dueAt: hoursAgo(40) },
 ]
 
 const CASES = [
@@ -90,6 +84,7 @@ const CASES = [
     text: '宿舍空调不制冷，希望安排维修',
     history: busyHistory,
     expectLevel: 'medium',
+    expectFeatures: { submits24h: 3, nightSubmits: 2, minIntervalMinutes: 180, repeatCategory7d: 3, overdueCount: 2 },
   },
   {
     id: 'R-07',
@@ -100,10 +95,11 @@ const CASES = [
   },
   {
     id: 'R-08',
-    desc: '长期同类重复 + 历史多次超时 + 30 天内高风险 → 中风险',
+    desc: '历史多次超时 + 30 天内高风险 → 中风险',
     text: '宿舍热水器又坏了，这是这个月第三次了，还是没人来修',
     history: chronicHistory,
     expectLevel: 'medium',
+    expectFeatures: { overdueCount: 2, priorHighRisk30d: 1 },
   },
   {
     id: 'R-09',
@@ -111,6 +107,26 @@ const CASES = [
     text: '操场的路灯坏了三盏，晚上跑步看不清路',
     baseRisk: 'high',
     expectLevel: 'high',
+  },
+  {
+    id: 'R-10',
+    desc: '过期密集记录及异常时间戳不触发近期行为预警',
+    text: '宿舍空调不制冷，希望安排维修',
+    history: [
+      { createdAt: hoursAgo(178), risk: 'low' },
+      { createdAt: hoursAgo(177.8), risk: 'low' },
+      { createdAt: hoursAgo(-1), risk: 'high' },
+      { createdAt: 'invalid', risk: 'high' },
+    ],
+    expectLevel: 'low',
+    expectFeatures: { totalTickets: 2, submits24h: 0, nightSubmits: 0, minIntervalMinutes: null, priorHighRisk30d: 0 },
+  },
+  {
+    id: 'R-11',
+    desc: '强烈困扰同时出现明确安全信号 → 优先给出现场核查建议',
+    text: '宿舍插座漏电，我害怕又恐慌，昨晚一直失眠',
+    expectLevel: 'high',
+    expectChannel: '现场核查',
   },
 ]
 
@@ -140,9 +156,13 @@ if (!process.argv.includes('--quiet')) {
 
 let failed = 0
 for (const item of CASES) {
-  const scan = scanRisk({ text: item.text, history: item.history || [], baseRisk: item.baseRisk || 'low' })
+  const scan = scanRisk({ text: item.text, history: item.history || [], baseRisk: item.baseRisk || 'low', now: REFERENCE_TIME })
+  const featureMismatches = Object.entries(item.expectFeatures || {}).filter(
+    ([key, expected]) => scan.dimensions.behavior.features[key] !== expected,
+  )
+  const channelMatches = !item.expectChannel || scan.intervention.channels.includes(item.expectChannel)
   // 标签必须与预期完全一致：既不能漏报（低于预期），也不能误报（高于预期）
-  const pass = scan.level === item.expectLevel
+  const pass = scan.level === item.expectLevel && !featureMismatches.length && channelMatches
   if (!pass) failed += 1
   report.cases.push({
     id: item.id,
@@ -151,6 +171,8 @@ for (const item of CASES) {
     historyCount: (item.history || []).length,
     baseRisk: item.baseRisk || 'low',
     expectLevel: item.expectLevel,
+    expectFeatures: item.expectFeatures,
+    expectChannel: item.expectChannel,
     pass,
     label: scan.levelLabel,
     level: scan.level,
@@ -164,15 +186,20 @@ for (const item of CASES) {
     slaMinutes: scan.slaMinutes,
   })
 
+  if (process.argv.includes('--quiet')) continue
   console.log(line())
   console.log(`${pass ? '✓' : '✗'} [${item.id}] ${item.desc}`)
-  if (!pass) {
+  if (scan.level !== item.expectLevel) {
     console.log(
       `  ↳ 标签不符合预期：期望 ${item.expectLevel}，实际 ${scan.level}（${
         RISK_ORDER[scan.level] < RISK_ORDER[item.expectLevel] ? '漏报' : '误报'
       }）`,
     )
   }
+  for (const [key, expected] of featureMismatches) {
+    console.log(`  ↳ ${key} 不符合预期，期望 ${expected}，实际 ${scan.dimensions.behavior.features[key]}`)
+  }
+  if (!channelMatches) console.log(`  ↳ 干预建议缺少预期触达方式：${item.expectChannel}`)
   console.log(`诉求原文：${item.text}`)
   if ((item.history || []).length) console.log(`历史工单：${item.history.length} 单（行为时序特征参与融合）`)
   console.log(`  风险标签：${scan.levelLabel}（${scan.level}）｜融合分 ${scan.score}｜置信度 ${scan.confidence}｜SLA ${scan.slaMinutes} 分钟`)
@@ -208,7 +235,7 @@ const stability = []
 for (const item of CASES) {
   const levels = new Set()
   for (let index = 0; index < REPEAT; index += 1) {
-    levels.add(scanRisk({ text: item.text, history: item.history || [], baseRisk: item.baseRisk || 'low' }).level)
+    levels.add(scanRisk({ text: item.text, history: item.history || [], baseRisk: item.baseRisk || 'low', now: REFERENCE_TIME }).level)
   }
   stability.push({ id: item.id, runs: REPEAT, distinctLevels: [...levels], stable: levels.size === 1 })
 }

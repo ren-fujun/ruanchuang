@@ -23,47 +23,46 @@ const RISK_ORDER = { low: 0, medium: 1, high: 2 }
 const URGENCY_ORDER = { normal: 0, high: 1, urgent: 2 }
 
 const clean = (value, max = 200) =>
-  String(value ?? '')
+  (typeof value === 'string' ? value : '')
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
     .slice(0, max)
-
-const highestOf = (a, b, order, fallback) => {
-  if (!(b in order)) return fallback
-  return order[a] >= order[b] ? fallback : b
-}
 
 const lowerEnum = (value, allowed) => {
   const normalized = clean(value, 24).toLowerCase()
   return allowed.includes(normalized) ? normalized : null
 }
 
-const hasInjection = (value) => {
-  const text = String(value || '').toLowerCase()
-  return INJECTION_MARKERS.some((marker) => text.includes(marker.toLowerCase()))
-}
+const normalize = (text) => String(text ?? '').normalize('NFKC').replace(/\p{Cf}/gu, '')
 
 /** 电话 / 号码候选：先剔除时间（9:00–11:30）避免误判，再抽取「最多两段分隔」的数字串，
  *  这样既能识别「0571-8820 3103」，也不会把相邻的两个号码贪婪地连成一个超长串。 */
 const TIME_RE = /\d{1,2}:\d{2}(?::\d{2})?/g
-const PHONE_RE = /[0-9]+(?:[-\s][0-9]+){0,2}/g
+const PHONE_RE = /(?:\(0\d{2,3}\)[ -]?)?\d+(?:[- ]\d+){0,2}/g
+const CONTACT_PREFIX_RE = /(?:电话(?:号码)?|热线|拨打|致电|联系(?:方式)?)\s*(?:(?:为|是|:)\s*)?(?:[()\d -]+(?:[/、]|或|和)\s*)*$/
+const LANDLINE_RE = /^0\d{2,3}([2-9]\d{6,7})$/
+const QUANTITY = String.raw`(?:(?<![\d.])\d+(?:\.\d+)?|(?<![零〇一二两三四五六七八九十百千])[零〇一二两三四五六七八九十百千]+)`
+const MONEY_RE = new RegExp(String.raw`${QUANTITY}\s*(?:万元|元|块)`, 'g')
+const DURATION_RE = new RegExp(String.raw`${QUANTITY}\s*(?:个\s*)?(?:工作日|分钟|小时|天|周|月)`, 'g')
 
 const digitsOnly = (value) => String(value).replace(/\D/g, '')
 
-/** 号码比对：允许「8820 3103」与「0571-8820 3103」这类区号省略写法互相匹配 */
-const phoneKnown = (phone, known) => known.some((item) => item.includes(phone) || phone.includes(item))
+/** 允许省略来源中已存在的固定电话区号 */
+const phoneKnown = (phone, known) =>
+  known.some((item) => item === phone || item.match(LANDLINE_RE)?.[1] === phone)
 
 /** 抽取文本里的硬事实：电话号码、金额、时限 */
 export const extractFacts = (text) => {
-  const source = String(text || '').replace(TIME_RE, ' ')
-  const phones = (source.match(PHONE_RE) || [])
-    .map(digitsOnly)
-    .filter((item) => item.length >= 5 && item.length <= 13)
-  const money = (source.match(/\d+(?:\.\d+)?\s*(?:元|块|万元)/g) || []).map((item) => item.replace(/\s/g, ''))
-  const duration = (source.match(/\d+\s*(?:分钟|小时|个工作日|工作日|天|周)/g) || []).map((item) =>
-    item.replace(/\s/g, ''),
-  )
+  const source = normalize(text).replace(TIME_RE, ' ')
+  const phones = []
+  for (const match of source.matchAll(PHONE_RE)) {
+    const phone = digitsOnly(match[0])
+    const explicit = CONTACT_PREFIX_RE.test(source.slice(Math.max(0, match.index - 40), match.index))
+    if (explicit ? phone.length >= 3 : phone.length >= 5 && phone.length <= 13) phones.push(phone)
+  }
+  const money = (source.match(MONEY_RE) || []).map((item) => item.replace(/\s/g, ''))
+  const duration = (source.match(DURATION_RE) || []).map((item) => item.replace(/\s/g, ''))
   return { phones: [...new Set(phones)], money: [...new Set(money)], duration: [...new Set(duration)] }
 }
 
@@ -71,24 +70,29 @@ export const extractFacts = (text) => {
  * 校验模型答复是否可追溯。
  * @returns {{ ok: boolean, violations: string[], answer: string }}
  */
-export const guardAnswerText = ({ answer, sources = [], fallback = '' }) => {
-  const text = clean(answer, 400)
+export const guardAnswerText = ({ answer, sources = [], fallback = '', maxLength = 400, allowPublicContacts = true }) => {
+  const text = clean(answer, Infinity)
   const violations = []
   if (!text) return { ok: false, violations: ['空答复'], answer: fallback }
+  if (text.length > maxLength) return { ok: false, violations: ['答复超长'], answer: fallback }
 
-  const overPromise = OVER_PROMISE_WORDS.find((word) => text.includes(word))
+  const normalized = normalize(text)
+  const overPromise = OVER_PROMISE_WORDS.find((word) => normalized.includes(word))
   if (overPromise) violations.push(`过度承诺：${overPromise}`)
 
-  const sourcePool = [sources.join(' '), GLOBAL_CONTACT_ALLOWLIST.join(' ')].join(' ')
-  const sourceFacts = extractFacts(sourcePool)
+  const sourceFacts = extractFacts(sources.join('\n'))
   const answerFacts = extractFacts(text)
-  const unknownPhones = answerFacts.phones.filter((phone) => !phoneKnown(phone, sourceFacts.phones))
+  const knownPhones = allowPublicContacts ? [...sourceFacts.phones, ...GLOBAL_CONTACT_ALLOWLIST] : sourceFacts.phones
+  const unknownPhones = answerFacts.phones.filter((phone) => !phoneKnown(phone, knownPhones))
   if (unknownPhones.length) violations.push(`来源中不存在的电话：${unknownPhones.join('、')}`)
   const unknownMoney = answerFacts.money.filter((item) => !sourceFacts.money.includes(item))
   if (unknownMoney.length) violations.push(`来源中不存在的金额：${unknownMoney.join('、')}`)
   const unknownDuration = answerFacts.duration.filter((item) => !sourceFacts.duration.includes(item))
   if (unknownDuration.length) violations.push(`来源中不存在的时限：${unknownDuration.join('、')}`)
-  if (hasInjection(text)) violations.push('疑似提示词注入残留')
+  const normalizedLower = normalized.toLowerCase()
+  if (INJECTION_MARKERS.some((marker) => normalizedLower.includes(marker))) {
+    violations.push('疑似提示词注入残留')
+  }
 
   return { ok: violations.length === 0, violations, answer: violations.length ? fallback : text }
 }
@@ -97,11 +101,31 @@ export const guardAnswerText = ({ answer, sources = [], fallback = '' }) => {
  * 合并模型结果与规则结果：模型只能补充与提升，不能删改红线字段。
  * @returns {{ analysis: object, applied: string[], rejected: string[] }}
  */
-export const guardAnalysis = ({ llm, base, categories = [], deptIds = [] }) => {
+export const guardAnalysis = ({ llm, base, sourceText = '', categories = [], deptIds = [] }) => {
   const applied = []
   const rejected = []
   const analysis = { ...base }
-  if (!llm || typeof llm !== 'object') return { analysis, applied, rejected: ['模型未返回对象'] }
+  if (!llm || typeof llm !== 'object' || Array.isArray(llm)) {
+    return { analysis, applied, rejected: ['模型未返回对象'] }
+  }
+  const sources = [sourceText, base.summary, base.riskReason]
+
+  const applyText = (field, maxLength) => {
+    if (typeof llm[field] !== 'string' || !llm[field].trim()) return
+    const isDraft = field === 'draft'
+    const checked = guardAnswerText({
+      answer: llm[field],
+      sources: isDraft ? [base.draft] : sources,
+      maxLength,
+      allowPublicContacts: isDraft,
+    })
+    if (!checked.ok) {
+      rejected.push(`${field}:${checked.violations.join('；')}`)
+      return
+    }
+    analysis[field] = checked.answer
+    applied.push(field)
+  }
 
   const category = clean(llm.category, 24)
   if (category && categories.includes(category)) {
@@ -133,40 +157,11 @@ export const guardAnalysis = ({ llm, base, categories = [], deptIds = [] }) => {
     rejected.push(`urgency 非法:${clean(llm.urgency, 12)}`)
   }
 
-  if (typeof llm.riskReason === 'string' && clean(llm.riskReason)) {
-    analysis.riskReason = clean(llm.riskReason, 160)
-    applied.push('riskReason')
-  }
-  if (typeof llm.sentiment === 'string' && clean(llm.sentiment)) {
-    analysis.sentiment = clean(llm.sentiment, 40)
-    applied.push('sentiment')
-  }
-  if (typeof llm.summary === 'string' && clean(llm.summary)) {
-    const candidate = clean(llm.summary, 200)
-    const facts = extractFacts(candidate)
-    const sourceFacts = extractFacts(`${base.summary} ${llm.sourceText || ''}`)
-    const unknown = [...facts.phones, ...facts.money].filter(
-      (item) =>
-        !phoneKnown(item, sourceFacts.phones) &&
-        !sourceFacts.money.includes(item) &&
-        !sourceFacts.duration.includes(item),
-    )
-    if (unknown.length) rejected.push(`summary 含无来源事实:${unknown.join('、')}`)
-    else {
-      analysis.summary = candidate
-      applied.push('summary')
-    }
-  }
-  if (typeof llm.draft === 'string' && clean(llm.draft)) {
-    const draft = guardAnswerText({
-      answer: llm.draft,
-      sources: [`${base.summary} ${base.riskReason}`],
-      fallback: base.draft,
-    })
-    analysis.draft = draft.answer
-    if (draft.ok) applied.push('draft')
-    else rejected.push(`draft:${draft.violations.join('；')}`)
-  }
+  if (base.risk === 'low') applyText('riskReason', 160)
+  else if (llm.riskReason && llm.riskReason !== base.riskReason) rejected.push('riskReason 保留规则风控依据')
+  applyText('sentiment', 40)
+  applyText('summary', 200)
+  applyText('draft', 400)
 
   if (Array.isArray(llm.suggestedDepartments) && deptIds.length) {
     const suggested = llm.suggestedDepartments
@@ -175,15 +170,15 @@ export const guardAnalysis = ({ llm, base, categories = [], deptIds = [] }) => {
     const dropped = llm.suggestedDepartments.length - suggested.length
     if (dropped > 0) rejected.push(`suggestedDepartments 越界 ${dropped} 个`)
     if (suggested.length) {
-      analysis.suggestedDepartments = suggested.slice(0, 4)
+      analysis.suggestedDepartments = [...new Set(suggested)].slice(0, 4)
       applied.push('suggestedDepartments')
     }
   }
 
   if (Array.isArray(llm.tags)) {
     const tags = llm.tags
-      .map((tag) => clean(tag, 12))
-      .filter((tag) => tag && !hasInjection(tag))
+      .map((answer) => guardAnswerText({ answer, sources, maxLength: 12, allowPublicContacts: false }).answer)
+      .filter(Boolean)
       .slice(0, 5)
     if (tags.length) {
       analysis.tags = tags
@@ -193,10 +188,15 @@ export const guardAnalysis = ({ llm, base, categories = [], deptIds = [] }) => {
 
   if (llm.elements && typeof llm.elements === 'object') {
     const allowed = ['location', 'object', 'phenomenon', 'timeHint', 'demand']
-    analysis.elements = Object.fromEntries(
-      allowed.map((key) => [key, clean(llm.elements[key], 40)]).filter(([, value]) => value),
+    const elements = Object.fromEntries(
+      allowed
+        .map((key) => [key, guardAnswerText({ answer: llm.elements[key], sources, maxLength: 40, allowPublicContacts: false }).answer])
+        .filter(([, value]) => value),
     )
-    if (Object.keys(analysis.elements).length) applied.push('elements')
+    if (Object.keys(elements).length) {
+      analysis.elements = { ...analysis.elements, ...elements }
+      applied.push('elements')
+    }
   }
 
   return { analysis, applied, rejected }
@@ -217,7 +217,7 @@ export const groundedReview = async ({ draft, sources = [] }) => {
   const violations = Array.isArray(result.data?.violations)
     ? result.data.violations.map((item) => clean(item, 80)).filter(Boolean).slice(0, 5)
     : []
-  return { ok: result.data?.grounded !== false && violations.length === 0, skipped: false, violations }
+  return { ok: result.data.grounded === true && violations.length === 0, skipped: false, violations }
 }
 
 export const guardSummary = () => ({

@@ -7,7 +7,7 @@ import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
 import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
-import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, generateCounselorBrief } from './ai.js'
+import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
   agentManifest,
@@ -99,6 +99,7 @@ const studentHistory = (studentId, excludeId = null) =>
       id: ticket.id,
       createdAt: ticket.createdAt,
       updatedAt: ticket.updatedAt,
+      resolvedAt: ticket.resolvedAt || ticket.timeline?.findLast((event) => event.type === 'awaiting_confirm')?.at,
       dueAt: ticket.dueAt,
       category: ticket.category,
       risk: ticket.risk,
@@ -153,6 +154,25 @@ const requireRole = (role) => (req, res, next) => {
   }
   next()
 }
+
+const riskInput = (user, body = {}) => {
+  const text = String(body.text || '').trim()
+  const staff = user.role === 'counselor'
+  const studentId = staff ? body.studentId : user.id
+  const history = staff && Array.isArray(body.history)
+    ? body.history
+    : studentId ? studentHistory(studentId) : []
+  return {
+    text,
+    history,
+    category: body.category,
+    location: String(body.location || ''),
+    baseRisk: staff && Object.hasOwn(RISK_LABELS, body.baseRisk) ? body.baseRisk : detectRisk(text).level,
+    useLlm: body.useLlm !== false,
+  }
+}
+
+const asyncRoute = (handler) => (req, res, next) => handler(req, res).catch(next)
 
 const getTicketOr404 = (id, res) => {
   const ticket = db.tickets.find((item) => item.id === id)
@@ -318,7 +338,7 @@ app.get('/api/knowledge', requireAuth, (req, res) => {
   res.json({ items })
 })
 
-app.post('/api/ai/precheck', requireAuth, async (req, res) => {
+app.post('/api/ai/precheck', requireAuth, asyncRoute(async (req, res) => {
   const text = String(req.body?.text || '').trim()
   if (text.length < 4) {
     return res.status(400).json({ message: '再多描述一点，AI 才能更准确地帮你判断。' })
@@ -328,6 +348,7 @@ app.post('/api/ai/precheck', requireAuth, async (req, res) => {
     text,
     category: req.body?.category,
     location,
+    urgency: Object.hasOwn(URGENCY_LABELS, req.body?.urgency) ? req.body.urgency : undefined,
     history: req.user.role === 'student' ? studentHistory(req.user.id) : [],
     useLlm: req.body?.useLlm !== false,
   })
@@ -345,7 +366,7 @@ app.post('/api/ai/precheck', requireAuth, async (req, res) => {
     latencyMs: chain.latencyMs,
     engine: chain.engine,
   })
-})
+}))
 
 // ── B 部分 · AI 能力开放接口（图谱 / 风险 / Agent / 健康度）────────────
 // 接口契约与字段说明见 docs/B部分交付说明.md
@@ -370,24 +391,20 @@ app.get('/api/ai/agents', requireAuth, (req, res) => {
   res.json(agentManifest())
 })
 
-app.post('/api/ai/agents/:name', requireAuth, async (req, res) => {
+app.post('/api/ai/agents/:name', requireAuth, asyncRoute(async (req, res) => {
   const name = String(req.params.name || '')
   if (name === 'attribution' && req.user.role !== 'counselor') {
     return res.status(403).json({ message: '复盘归因涉及全校工单数据，仅辅导员可用。' })
   }
   const body = req.body || {}
-  const payload = { ...body }
-  if (name === 'risk' && !Array.isArray(payload.history)) {
-    const target = req.user.role === 'student' ? req.user.id : body.studentId
-    payload.history = target ? studentHistory(target) : []
-  }
+  const payload = name === 'risk' ? riskInput(req.user, body) : { ...body }
   if (name === 'attribution' && !Array.isArray(payload.tickets)) {
     payload.tickets = db.tickets
   }
   const result = await invokeAgent(name, payload)
   if (!result.ok && result.warnings?.length) return res.status(400).json(result)
   res.json(result)
-})
+}))
 
 app.get('/api/ai/graph', requireAuth, (req, res) => {
   const summary = graphSummary()
@@ -427,19 +444,9 @@ app.get('/api/ai/kb/search', requireAuth, (req, res) => {
 })
 
 app.post('/api/ai/risk-scan', requireAuth, (req, res) => {
-  const text = String(req.body?.text || '').trim()
-  if (text.length < 2) return res.status(400).json({ message: '请提供需要筛查的诉求文本。' })
-  const target = req.user.role === 'student' ? req.user.id : req.body?.studentId
-  const history = Array.isArray(req.body?.history) ? req.body.history : target ? studentHistory(target) : []
-  res.json(
-    scanRisk({
-      text,
-      history,
-      category: req.body?.category,
-      location: req.body?.location,
-      baseRisk: req.body?.baseRisk || 'low',
-    }),
-  )
+  const input = riskInput(req.user, req.body || {})
+  if (input.text.length < 2) return res.status(400).json({ message: '请提供需要筛查的诉求文本。' })
+  res.json(scanRisk(input))
 })
 
 app.post('/api/ai/attribution', requireAuth, requireRole('counselor'), async (req, res) => {
@@ -625,7 +632,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   })
 })
 
-app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) => {
+app.post('/api/tickets', requireAuth, requireRole('student'), asyncRoute(async (req, res) => {
   const text = String(req.body?.description || '').trim()
   if (text.length < 6) {
     return res.status(400).json({ message: '请至少用一句话描述你遇到的问题。' })
@@ -637,7 +644,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
     text,
     category,
     location,
-    urgency: req.body?.urgency,
+    urgency: Object.hasOwn(URGENCY_LABELS, req.body?.urgency) ? req.body.urgency : undefined,
     history: studentHistory(req.user.id),
   })
   const analysis = chain.analysis
@@ -713,7 +720,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
 
   save()
   res.status(201).json({ ticket: decorateTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
-})
+}))
 
 app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, res) => {
   const ticket = getTicketOr404(req.params.id, res)

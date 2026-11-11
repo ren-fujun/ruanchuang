@@ -297,7 +297,7 @@ export const detectUrgency = (text, risk, explicitUrgency) => {
   return 'normal'
 }
 
-const makeSummary = (text, category, location, risk) => {
+export const makeSummary = (text, category, location, risk) => {
   const cleaned = text.replace(/\s+/g, ' ').trim()
   const firstSentence = cleaned.split(/[。！？!?]/)[0].slice(0, 58)
   const suffix = cleaned.length > firstSentence.length ? '…' : ''

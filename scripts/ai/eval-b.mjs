@@ -125,6 +125,54 @@ const CASES = [
     text: '操场的路灯坏了三盏，晚上跑步看不清路',
     expect: { risk: 'low' },
   },
+  {
+    id: 'B-16',
+    desc: '电脑卡住不触发校园卡补办指引',
+    text: '电脑卡住了打不开',
+    expect: { tierNot: 'confident', canSelfSolve: false },
+  },
+  {
+    id: 'B-17',
+    desc: '信用卡补办不触发校园卡补办指引',
+    text: '银行信用卡丢了应该怎么补办',
+    expect: { tierNot: 'confident', canSelfSolve: false },
+  },
+  {
+    id: 'B-18',
+    desc: '图书馆设施故障不触发借阅指引',
+    text: '图书馆四楼空调温度太低，想反馈一下。',
+    expect: { tierNot: 'confident', canSelfSolve: false },
+  },
+  {
+    id: 'B-19',
+    desc: '预约场馆不触发心理咨询预约指引',
+    text: '预约体育馆的篮球场',
+    expect: { tierNot: 'confident', canSelfSolve: false },
+  },
+  {
+    id: 'B-20',
+    desc: '宿舍报修语境下优先命中校园网故障指引，兼容全角 WiFi 输入',
+    text: '宿舍 ＷｉＦｉ 掉线怎么报修',
+    expect: { kbId: 'kb-net', kbTier: 'confident', canSelfSolve: true },
+  },
+  {
+    id: 'B-21',
+    desc: '在籍证明同义表达仍可自助查询',
+    text: '我的在籍证明要在哪里开？',
+    expect: { kbId: 'kb-proof', kbTier: 'confident', canSelfSolve: true },
+  },
+  {
+    id: 'B-22',
+    desc: '图书馆开放时间仍可自助查询',
+    text: '图书馆几点关门？',
+    expect: { kbId: 'kb-library', kbTier: 'confident', canSelfSolve: true },
+  },
+  {
+    id: 'B-23',
+    desc: '助学贷款申请材料不误用奖助学金指引',
+    text: '申请助学贷款需要提交什么材料',
+    expect: { tierNot: 'confident', canSelfSolve: false },
+  },
 ]
 
 const RISK_ORDER = { low: 0, medium: 1, high: 2 }

@@ -14,7 +14,7 @@
  * 任何一路失败都不会中断链路：降级为空结果并标注 degraded=true，由规则兜底。
  */
 
-import { analyzeRequest, CATEGORY_META } from '../ai.js'
+import { analyzeRequest, CATEGORY_META, makeSummary } from '../ai.js'
 import { departmentMap } from '../seed.js'
 import { chatJson, llmEnabled, llmStatus } from './llmClient.js'
 import { PROMPTS } from './prompts.js'
@@ -26,6 +26,7 @@ import { refineRiskScan, scanRisk } from './riskAgent.js'
 export const AGENT_VERSION = 'b-1.0.0'
 const CATEGORIES = CATEGORY_META.map((item) => item.name).concat('其他')
 const DEPT_IDS = Object.keys(departmentMap)
+const MANUAL_REVIEW_ANSWER = '建议把具体情况提交给辅导员，由中枢协调对应部门处理。'
 
 /** 部门 → 分类的口径修正表：图谱判定优先于关键词分类时使用 */
 const DEPT_CATEGORY_HINT = {
@@ -80,7 +81,8 @@ export const intentAgent = async ({ text, category, location, urgency, useLlm = 
     return { ...envelope({ agent: 'intent', output: base, started, degraded: true }), warnings: [`模型不可用，已回退规则：${result.reason}`] }
   }
   const { analysis, applied, rejected } = guardAnalysis({
-    llm: { ...result.data, sourceText: text },
+    llm: result.data,
+    sourceText: [text, location].filter(Boolean).join('\n'),
     base,
     categories: CATEGORIES,
     deptIds: DEPT_IDS,
@@ -103,9 +105,23 @@ export const routeAgent = async ({ text, category, preferredDepts = [], riskLeve
 // ── 风险筛查 Agent ─────────────────────────────────────────
 export const riskScanAgent = async ({ text, history = [], category, location, baseRisk = 'low', useLlm = true, now }) => {
   const started = Date.now()
-  let scan = scanRisk({ text, history, category, location, baseRisk, now })
-  if (useLlm && llmEnabled()) scan = await refineRiskScan(scan, { text })
-  return envelope({ agent: 'risk', output: scan, started, degraded: Boolean(scan.model && scan.model.applied === false) })
+  const scan = scanRisk({ text, history, category, location, baseRisk, now })
+  const result = envelope({ agent: 'risk', output: scan, started })
+  return enrichRiskResult(result, { text, useLlm })
+}
+
+const enrichRiskResult = async (result, { text, useLlm }) => {
+  if (!result.output || !useLlm || !llmEnabled()) return result
+  const enhancement = await safe('risk', Date.now(), () => refineRiskScan(result.output, { text }))
+  const output = enhancement.output || result.output
+  const reason = output.model?.applied === false ? output.model.reason : null
+  return {
+    ...result,
+    output,
+    degraded: enhancement.degraded || output.model?.applied === false,
+    latencyMs: result.latencyMs + enhancement.latencyMs,
+    warnings: reason ? [`模型不可用，已保留规则筛查结果：${reason}`] : enhancement.warnings,
+  }
 }
 
 // ── 知识库 Agent ───────────────────────────────────────────
@@ -133,11 +149,11 @@ export const knowledgeAgent = async ({ text, useLlm = true, riskLevel = 'low', u
   // 只有「高置信命中 + 低风险 + 非紧急」才允许走自助，用阈值换准确率
   const canSelfSolve = Boolean(knowledge) && match.tier === 'confident' && riskLevel === 'low' && urgency === 'normal'
   const sources = knowledge
-    ? [knowledge.title, knowledge.summary, ...(knowledge.steps || []), '心理援助热线 0571-8820 8125'].join(' ')
+    ? [knowledge.title, knowledge.summary, match.item.answer, ...(knowledge.steps || [])].join(' ')
     : ''
   let answer = ''
-  let warnings = []
-  let selfService = { canSelfSolve, tier: match.tier, threshold: match.threshold }
+  const warnings = []
+  let model
 
   if (knowledge) {
     const ruleAnswer = canSelfSolve
@@ -149,26 +165,25 @@ export const knowledgeAgent = async ({ text, useLlm = true, riskLevel = 'low', u
         prompt: PROMPTS.selfServiceAnswer,
         payload: { text, knowledge: match.item },
       })
-      if (result.ok && result.data?.grounded !== false && typeof result.data?.answer === 'string') {
+      if (result.ok && result.data?.grounded === true && typeof result.data.answer === 'string' && result.data.answer.trim()) {
         const guarded = guardAnswerText({ answer: result.data.answer, sources: [sources], fallback: ruleAnswer })
         answer = guarded.answer
-        if (!guarded.ok) warnings = warnings.concat(guarded.violations.map((item) => `护栏回退：${item}`))
+        if (guarded.ok) model = result.meta
+        else warnings.push(...guarded.violations.map((item) => `护栏回退：${item}`))
       } else if (result.ok) {
-        warnings.push('模型自评 grounded=false，已回退知识库原文')
+        warnings.push('模型未提供有依据的有效答复，已回退知识库原文')
       } else {
         warnings.push(`模型不可用，已回退知识库原文：${result.reason}`)
       }
     }
   } else {
-    answer =
-      riskLevel === 'high'
-        ? '听起来你现在很不容易。请先不要独自承受，可以拨打 24 小时心理援助热线 0571-8820 8125；如果情况紧急，请立即联系辅导员或拨打 120。你也可以直接提交诉求，我们会尽快找到你。'
-        : '暂时没有完全匹配的自助答案，建议把具体情况提交给辅导员，由中枢协调对应部门处理。'
+    answer = `暂时没有完全匹配的自助答案。${MANUAL_REVIEW_ANSWER}`
   }
 
   const guarded = guardAnswerText({ answer, sources: [sources], fallback: knowledge && canSelfSolve ? match.item.answer : answer })
   return {
-    ...envelope({ agent: 'kb', output: { knowledge, answer: guarded.answer, canSelfSolve, sources }, started, warnings }),
+    ...envelope({ agent: 'kb', output: { knowledge, answer: guarded.answer, canSelfSolve, sources }, started, degraded: warnings.length > 0, warnings }),
+    model,
     violations: guarded.violations,
   }
 }
@@ -202,9 +217,10 @@ export const AGENTS = {
 
 /** A 侧 Pipeline 统一调用入口 */
 export const invokeAgent = async (name, payload = {}) => {
-  const agent = AGENTS[name]
+  const agent = Object.hasOwn(AGENTS, name) ? AGENTS[name] : null
   if (!agent) return { ok: false, agent: name, version: AGENT_VERSION, degraded: true, latencyMs: 0, output: null, warnings: [`未知 Agent：${name}`] }
-  return safe(name, Date.now(), () => agent(payload))
+  const result = await safe(name, Date.now(), () => agent(payload))
+  return result.output || result
 }
 
 export const agentManifest = () => ({
@@ -221,7 +237,7 @@ export const agentManifest = () => ({
 })
 
 /** 规则修正：图谱与风险筛查的结论回写进分析结果（基础任务 3：AI 前置预检与规则修正） */
-const applyRuleCorrections = (analysis, { graph, risk }) => {
+const applyRuleCorrections = (analysis, { graph, risk, text, location }) => {
   const corrected = { ...analysis }
   const notes = []
 
@@ -235,6 +251,12 @@ const applyRuleCorrections = (analysis, { graph, risk }) => {
     notes.push('风险筛查为中风险，风险等级由低提升为中')
   }
 
+  if (corrected.risk !== analysis.risk) {
+    corrected.riskReason = risk.reasons.at(-1) || risk.levelLabel
+    corrected.sentiment = risk.dimensions.emotion.label
+    corrected.draft = '同学你好，已收到你的诉求。我们会优先核实情况，并尽快与你联系。'
+  }
+
   if (graph?.matched) {
     const hint = DEPT_CATEGORY_HINT[graph.primaryDept]
     // 图谱证据足够强时以图谱权责归属修正分类；心理危机分类由危机词判定，不覆盖
@@ -245,6 +267,7 @@ const applyRuleCorrections = (analysis, { graph, risk }) => {
     }
     const merged = [
       ...graph.ownerDepts,
+      ...graph.countersign.departments.map((department) => department.id),
       ...graph.collaboratorDepts,
       ...(corrected.suggestedDepartments || []),
     ].filter((id, index, list) => DEPT_IDS.includes(id) && list.indexOf(id) === index)
@@ -259,26 +282,34 @@ const applyRuleCorrections = (analysis, { graph, risk }) => {
     if (!corrected.tags.includes('图谱路由')) corrected.tags = [...corrected.tags, '图谱路由'].slice(0, 5)
   }
 
+  if (corrected.risk !== analysis.risk || corrected.category !== analysis.category) {
+    corrected.summary = makeSummary(text, corrected.category, location, corrected.risk)
+  }
   return { corrected, notes }
 }
 
 /**
- * B 侧认知链路：意图 →（风险 / 图谱路由 / 知识库 并行）→ 规则修正 → 护栏 → 组装
+ * B 侧认知链路：意图 → 规则风险筛查 →（风险解读 / 图谱路由 / 知识库 并行）→ 规则修正 → 组装
  * 返回值同时兼容既有 /api/ai/precheck 契约（analysis / knowledge / answer / canSelfSolve / needsTicket / quickReplies）
  * 并新增 graph / risk / trace 字段供 C 展示、D 训练与 A 调度。
  */
-export const runCognitionChain = async ({ text, category, location, urgency, history = [], useLlm = true } = {}) => {
+export const runCognitionChain = async ({ text = '', category, location = '', urgency, history = [], useLlm = true } = {}) => {
   const started = Date.now()
   const trace = []
 
-  const intent = await intentAgent({ text, category, location, urgency, useLlm })
+  const intent = await invokeAgent('intent', { text, category, location, urgency, useLlm })
   trace.push({ agent: 'intent', degraded: intent.degraded, ms: intent.latencyMs, warnings: intent.warnings })
-  const baseAnalysis = intent.output
+  const baseAnalysis = intent.output || analyzeRequest({ text, category, location, urgency })
+  const ruleRisk = await invokeAgent('risk', {
+    text, history, category: baseAnalysis.category, location, baseRisk: baseAnalysis.risk, useLlm: false,
+  })
+  const effectiveRisk = ruleRisk.output?.level || baseAnalysis.risk
+  const effectiveUrgency = effectiveRisk === 'high' ? 'urgent' : baseAnalysis.urgency
 
   const [riskResult, routeResult, kbResult] = await Promise.all([
-    riskScanAgent({ text, history, category: baseAnalysis.category, location, baseRisk: baseAnalysis.risk, useLlm }),
-    routeAgent({ text, category: baseAnalysis.category, preferredDepts: baseAnalysis.suggestedDepartments, riskLevel: baseAnalysis.risk }),
-    knowledgeAgent({ text, useLlm, riskLevel: baseAnalysis.risk, urgency: baseAnalysis.urgency }),
+    enrichRiskResult(ruleRisk, { text, useLlm }),
+    invokeAgent('route', { text, category: baseAnalysis.category, preferredDepts: baseAnalysis.suggestedDepartments, riskLevel: effectiveRisk }),
+    invokeAgent('kb', { text, useLlm, riskLevel: effectiveRisk, urgency: ruleRisk.output ? effectiveUrgency : 'urgent' }),
   ])
   trace.push({ agent: 'risk', degraded: riskResult.degraded, ms: riskResult.latencyMs, warnings: riskResult.warnings })
   trace.push({ agent: 'route', degraded: routeResult.degraded, ms: routeResult.latencyMs, warnings: routeResult.warnings })
@@ -286,21 +317,14 @@ export const runCognitionChain = async ({ text, category, location, urgency, his
 
   const risk = riskResult.output
   const graph = routeResult.output
-  const { corrected, notes } = applyRuleCorrections(baseAnalysis, { graph, risk })
+  const { corrected, notes } = applyRuleCorrections(baseAnalysis, { graph, risk, text, location })
   if (notes.length) trace.push({ agent: 'rules', degraded: false, ms: 0, warnings: [], notes })
 
   // 高风险或紧急时，自助通道一律关闭（与既有后端行为保持一致）
-  let canSelfSolve = kbResult.output.canSelfSolve
-  let answer = kbResult.output.answer
-  if (corrected.risk !== 'low' || ['high', 'urgent'].includes(corrected.urgency)) {
-    if (canSelfSolve) {
-      answer =
-        corrected.risk === 'high'
-          ? '这件事需要被优先看见。请直接提交诉求，辅导员会尽快联系你；如果你正处于紧急危险中，请立即拨打 120 / 110。'
-          : '这件事需要人工协同处理，建议直接提交给辅导员，由中枢协调对应部门。'
-    }
-    canSelfSolve = false
-  }
+  const canSelfSolve = Boolean(risk && kbResult.output?.canSelfSolve && corrected.risk === 'low' && corrected.urgency === 'normal')
+  const answer = corrected.risk === 'high'
+    ? '这件事需要优先处理。请直接提交诉求，辅导员会尽快跟进。'
+    : kbResult.output?.answer || MANUAL_REVIEW_ANSWER
 
   const analysis = {
     ...corrected,
@@ -311,7 +335,7 @@ export const runCognitionChain = async ({ text, category, location, urgency, his
 
   return {
     analysis,
-    knowledge: kbResult.output.knowledge,
+    knowledge: kbResult.output?.knowledge || null,
     answer,
     canSelfSolve,
     needsTicket: !canSelfSolve,
@@ -321,7 +345,7 @@ export const runCognitionChain = async ({ text, category, location, urgency, his
     facts: extractFacts(text),
     trace,
     latencyMs: Date.now() - started,
-    engine: llmEnabled() ? 'deepseek+rules' : 'local-rules',
+    engine: intent.applied?.length || risk?.model?.applied || kbResult.model ? 'deepseek+rules' : 'local-rules',
   }
 }
 
@@ -355,6 +379,7 @@ export const ticketAiSnapshot = (chain) => ({
         collaboratorDepts: chain.graph.collaboratorDepts,
         countersign: chain.graph.countersign,
         dispatchPath: chain.graph.dispatchPath,
+        slaMinutes: chain.graph.slaMinutes,
         complexity: chain.graph.complexity,
         bottlenecks: chain.graph.bottlenecks,
         evidence: chain.graph.evidence.slice(0, 6),

@@ -443,7 +443,13 @@ const loadDeptIds = (text) =>
     .map((dept) => dept.id)
 
 /** 关键词 → 权责事项打分。长关键词权重更高，命中词全部保留作为证据 */
-const scoreDuties = (text, preferredDepts = []) => {
+// 地点和泛化的办理动作可以加权，但单独出现时不能证明某项权责命中。
+const CONTEXT_KEYWORDS = new Set([
+  '宿舍', '寝室', '卫生间', '阳台', '教室', '操场', '食堂', '图书馆', '校医院',
+  '报修', '维修', '预约', '卡住', '补办', '挂失', '充值',
+])
+
+const scoreDuties = (text, { preferredDepts = [], category } = {}) => {
   const haystack = clean(text, 600).toLowerCase()
   return DUTIES.map((duty) => {
     let score = 0
@@ -454,12 +460,13 @@ const scoreDuties = (text, preferredDepts = []) => {
         matched.push(keyword)
       }
     }
+    if (!matched.some((keyword) => !CONTEXT_KEYWORDS.has(keyword))) return null
     if (preferredDepts.includes(duty.ownerDept)) score += 1.6
     else if ((duty.supportDepts || []).some((dept) => preferredDepts.includes(dept))) score += 0.8
-    if ((duty.categories || []).length && matched.length) score += 0.2
+    if (duty.categories?.includes(category)) score += 0.2
     return { duty, score: Number(score.toFixed(2)), matched }
   })
-    .filter((entry) => entry.score > 0)
+    .filter(Boolean)
     .sort((a, b) => b.score - a.score)
 }
 
@@ -475,7 +482,7 @@ const triggeredCountersign = (duty, haystack) =>
  * 派单路径：主责 + 协同 + 会签 + 处置 + 反馈归档。
  * involvedDuties 为图谱命中的全部权责事项（复合工单时会有多条）。
  */
-const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, supportDepts }) => {
+const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, supportDepts, slaMinutes }) => {
   const primary = involvedDuties[0]
   const path = [
     { order: 1, stage: '受理', actor: '辅导员', action: '接单核对诉求要素与地点，确认是否需要现场核查', slaMinutes: 30 },
@@ -490,9 +497,19 @@ const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, suppo
       slaMinutes: 15,
     },
   ]
-  countersignRules.forEach((rule, index) => {
+  if (ownerDepts.length > 1) {
     path.push({
-      order: 3 + index,
+      order: path.length + 1,
+      stage: '会签',
+      actor: ownerDepts.map(deptShort).join(' + '),
+      action: '联合主办部门会签确认各自的处置范围',
+      slaMinutes: 60,
+      countersign: true,
+    })
+  }
+  countersignRules.forEach((rule) => {
+    path.push({
+      order: path.length + 1,
       stage: '会签',
       actor: deptShort(rule.dept),
       action: rule.reason,
@@ -505,7 +522,7 @@ const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, suppo
     stage: '处置',
     actor: ownerDepts.map(deptShort).join(' + '),
     action: '按权责处置并回填结果与凭证',
-    slaMinutes: Math.min(...involvedDuties.map((duty) => duty.slaMinutes)),
+    slaMinutes,
   })
   path.push({
     order: path.length + 1,
@@ -524,9 +541,9 @@ const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, suppo
  */
 export const queryGraph = (text, options = {}) => {
   const haystack = clean(text, 600).toLowerCase()
-  const preferredDepts = options.preferredDepts || []
-  const limit = options.limit || 3
-  const ranked = scoreDuties(text, preferredDepts)
+  const preferredDepts = Array.isArray(options.preferredDepts) ? options.preferredDepts : []
+  const limit = Number.isInteger(options.limit) && options.limit > 0 ? options.limit : 3
+  const ranked = scoreDuties(text, { preferredDepts, category: options.category })
   const mentionedDepts = loadDeptIds(haystack)
   const threshold = options.threshold ?? 1.4
 
@@ -536,8 +553,9 @@ export const queryGraph = (text, options = {}) => {
       duties: [],
       primaryDuty: null,
       primaryDept: null,
+      ownerDepts: [],
       collaboratorDepts: [],
-      countersign: { required: false, departments: [], rules: [] },
+      countersign: { required: false, departments: [], rules: [], jointOwners: [] },
       dispatchPath: [],
       complexity: 'unknown',
       complexityReason: '图谱未命中明确权责事项，建议人工确认归属',
@@ -551,15 +569,14 @@ export const queryGraph = (text, options = {}) => {
   }
 
   const top = ranked[0]
-  const second = ranked[1]
-  const compoundByScore = Boolean(second && second.score >= top.score * 0.55 && second.duty.ownerDept !== top.duty.ownerDept)
-  const compoundByConnector = COMPOUND_CONNECTORS.some((word) => haystack.includes(word)) && ranked.length >= 2
-  const involvedDuties = [top.duty]
-  if (compoundByScore || compoundByConnector) {
-    for (const entry of ranked.slice(1, limit)) {
-      if (entry.score >= threshold && entry.duty.ownerDept !== top.duty.ownerDept) involvedDuties.push(entry.duty)
-    }
-  }
+  const hasConnector = COMPOUND_CONNECTORS.some((word) => haystack.includes(word))
+  const secondaryThreshold = hasConnector ? threshold : Math.max(threshold, top.score * 0.55)
+  const secondaryDuties = ranked.slice(1, limit).filter((entry) =>
+    entry.score >= secondaryThreshold &&
+    entry.duty.ownerDept !== top.duty.ownerDept &&
+    entry.matched.some((keyword) => !CONTEXT_KEYWORDS.has(keyword) && !top.matched.includes(keyword)),
+  )
+  const involvedDuties = [top.duty, ...secondaryDuties.map((entry) => entry.duty)]
 
   const ownerDepts = [...new Set(involvedDuties.map((duty) => duty.ownerDept))]
   const supportDepts = [...new Set(involvedDuties.flatMap((duty) => duty.supportDepts || []))].filter(
@@ -583,7 +600,12 @@ export const queryGraph = (text, options = {}) => {
   // 多跳证据：duty → dept / countersign / bottleneck，保留每一跳便于解释与可视化
   // 会签节点只保留「本次触发」的，避免证据链里出现与判定结论不一致的会签关系
   const triggeredCountersignNodes = new Set(countersignRules.map((rule) => `cs:${rule.dutyId}:${rule.dept}`))
-  const evidence = []
+  const evidence = countersignRules.map((rule) => ({
+    path: [`duty:${rule.dutyId}`, `cs:${rule.dutyId}:${rule.dept}`, `dept:${rule.dept}`],
+    type: 'countersigned_by',
+    label: `${rule.dutyName} —需会签→ ${deptName(rule.dept)}：${rule.reason}`,
+    weight: 0.9,
+  }))
   for (const duty of involvedDuties) {
     const nodeId = `duty:${duty.id}`
     for (const edge of IN_EDGES.get(nodeId) || []) {
@@ -606,8 +628,9 @@ export const queryGraph = (text, options = {}) => {
     }
   }
 
-  const complexity = involvedDuties.length > 1 ? 'compound' : ownerDepts.length + supportDepts.length >= 3 ? 'compound' : 'single'
-  const slaMinutes = Math.min(...involvedDuties.map((duty) => duty.slaMinutes))
+  const complexity = involvedDuties.length > 1 ? 'compound' : 'single'
+  const dutySla = Math.min(...involvedDuties.map((duty) => duty.slaMinutes))
+  const slaMinutes = options.riskLevel === 'high' ? Math.min(dutySla, 60) : dutySla
   const confidence = Number(
     Math.min(0.95, 0.55 + Math.min(top.score, 8) / 20 + (complexity === 'compound' ? 0.03 : 0)).toFixed(2),
   )
@@ -647,7 +670,7 @@ export const queryGraph = (text, options = {}) => {
       })),
       jointOwners: ownerDepts,
     },
-    dispatchPath: buildDispatchPath(involvedDuties, countersignRules, { ownerDepts, supportDepts }),
+    dispatchPath: buildDispatchPath(involvedDuties, countersignRules, { ownerDepts, supportDepts, slaMinutes }),
     complexity,
     complexityReason:
       involvedDuties.length > 1
@@ -679,6 +702,8 @@ export const dutiesByCategory = (category) => DUTIES.filter((duty) => (duty.cate
 
 const matchDutyForTicket = (ticket) => {
   if (!ticket) return null
+  const savedDuty = ticket.ai?.graph?.primaryDuty?.id
+  if (savedDuty && Object.hasOwn(DUTY_MAP, savedDuty)) return DUTY_MAP[savedDuty]
   const byCategory = dutiesByCategory(ticket.category)
   if (byCategory.length) {
     const text = `${ticket.title || ''} ${ticket.description || ''}`.toLowerCase()
@@ -766,7 +791,7 @@ export const attributionSummary = (tickets = []) => {
   const top = ranked[0]
   const sampleNote = top.sampleAdequate ? '' : `（当前仅 ${top.total} 单，样本量偏小，结论供参考）`
   const headline = `${top.dutyName}是当前最集中的流程卡点：${top.total} 单中有 ${top.overdue} 单超时（超时率 ${Math.round(top.overdueRate * 100)}%）${
-    top.bottleneck ? `，主要卡在「${top.bottleneck.name}」` : ''
+    top.bottleneck && top.overdue ? `，图谱提示优先核查「${top.bottleneck.name}」` : ''
   }${sampleNote}`
   return {
     headline,

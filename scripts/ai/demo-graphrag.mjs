@@ -7,13 +7,14 @@
  *
  * 演示内容：
  *   1. 权责—流程图谱总览（节点 / 边 / 权责事项 / 会签规则 / 卡点 / 阶段）
- *   2. 8 条「诉求原文 → 子图检索」样例：命中权责、主责与协同部门、会签规则、复合工单判定、
+ *   2. 「诉求原文 → 子图检索」样例：命中权责、主责与协同部门、会签规则、复合工单判定、
  *      派单路径、SLA、置信度、多跳证据链
  *   3. 单条权责子图（duty → dept / countersign / bottleneck 双向边）
  *   4. 诉求事件图谱：用历史工单给权责节点回填权重，输出卡点排序与一句话归因结论
  *
  * 产物：scripts/ai/out/graphrag-demo.json
  */
+import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -44,48 +45,70 @@ const CASES = [
     desc: '宿舍漏水 + 用电隐患（单诉求触发两项权责 → 复合工单 + 保卫处会签）',
     text: '宿舍卫生间水龙头漏水，已经漏到柜子里，插排附近也渗水，怕漏电',
     options: { category: '宿舍生活', preferredDepts: ['dorm'], riskLevel: 'high' },
+    expected: { owner: 'dorm', complexity: 'compound', countersign: ['security'] },
   },
   {
     id: 'G-02',
     desc: '消防通道占用 + 飞线充电（安全类会签宿管中心）',
     text: '宿舍楼消防通道被电动车占用，还有飞线充电，万一着火跑不出去',
     options: { category: '安全保卫', preferredDepts: ['security'], riskLevel: 'high' },
+    expected: { owner: 'security', complexity: 'single', countersign: ['dorm', 'logistics'] },
   },
   {
     id: 'G-03',
     desc: '心理危机表达（心理中心主责 + 学院会签，SLA 收紧）',
     text: '我最近压力很大，撑不住了，觉得活着没意思，不想回寝室',
     options: { category: '心理支持', preferredDepts: ['psych'], riskLevel: 'high' },
+    expected: { owner: 'psych', complexity: 'single', countersign: ['office'] },
   },
   {
     id: 'G-04',
     desc: '食堂吃出异物并腹泻（食品安全会签保卫处 + 校医院）',
     text: '今天中午在食堂吃出虫子，之后一直腹泻，肚子很痛',
     options: { category: '餐饮服务', preferredDepts: ['canteen'], riskLevel: 'high' },
+    expected: { owner: 'canteen', complexity: 'single', countersign: ['security', 'clinic'] },
   },
   {
     id: 'G-05',
     desc: '电梯困人（特种设备安全，会签保卫处）',
     text: '图书馆电梯突然卡住，有人被困在里面了，很危险',
     options: { category: '安全保卫', preferredDepts: ['logistics', 'security'], riskLevel: 'high' },
+    expected: { owner: 'logistics', complexity: 'single', countersign: ['security'] },
   },
   {
     id: 'G-06',
     desc: '校园卡丢失（单一权责事项 → 直线派单，可自助办理）',
     text: '校园卡丢了，应该怎么补办？',
     options: { category: '校园卡服务', preferredDepts: [], riskLevel: 'low' },
+    expected: { owner: 'it', complexity: 'single', countersign: [] },
   },
   {
     id: 'G-07',
     desc: '宿舍校园网掉线（信息中心主责，低风险直线派单）',
     text: '宿舍校园网一直掉线，认证页面打不开，网课都上不了',
     options: { category: '网络信息', preferredDepts: ['it'], riskLevel: 'low' },
+    expected: { owner: 'it', complexity: 'single', countersign: [] },
   },
   {
     id: 'G-08',
     desc: '表述模糊（图谱未命中明确权责 → 人工确认归属，不硬派单）',
     text: '就是有点问题，你们看着办吧',
-    options: { category: '其他', preferredDepts: [], riskLevel: 'low' },
+    options: { category: '其他', preferredDepts: ['office'], riskLevel: 'low' },
+    expected: { owner: null, complexity: 'unknown', countersign: [] },
+  },
+  {
+    id: 'G-09',
+    desc: '宿舍漏水加断电 → 宿管与后勤联合会签',
+    text: '宿舍漏水，同时断电了',
+    options: { category: '宿舍生活', preferredDepts: ['dorm', 'logistics'], riskLevel: 'medium' },
+    expected: { owner: 'dorm', complexity: 'compound', countersign: [] },
+  },
+  {
+    id: 'G-10',
+    desc: '电脑卡住 → 泛化词不触发电梯派单',
+    text: '电脑卡住了打不开',
+    options: { category: '其他', preferredDepts: ['logistics'], riskLevel: 'low' },
+    expected: { owner: null, complexity: 'unknown', countersign: [] },
   },
 ]
 
@@ -128,6 +151,20 @@ if (!quiet) {
 
 for (const item of CASES) {
   const graph = queryGraph(item.text, item.options)
+  assert.deepEqual({
+    owner: graph.primaryDept,
+    complexity: graph.complexity,
+    countersign: graph.countersign.departments.map((department) => department.id),
+  }, item.expected, item.id)
+  assert.equal(graph.matched, Boolean(item.expected.owner), item.id)
+  if (item.id === 'G-02') {
+    assert.deepEqual(graph.ownerDepts, ['security'], item.id)
+    assert.ok(graph.evidence.some((item) => item.path.length === 3 && item.path.at(-1) === 'dept:dorm'))
+  }
+  if (item.id === 'G-09') {
+    assert.deepEqual(new Set(graph.countersign.jointOwners), new Set(['dorm', 'logistics']), item.id)
+    assert.ok(graph.dispatchPath.some((step) => step.stage === '会签' && step.countersign))
+  }
   report.cases.push({
     id: item.id,
     desc: item.desc,
