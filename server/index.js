@@ -26,8 +26,6 @@ try {
 const PORT = Number(process.env.PORT || 8787)
 const app = express()
 
-app.use(express.json({ limit: '6mb' }))
-
 const errorCodes = {
   400: 40001,
   401: 40101,
@@ -75,6 +73,8 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(204)
   next()
 })
+
+app.use(express.json({ limit: '6mb' }))
 
 const nowIso = () => new Date().toISOString()
 const dateKey = (value) => {
@@ -1164,6 +1164,9 @@ app.use('/api', (req, res) => {
 
 app.use((error, req, res, next) => {
   console.error(error)
+  if (error?.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: '请求内容不是有效的 JSON。' })
+  }
   if (error?.type === 'entity.too.large' || error?.status === 413) {
     return res.status(413).json({ message: '请求内容过大，请减少附件或压缩后重试。' })
   }

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { access, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import net from 'node:net'
@@ -46,6 +46,10 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
       await delay(50)
     }
     assert.ok(ready, '测试服务未启动')
+    const malformed = await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5180' }, body: '{invalid' })
+    assert.equal(malformed.status, 400)
+    assert.equal(malformed.headers.get('access-control-allow-origin'), 'http://localhost:5180')
+    assert.deepEqual(await malformed.json(), { code: 40001, msg: '请求内容不是有效的 JSON。', data: null })
     const student = await call('/auth/login', { body: { account: '20230118', password: '123456', role: 'student' } })
     const counselor = await call('/auth/login', { body: { account: 'chenyuan', password: '123456', role: 'counselor' } })
     const precheck = await call('/ai/precheck', { token: student.token, body: { text: '图书馆空调持续故障' } })
@@ -98,6 +102,33 @@ test('生产模式关闭一键演示登录', async () => {
     assert.ok(ready, '测试服务未启动')
     const result = await fetch(`${base}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'counselor' }) })
     assert.equal(result.status, 403)
+  } finally {
+    child.kill()
+    await new Promise((resolve) => child.once('exit', resolve))
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('.env 中的数据文件路径在存储初始化前生效', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhihui-env-test-'))
+  const dataFile = path.join(dir, 'isolated-store.json')
+  const listener = net.createServer()
+  await new Promise((resolve) => listener.listen(0, '127.0.0.1', resolve))
+  const port = listener.address().port
+  await new Promise((resolve) => listener.close(resolve))
+  await writeFile(path.join(dir, '.env'), `ZHIHUI_DATA_FILE=${dataFile.replaceAll('\\', '/')}\nPORT=${port}\n`)
+  const env = { ...process.env }
+  delete env.PORT
+  delete env.ZHIHUI_DATA_FILE
+  const child = spawn(process.execPath, [path.resolve('server/index.js')], { cwd: dir, env, stdio: 'ignore' })
+  try {
+    let ready = false
+    for (let i = 0; i < 100; i++) {
+      try { if ((await fetch(`http://127.0.0.1:${port}/api/health`)).ok) { ready = true; break } } catch {}
+      await delay(50)
+    }
+    assert.ok(ready, '测试服务未使用 .env 中的端口启动')
+    await access(dataFile)
   } finally {
     child.kill()
     await new Promise((resolve) => child.once('exit', resolve))

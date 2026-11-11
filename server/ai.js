@@ -1,5 +1,5 @@
-import { departmentMap, knowledgeBase } from './seed.js'
-import { searchKnowledgeDetailed } from './ai/knowledge.js'
+import { departmentMap } from './seed.js'
+import { searchKnowledgeDetailed, searchKnowledge as searchKnowledgeV2 } from './ai/knowledge.js'
 
 const CATEGORY_RULES = [
   {
@@ -264,7 +264,8 @@ export const suggestDepartments = (text, category) => {
   return [...new Set(result)]
 }
 
-export const analyzeRequest = ({ text = '', category: explicitCategory, location = '', urgency: explicitUrgency } = {}) => {
+export const analyzeRequest = ({ text: inputText = '', category: explicitCategory, location = '', urgency: explicitUrgency } = {}) => {
+  const text = typeof inputText === 'string' ? inputText : ''
   const risk = detectRisk(text)
   const psychCrisis = PSYCH_CRISIS_WORDS.some((word) => text.includes(word))
   const category = psychCrisis ? '心理支持' : scoreCategory(text, explicitCategory)
@@ -310,29 +311,7 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
   }
 }
 
-const normalize = (text) => text.toLowerCase().replace(/[\s，。！？、；：,.!?;:]/g, '')
-
-export const searchKnowledge = (text) => {
-  const normalized = normalize(text)
-  const scored = knowledgeBase
-    .map((item) => {
-      const score = item.keywords.reduce((total, keyword) => {
-        if (normalized.includes(normalize(keyword))) return total + (keyword.length >= 3 ? 3 : 2)
-        return total
-      }, 0)
-      return { item, score }
-    })
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-
-  if (!scored.length) return null
-  const best = scored[0]
-  return {
-    ...best.item,
-    matchScore: best.score,
-    related: scored.slice(1, 3).map((entry) => entry.item.title),
-  }
-}
+export const searchKnowledge = searchKnowledgeV2
 
 export const precheckRequest = ({ text, category, location }) => {
   const analysis = analyzeRequest({ text, category, location })

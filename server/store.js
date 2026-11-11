@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url'
 import { seedData } from './seed.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// The store is initialized during import, before index.js can load its .env.
+try {
+  process.loadEnvFile?.()
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error
+}
 const dataDir = path.join(__dirname, 'data')
 const dataFile = process.env.ZHIHUI_DATA_FILE
   ? path.resolve(process.env.ZHIHUI_DATA_FILE)

@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { analyzeRequest, precheckRequest } from './ai.js'
+import { analyzeRequest, precheckRequest, searchKnowledge } from './ai.js'
 import { refineAnalysis } from './llm.js'
+import { kbConfig, searchKnowledgeDetailed } from './ai/knowledge.js'
 
 test('图书馆设施问题建议相关部门并给出可核对的依据', () => {
   const result = analyzeRequest({ text: '图书馆空调一直不工作，很多同学受到影响', location: '图书馆二楼' })
@@ -61,6 +62,28 @@ test('知识库仅对足够明确且低风险的查询建议自助', () => {
   assert.equal(precheckRequest({ text: '校园卡丢了，补办需要带什么材料？' }).canSelfSolve, true)
   assert.equal(precheckRequest({ text: '校园卡丢了，宿舍漏电了怎么办？' }).canSelfSolve, false)
   assert.equal(precheckRequest({ text: '宿舍漏水和校园卡丢了怎么处理' }).canSelfSolve, false)
+  assert.equal(precheckRequest({ text: '卡住' }).canSelfSolve, false)
+  assert.equal(searchKnowledge('校园卡补办')?.id, searchKnowledgeDetailed('校园卡补办').item?.id)
+})
+
+test('异常输入和无效检索阈值不会导致不安全的判断', () => {
+  assert.equal(analyzeRequest({ text: null }).risk, 'low')
+  assert.equal(analyzeRequest({ text: 123 }).category, '其他')
+  const ratio = process.env.KB_AMBIGUITY_RATIO
+  const min = process.env.KB_MIN_SCORE
+  const confident = process.env.KB_CONFIDENT_SCORE
+  try {
+    process.env.KB_AMBIGUITY_RATIO = '2'
+    process.env.KB_MIN_SCORE = '6'
+    process.env.KB_CONFIDENT_SCORE = '3'
+    assert.ok(kbConfig().ambiguityRatio <= 1)
+    assert.ok(kbConfig().confidentScore >= kbConfig().minScore)
+  } finally {
+    for (const [name, value] of [['KB_AMBIGUITY_RATIO', ratio], ['KB_MIN_SCORE', min], ['KB_CONFIDENT_SCORE', confident]]) {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+  }
 })
 
 test('普通宿舍报修识别类别并保留常规办理建议', () => {

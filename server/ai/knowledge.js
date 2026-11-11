@@ -23,15 +23,20 @@ const num = (value, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
-export const kbConfig = () => ({
-  minScore: num(process.env.KB_MIN_SCORE, DEFAULT_MIN_SCORE),
-  confidentScore: num(process.env.KB_CONFIDENT_SCORE, DEFAULT_CONFIDENT_SCORE),
-  ambiguityRatio: num(process.env.KB_AMBIGUITY_RATIO, DEFAULT_AMBIGUITY_RATIO),
-})
+export const kbConfig = () => {
+  const minScore = num(process.env.KB_MIN_SCORE, DEFAULT_MIN_SCORE)
+  const confidentScore = num(process.env.KB_CONFIDENT_SCORE, DEFAULT_CONFIDENT_SCORE)
+  const ambiguityRatio = num(process.env.KB_AMBIGUITY_RATIO, DEFAULT_AMBIGUITY_RATIO)
+  return {
+    minScore,
+    confidentScore: Math.max(minScore, confidentScore),
+    ambiguityRatio: ambiguityRatio <= 1 ? ambiguityRatio : DEFAULT_AMBIGUITY_RATIO,
+  }
+}
 
 /** 同义词归一：同一件事的不同叫法，命中任意一个即当作命中整组 */
 export const SYNONYM_GROUPS = [
-  ['一卡通', '校园卡', '饭卡', '卡'],
+  ['一卡通', '校园卡', '饭卡'],
   ['断电', '停电', '跳闸', '没电', '断电了'],
   ['漏水', '渗水', '跑水', '水龙头'],
   ['断网', '没网', '连不上网', '网络故障', '网断了'],
