@@ -90,6 +90,33 @@ npm run seed
 
 高风险关键词（如危机表达、消防通道占用、漏电等）会触发 60 分钟优先 SLA，并在辅导员中枢顶部展示雷达预警。
 
+## AI 与认知层（B 部分）
+
+AI 层由「规则引擎 + 知识图谱 + 风险筛查 + 大模型增强 + 幻觉护栏」组成，**不配置密钥也能完整运行**：模型不可用时自动回退本地规则，业务结论完全一致。
+
+| 能力 | 说明 | 关键文件 |
+| --- | --- | --- |
+| GraphRAG 权责流程图谱 | 70 节点 / 104 条加权边：15 个部门、23 项权责事项、19 条会签规则、7 个历史卡点、6 个流程阶段；支持子图检索、复合工单识别、会签判定、派单路径与多跳证据链 | `server/ai/graphrag.js` |
+| 诉求事件图谱 | 用工单历史给权责节点回填权重（小样本收缩超时率 ×0.5 + 单量占比 ×0.3 + 高风险占比 ×0.2，单量 <2 标记 `sampleAdequate:false`），输出卡点排序与改进建议 | `server/ai/graphrag.js` |
+| 风险筛查 Agent | 情绪词典（危机/安全/痛苦/冲突/焦虑 5 维 110 词，含程度副词、否定衰减、标点强化）+ 行为时序特征（24h/72h/7d 提交、夜间占比、最短间隔、同类重复、历史超时、30 天内高风险）→ 高/中/低标签 + 干预建议 | `server/ai/riskAgent.js` |
+| 知识库检索 | 泛化词剔除 + 同义词归一 + 字段加权 BM25 + 四级置信分层；仅「高置信 + 低风险 + 非紧急」开放自助答复 | `server/ai/knowledge.js` |
+| 大模型加固 | 超时、指数退避重试、熔断、并发闸门、LRU+TTL 缓存、故障注入与指标（含 p95 与失败归因） | `server/ai/llmClient.js` |
+| 幻觉护栏 | 字段白名单、风险不降级、硬事实（电话/金额/时限）可追溯、过度承诺与注入残留拦截 | `server/ai/guard.js` |
+| Agent 编排 | `intent / route / risk / kb / attribution / guard` 六个 Agent，统一信封协议 `{ok, agent, version, degraded, latencyMs, output, warnings}` | `server/ai/agents.js` |
+
+文档与自检：
+
+- 接口与字段约定：[docs/B部分交付说明.md](docs/B部分交付说明.md)
+- 演示命令、答辩台词与演练记录：[docs/B部分演示与验收.md](docs/B部分演示与验收.md)
+- 自检脚本：[scripts/ai/README.md](scripts/ai/README.md)
+
+```powershell
+node scripts\ai\eval-b.mjs          # 认知链路评测：18 项用例
+node scripts\ai\demo-graphrag.mjs   # GraphRAG 检索匹配演示样例
+node scripts\ai\demo-risk.mjs       # 风险预警 Demo（可稳定触发风险标签）
+node scripts\ai\drill-degrade.mjs   # 容灾降级 + 幻觉护栏演练：35 项检查
+```
+
 ## 6. 目录结构
 
 ```text
@@ -119,13 +146,22 @@ npm run seed
 │     └─ Login.tsx         身份选择与一键体验
 ├─ server/
 │  ├─ index.js             REST API、权限、工单流转、统计
-│  ├─ ai.js                本地分类、风险、SLA、知识库检索
+│  ├─ ai.js                本地分类、风险、SLA、知识库检索入口
+│  ├─ ai/                  认知层（B 部分）
+│  │  ├─ agents.js           Agent 编排、规则修正、认知链路、工单 AI 快照
+│  │  ├─ graphrag.js         权责流程图谱 + 事件图谱 + 子图检索 + 会签判定
+│  │  ├─ riskAgent.js        风险筛查：情绪词典 + 行为时序融合 + 干预建议
+│  │  ├─ knowledge.js        知识库检索：分词、同义词、字段加权 BM25、置信分层
+│  │  ├─ llmClient.js        大模型加固：超时 / 重试 / 熔断 / 并发 / 缓存 / 故障注入
+│  │  ├─ guard.js            幻觉护栏：白名单、不降级、硬事实可追溯
+│  │  └─ prompts.js          版本化提示词注册表
 │  ├─ llm.js               DeepSeek 可选增强层（失败自动回退）
 │  ├─ dorm.js / dormSeed.js 宿舍查寝逻辑与演示数据
-│  ├─ seed.js              6 个部门、27 张演示工单、知识库
+│  ├─ seed.js              15 个部门、27 张演示工单、知识库
 │  ├─ store.js             JSON 持久化
 │  └─ reset.js             重置演示数据
 ├─ scripts/                验收与工具脚本（见 scripts/README.md）
+│  ├─ ai/                  B 部分自检：冒烟 / 评测 / 演示 / 降级演练（见 scripts/ai/README.md）
 │  ├─ e2e/                 接口 / 界面 / 契约三套端到端校验
 │  ├─ screenshots/         各视口与主题的截图脚本
 │  ├─ tools/               一次性辅助工具（外部文档抽取、编码恢复）
@@ -166,7 +202,17 @@ push "说明" -NoPush     # 只提交不推送
 | GET | `/api/counselor/dashboard` | 辅导员中枢聚合 |
 | GET | `/api/counselor/insights` | 协同洞察 |
 | GET/POST | `/api/counselor/dorm-check` | 宿舍查寝数据 / 提交查寝打卡 |
-| POST | `/api/ai/precheck` | AI 预检 + 知识库检索 |
+| POST | `/api/ai/precheck` | AI 预检 + 知识库检索（响应新增 `graph` / `risk` / `trace`） |
+| GET | `/api/ai/health` | AI 健康度：引擎、熔断与指标、图谱规模、词典规模、提示词版本 |
+| GET | `/api/ai/agents` | Agent 清单与 I/O 约定 |
+| POST | `/api/ai/agents/:name` | 统一 Agent 调用入口（`attribution` 仅辅导员） |
+| GET | `/api/ai/graph` | 图谱总览；`?full=1` 返回完整 `nodes` / `edges` |
+| GET | `/api/ai/graph/duty/:id` | 单条权责子图 |
+| POST | `/api/ai/graph/query` | 文本 → 权责子图检索（会签 / 复合判定 / 派单路径） |
+| GET | `/api/ai/kb/search` | 知识库检索详情（含置信分层与阈值） |
+| POST | `/api/ai/risk-scan` | 风险筛查（风险标签 + 干预建议） |
+| POST | `/api/ai/attribution` | 复盘归因（卡点排序 + 结论 + 建议） |
+| POST | `/api/ai/llm/fault` · `/api/ai/llm/reset` | **演练用**：注入 / 复位模型故障 |
 | GET/POST | `/api/tickets` | 工单列表 / 创建 |
 | GET | `/api/tickets/:id` | 工单详情（含角色权限） |
 | PATCH | `/api/tickets/:id/review` | 辅导员审核分派 |
@@ -181,10 +227,12 @@ push "说明" -NoPush     # 只提交不推送
 - `npm run build` 通过。
 - Playwright 以 390 × 844 移动视口完整走查学生端、辅导员端全部页面，浏览器控制台无报错。
 - API 端到端流程已通过：学生提交 → 辅导员审核分派 → 部门接单 → 录入处置结果 → 学生确认并 5 星评价 → 归档。
+- AI 认知层（B 部分）自检全部通过：`eval-b.mjs` 18/18、`drill-degrade.mjs` 35/35，GraphRAG 与风险预警演示脚本退出码均为 0。
+- 容灾验证：无 API Key、模型超时、网络不可达、脏 JSON、上游 500 五种情形下业务结论与规则基线零差异。
 
 ## 9. 下一阶段建议
 
-1. 接入真实大模型与校内办事知识库向量检索（接口已预留）。
-2. 增加职能部门移动端与学工/党委驾驶舱。
-3. 接入对象存储、消息推送（订阅消息 / WebSocket）与统一身份认证。
-4. 将 JSON 存储替换为 PostgreSQL / MySQL，补充审计日志与数据脱敏策略。
+1. 增加职能部门移动端与学工/党委驾驶舱。
+2. 接入对象存储、消息推送（订阅消息 / WebSocket）与统一身份认证。
+3. 将 JSON 存储替换为 PostgreSQL / MySQL，补充审计日志与数据脱敏策略。
+4. 知识库扩容后可把 `searchKnowledgeDetailed` 换成向量检索（上层接口已抽象，无需改动认知链路）；用积累的 `behaviorFeatures` 训练 D 侧时序风险预测模型。

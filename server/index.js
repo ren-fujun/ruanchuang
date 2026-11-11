@@ -5,16 +5,23 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
-import { llmEnabled, refineAnalysis } from './llm.js'
+import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
+import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, generateCounselorBrief } from './ai.js'
 import {
-  STATUS_LABELS,
-  URGENCY_LABELS,
-  RISK_LABELS,
-  analyzeRequest,
-  generateCounselorBrief,
-  precheckRequest,
-} from './ai.js'
+  AGENT_VERSION,
+  agentManifest,
+  attributionAgent,
+  invokeAgent,
+  runCognitionChain,
+  ticketAiSnapshot,
+} from './ai/agents.js'
+import { graphSummary, graphVisualization, dutySubgraph, queryGraph, rankBottlenecks } from './ai/graphrag.js'
+import { knowledgeIndexStats, searchKnowledgeDetailed } from './ai/knowledge.js'
+import { riskLexiconSummary, scanRisk } from './ai/riskAgent.js'
+import { guardSummary } from './ai/guard.js'
+import { promptVersions } from './ai/prompts.js'
+import { FAULT_MODE_LIST } from './ai/llmClient.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.join(__dirname, '..')
@@ -80,6 +87,23 @@ const publicUser = (user) => {
   const { password, ...safe } = user
   return safe
 }
+
+/**
+ * 风险筛查 Agent 需要的「行为时序特征」原始输入：
+ * 只取时序与结果字段，避免把整张工单塞进特征计算。
+ */
+const studentHistory = (studentId, excludeId = null) =>
+  db.tickets
+    .filter((ticket) => ticket.studentId === studentId && ticket.id !== excludeId)
+    .map((ticket) => ({
+      id: ticket.id,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+      dueAt: ticket.dueAt,
+      category: ticket.category,
+      risk: ticket.risk,
+      status: ticket.status,
+    }))
 
 const addNotification = ({ userId, type, title, body, ticketId = null, tone = 'mint' }) => {
   db.notifications.unshift({
@@ -300,25 +324,142 @@ app.post('/api/ai/precheck', requireAuth, async (req, res) => {
     return res.status(400).json({ message: '再多描述一点，AI 才能更准确地帮你判断。' })
   }
   const location = String(req.body?.location || '')
-  const result = precheckRequest({
+  const chain = await runCognitionChain({
     text,
     category: req.body?.category,
     location,
+    history: req.user.role === 'student' ? studentHistory(req.user.id) : [],
+    useLlm: req.body?.useLlm !== false,
   })
-  const baseAnalysis = result.analysis
-  result.analysis = await refineAnalysis(text, baseAnalysis, location)
-  if (result.analysis.risk !== 'low' || ['high', 'urgent'].includes(result.analysis.urgency)) {
-    const wasSelfService = result.canSelfSolve
-    result.canSelfSolve = false
-    result.needsTicket = true
-    if (wasSelfService) {
-      result.answer =
-        result.analysis.risk === 'high'
-          ? '这件事需要被优先看见。请直接提交诉求，辅导员会尽快联系你；如果你正处于紧急危险中，请立即拨打 120 / 110。'
-          : '这件事需要人工协同处理，建议直接提交给辅导员，由中枢协调对应部门。'
-    }
+  res.json({
+    analysis: chain.analysis,
+    knowledge: chain.knowledge,
+    answer: chain.answer,
+    canSelfSolve: chain.canSelfSolve,
+    needsTicket: chain.needsTicket,
+    quickReplies: chain.quickReplies,
+    // B 部分新增：图谱路由与风险筛查结果，供 C 端展示、D 端训练使用
+    graph: chain.graph,
+    risk: chain.risk,
+    trace: chain.trace,
+    latencyMs: chain.latencyMs,
+    engine: chain.engine,
+  })
+})
+
+// ── B 部分 · AI 能力开放接口（图谱 / 风险 / Agent / 健康度）────────────
+// 接口契约与字段说明见 docs/B部分交付说明.md
+
+app.get('/api/ai/health', requireAuth, (req, res) => {
+  res.json({
+    agentVersion: AGENT_VERSION,
+    engine: llmEnabled() ? 'deepseek+rules' : 'local-rules',
+    llm: getLlmStatus(),
+    faultMode: currentLlmFault(),
+    faultModes: FAULT_MODE_LIST,
+    knowledge: knowledgeIndexStats(),
+    graph: graphSummary().stats,
+    risk: riskLexiconSummary(),
+    guard: guardSummary(),
+    prompts: promptVersions(),
+    at: nowIso(),
+  })
+})
+
+app.get('/api/ai/agents', requireAuth, (req, res) => {
+  res.json(agentManifest())
+})
+
+app.post('/api/ai/agents/:name', requireAuth, async (req, res) => {
+  const name = String(req.params.name || '')
+  if (name === 'attribution' && req.user.role !== 'counselor') {
+    return res.status(403).json({ message: '复盘归因涉及全校工单数据，仅辅导员可用。' })
   }
-  res.json({ ...result, engine: llmEnabled() ? 'deepseek' : 'local-rules' })
+  const body = req.body || {}
+  const payload = { ...body }
+  if (name === 'risk' && !Array.isArray(payload.history)) {
+    const target = req.user.role === 'student' ? req.user.id : body.studentId
+    payload.history = target ? studentHistory(target) : []
+  }
+  if (name === 'attribution' && !Array.isArray(payload.tickets)) {
+    payload.tickets = db.tickets
+  }
+  const result = await invokeAgent(name, payload)
+  if (!result.ok && result.warnings?.length) return res.status(400).json(result)
+  res.json(result)
+})
+
+app.get('/api/ai/graph', requireAuth, (req, res) => {
+  const summary = graphSummary()
+  if (String(req.query.full || '') === '1') {
+    res.json({ ...summary, ...graphVisualization() })
+    return
+  }
+  res.json(summary)
+})
+
+app.get('/api/ai/graph/duty/:id', requireAuth, (req, res) => {
+  const subgraph = dutySubgraph(String(req.params.id || ''))
+  if (!subgraph) return res.status(404).json({ message: '未找到该权责事项节点。' })
+  res.json(subgraph)
+})
+
+app.post('/api/ai/graph/query', requireAuth, (req, res) => {
+  const text = String(req.body?.text || '').trim()
+  if (text.length < 2) return res.status(400).json({ message: '请提供需要检索的诉求文本。' })
+  const preferredDepts = Array.isArray(req.body?.preferredDepts)
+    ? req.body.preferredDepts.filter((id) => departmentMap[id])
+    : []
+  res.json(
+    queryGraph(text, {
+      category: req.body?.category,
+      preferredDepts,
+      riskLevel: req.body?.riskLevel,
+      limit: Number(req.body?.limit) || 3,
+    }),
+  )
+})
+
+app.get('/api/ai/kb/search', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim()
+  if (!q) return res.status(400).json({ message: '请提供检索关键词。' })
+  res.json(searchKnowledgeDetailed(q))
+})
+
+app.post('/api/ai/risk-scan', requireAuth, (req, res) => {
+  const text = String(req.body?.text || '').trim()
+  if (text.length < 2) return res.status(400).json({ message: '请提供需要筛查的诉求文本。' })
+  const target = req.user.role === 'student' ? req.user.id : req.body?.studentId
+  const history = Array.isArray(req.body?.history) ? req.body.history : target ? studentHistory(target) : []
+  res.json(
+    scanRisk({
+      text,
+      history,
+      category: req.body?.category,
+      location: req.body?.location,
+      baseRisk: req.body?.baseRisk || 'low',
+    }),
+  )
+})
+
+app.post('/api/ai/attribution', requireAuth, requireRole('counselor'), async (req, res) => {
+  const result = await attributionAgent({ tickets: db.tickets, limit: Number(req.body?.limit) || 5 })
+  res.json({ ...result.output, bottlenecks: rankBottlenecks(db.tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
+})
+
+// 容灾演练开关：模拟大模型超时 / 离线 / 脏 JSON / 5xx，验证自动回退到规则链路
+app.post('/api/ai/llm/fault', requireAuth, requireRole('counselor'), (req, res) => {
+  const mode = req.body?.mode ?? null
+  try {
+    const applied = simulateLlmFault(mode)
+    res.json({ ok: true, faultMode: applied, hint: applied ? '后续 AI 调用将按该故障模式降级，请在演练后重置' : '已恢复正常' })
+  } catch (error) {
+    res.status(400).json({ message: error.message, modes: FAULT_MODE_LIST })
+  }
+})
+
+app.post('/api/ai/llm/reset', requireAuth, requireRole('counselor'), (req, res) => {
+  res.json({ ok: true, llm: resetLlm() })
 })
 
 app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => {
@@ -491,19 +632,45 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
   }
   const category = req.body?.category && req.body.category !== '智能识别' ? req.body.category : undefined
   const location = String(req.body?.location || '')
-  const baseAnalysis = analyzeRequest({
+  // B 侧认知链路：意图解析 → 风险筛查 / GraphRAG 路由 / 知识库检索 → 规则修正 → 护栏
+  const chain = await runCognitionChain({
     text,
     category,
     location,
     urgency: req.body?.urgency,
+    history: studentHistory(req.user.id),
   })
-  const analysis = await refineAnalysis(text, baseAnalysis, location)
+  const analysis = chain.analysis
   const createdAt = nowIso()
   const id = nextTicketId()
   const timeline = [
     makeTimelineEvent('created', '诉求已提交', 'AI 已完成初步识别，等待辅导员审核', req.user.name),
     makeTimelineEvent('ai', 'AI 完成要素提取', `已生成标准化工单草稿，风险等级：${RISK_LABELS[analysis.risk]}`, '智汇中枢'),
   ]
+  if (chain.graph?.matched) {
+    timeline.push(
+      makeTimelineEvent(
+        'ai',
+        'GraphRAG 完成权责路由',
+        `命中权责事项「${chain.graph.primaryDuty.name}」，主责${departmentMap[chain.graph.primaryDept]?.short || chain.graph.primaryDept}${
+          chain.graph.countersign.required
+            ? `，需会签：${(chain.graph.countersign.departments.map((item) => item.short).join('、') || chain.graph.countersign.jointOwners.map((deptId) => departmentMap[deptId]?.short).join('、'))}`
+            : ''
+        }`,
+        '智汇中枢',
+      ),
+    )
+  }
+  if (chain.risk && chain.risk.level !== 'low') {
+    timeline.push(
+      makeTimelineEvent(
+        'risk',
+        '风险筛查 Agent 输出标签',
+        `${chain.risk.levelLabel}（融合分 ${chain.risk.score}）：${chain.risk.signals.slice(0, 3).map((item) => item.label).join('；') || '行为时序特征异常'}`,
+        '智汇中枢',
+      ),
+    )
+  }
   const ticket = {
     id,
     title: String(req.body?.title || '').trim() || text.slice(0, 24),
@@ -521,16 +688,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
     updatedAt: createdAt,
     dueAt: new Date(Date.now() + analysis.slaMinutes * 60000).toISOString(),
     slaMinutes: analysis.slaMinutes,
-    ai: {
-      summary: analysis.summary,
-      risk: analysis.risk,
-      riskReason: analysis.riskReason,
-      sentiment: analysis.sentiment,
-      confidence: analysis.confidence,
-      suggestedDepartments: analysis.suggestedDepartments,
-      tags: analysis.tags,
-      draft: analysis.draft,
-    },
+    ai: ticketAiSnapshot(chain),
     attachments: Array.isArray(req.body?.attachments) ? req.body.attachments.slice(0, 6) : [],
     rating: null,
     timeline,

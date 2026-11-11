@@ -16,6 +16,19 @@ node scripts\e2e\api.mjs
 node scripts\screenshots\core-pages.mjs
 ```
 
+## ai/ · B 部分（AI 与认知层）自检与演示
+
+| 脚本 | 作用 | 产出 |
+| --- | --- | --- |
+| `smoke-b.mjs` | 冒烟自检：跑通一条认知链路并打印图谱 / 知识库 / 风险词典规模 | 控制台 |
+| `eval-b.mjs` | 认知链路评测：15 条链路用例 + 3 条护栏用例（`--llm` 可连模型一起跑） | 控制台 + 退出码 |
+| `demo-graphrag.mjs` | GraphRAG 检索匹配演示样例（含会签、复合工单、派单路径、卡点归因） | `scripts/ai/out/graphrag-demo.json` |
+| `demo-risk.mjs` | 风险预警 Demo：情绪维度 + 行为时序融合，稳定触发高/中/低标签 | `scripts/ai/out/risk-demo.json` |
+| `drill-degrade.mjs` | 容灾降级与幻觉护栏演练：无 Key 兜底、4 种故障注入、熔断、护栏、知识库阈值 | `scripts/ai/out/degrade-drill.json` |
+
+**全部可离线运行**（不需要 API Key，也不需要先起服务），退出码即结论。详见 [ai/README.md](ai/README.md)
+与 [../docs/B部分演示与验收.md](../docs/B部分演示与验收.md)。
+
 ## e2e/ · 端到端校验
 
 | 脚本 | 前置服务 | 作用 |

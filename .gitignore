@@ -2,6 +2,7 @@ node_modules/
 dist/
 screenshots/
 server/data/
+scripts/ai/out/
 .tmp/
 *.log
 .env

@@ -1,4 +1,5 @@
 import { departmentMap, knowledgeBase } from './seed.js'
+import { searchKnowledge as searchKnowledgeDetailed } from './ai/knowledge.js'
 
 const CATEGORY_RULES = [
   {
@@ -394,36 +395,20 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
   }
 }
 
-const normalize = (text) => text.toLowerCase().replace(/[\s，。！？、；：,.!?;:]/g, '')
-
-export const searchKnowledge = (text) => {
-  const normalized = normalize(text)
-  const scored = knowledgeBase
-    .map((item) => {
-      const score = item.keywords.reduce((total, keyword) => {
-        if (normalized.includes(normalize(keyword))) return total + (keyword.length >= 3 ? 3 : 2)
-        return total
-      }, 0)
-      return { item, score }
-    })
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-
-  if (!scored.length) return null
-  const best = scored[0]
-  return {
-    ...best.item,
-    matchScore: best.score,
-    related: scored.slice(1, 3).map((entry) => entry.item.title),
-  }
-}
+/**
+ * 知识库检索：实现已迁到 ai/knowledge.js（BM25 + 同义词 + 分层阈值），
+ * 这里保留同名导出，返回结构与旧版一致，避免调用方改动。
+ */
+export const searchKnowledge = (text) => searchKnowledgeDetailed(text)
 
 export const precheckRequest = ({ text, category, location }) => {
   const analysis = analyzeRequest({ text, category, location })
   const knowledge = searchKnowledge(text)
   const riskBlocksSelfService = analysis.risk !== 'low'
   const urgentBlocksSelfService = analysis.urgency === 'urgent' || analysis.urgency === 'high'
-  const canSelfSolve = Boolean(knowledge) && !riskBlocksSelfService && !urgentBlocksSelfService
+  // 只有高置信命中才允许自助，probable 只作参考（阈值调优，降低「抢答」带来的错答率）
+  const confidentMatch = knowledge?.matchTier === 'confident'
+  const canSelfSolve = Boolean(knowledge) && confidentMatch && !riskBlocksSelfService && !urgentBlocksSelfService
 
   let selfServiceAnswer = ''
   if (knowledge) {
@@ -448,6 +433,9 @@ export const precheckRequest = ({ text, category, location }) => {
           departmentId: knowledge.departmentId,
           updatedAt: knowledge.updatedAt,
           matchScore: knowledge.matchScore,
+          matchTier: knowledge.matchTier,
+          confidence: knowledge.confidence,
+          matchedTerms: knowledge.matchedTerms,
           related: knowledge.related,
         }
       : null,
