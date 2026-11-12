@@ -279,17 +279,16 @@ export function ProfilePage() {
         <div className="help-sheet">
           <div className="help-faq">
             <strong>诉求提交后多久会被看到？</strong>
-            <p>辅导员通常在 2 小时内完成首次审核；紧急与高风险工单会触发优先提醒。</p>
+            <p>处理时间需由学校确认；系统会提示辅导员优先关注高风险工单。</p>
           </div>
           <div className="help-faq">
             <strong>可以撤回或修改诉求吗？</strong>
             <p>审核前可在工单详情补充说明；如需撤回，请直接联系辅导员。</p>
           </div>
-          <a href="tel:057188208125" className="help-contact">
+          <div className="help-contact">
             <span><Phone size={17} /></span>
-            <div><strong>联系学生工作办公室</strong><small>工作日 9:00–17:00</small></div>
-            <ChevronRight size={16} />
-          </a>
+            <div><strong>联系辅导员</strong><small>联系方式请以学校官方渠道为准</small></div>
+          </div>
           <button className="help-feedback" onClick={() => toast('反馈入口已记录，感谢你的建议。', 'success')}>
             提交产品建议
           </button>
