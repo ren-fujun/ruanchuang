@@ -120,10 +120,9 @@ try {
     )
     await studentPage.getByPlaceholder('楼栋 / 教室 / 线上').fill('学生公寓 3 号楼 412')
     await studentPage.getByRole('button', { name: '让 AI 先看看' }).click()
-    await studentPage.getByText(/AI 预检完成|AI 暂时未能完成预检/).first().waitFor({ state: 'visible', timeout: 30000 })
-    await studentPage
-      .getByRole('button', { name: /^(确认提交|仍要提交|核对后提交草稿)$/ })
-      .click()
+    const submitButton = studentPage.getByRole('button', { name: /^(确认提交|仍要提交|核对后提交草稿)$/ })
+    await submitButton.waitFor({ state: 'visible', timeout: 30000 })
+    await submitButton.click()
     await studentPage.getByText('已经接住了。').waitFor({ state: 'visible', timeout: 20000 })
     const idText = await studentPage.getByText(/提交编号 ·/).innerText()
     ticketId = idText.split('·').at(-1).trim()
