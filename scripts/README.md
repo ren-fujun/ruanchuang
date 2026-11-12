@@ -34,10 +34,10 @@ node scripts\screenshots\core-pages.mjs
 | 脚本 | 前置服务 | 作用 |
 | --- | --- | --- |
 | `api.mjs` | `npm start`（API `8787`） | 接口全链路：登录 → 提交诉求 → 审核分派 → 部门接单 → 处置 → 确认评价 → 归档 |
-| `ui.mjs` | 需在 `8788` 起服务 | 390×844 移动视口走查，收集控制台报错，截图落在 `screenshots/e2e/` |
+| `ui.mjs` | `npm start`（默认 `8787`，支持 `E2E_BASE_URL`） | 390×844 移动视口走查，收集控制台报错，截图落在 `screenshots/e2e/` |
 | `contract-mock.mjs` | `npm run dev`（`5180`） | 校验前后端契约：MSW 模拟数据与真实接口返回结构是否一致 |
 
-> `ui.mjs` 里的基址是历史遗留的 `8788`，若本机服务不在该端口，请先改脚本首行的 `base`。
+> `api.mjs` 和 `ui.mjs` 默认访问 `8787`，可通过 `E2E_BASE_URL` 指定独立测试服务。测试会创建工单，请勿对正式数据运行。
 
 ## screenshots/ · 截图产出
 

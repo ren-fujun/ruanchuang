@@ -14,7 +14,11 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5180",
     "start": "node server/index.js",
-    "seed": "node server/reset.js"
+    "seed": "node server/reset.js",
+    "typecheck": "tsc --noEmit",
+    "demo": "npm run build && node scripts/demo.mjs",
+    "test:e2e:api": "node scripts/e2e/api.mjs",
+    "test:e2e:ui": "node scripts/e2e/ui.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",

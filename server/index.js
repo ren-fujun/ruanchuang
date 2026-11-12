@@ -82,6 +82,21 @@ const decorateTicket = (ticket) => {
   }
 }
 
+// Keep counselor-only follow-up content out of every student ticket response.
+const ticketForUser = (ticket, user) => {
+  const decorated = decorateTicket(ticket)
+  if (user?.role !== 'student') return decorated
+  return {
+    ...decorated,
+    notes: [],
+    timeline: (decorated.timeline || []).filter((event) => event.type !== 'note').map((event) => {
+      if (event.type === 'assigned') return { ...event, desc: String(event.desc || '').split('。督办备注：')[0] }
+      if (event.type === 'urge') return { ...event, desc: '辅导员已跟进督办，请留意后续进展。' }
+      return event
+    }),
+  }
+}
+
 const publicUser = (user) => {
   if (!user) return null
   const { password, ...safe } = user
@@ -244,6 +259,14 @@ const categoryStats = (tickets) => {
     .sort((a, b) => b.value - a.value)
 }
 
+const averageResponseHours = (tickets) => {
+  const samples = tickets.map((ticket) => {
+    const assigned = ticket.timeline.find((event) => event.type === 'assigned')
+    return assigned ? hoursBetween(ticket.createdAt, assigned.at) : null
+  }).filter((value) => value !== null && Number.isFinite(value))
+  return samples.length ? Number((samples.reduce((sum, value) => sum + value, 0) / samples.length).toFixed(1)) : 0
+}
+
 const departmentStats = (tickets) => {
   return db.departments.map((department) => {
     const assigned = tickets.filter((ticket) => ticket.departmentIds?.includes(department.id))
@@ -257,14 +280,14 @@ const departmentStats = (tickets) => {
       .filter((value) => value !== null && Number.isFinite(value))
     const avgHours = responseSamples.length
       ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : department.avgHours
+      : 0
     return {
       ...department,
       active: active.length,
       completed: completed.length,
       total: assigned.length,
       avgHours,
-      onTime: department.onTime,
+      onTime: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : 0,
       load: Math.min(100, 24 + active.length * 16),
     }
   })
@@ -487,7 +510,7 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
   const awaiting = mine.filter((ticket) => ticket.status === 'awaiting_confirm')
   const updates = mine
     .flatMap((ticket) =>
-      ticket.timeline.map((event) => ({
+      ticketForUser(ticket, req.user).timeline.map((event) => ({
         ...event,
         ticketId: ticket.id,
         ticketTitle: ticket.title,
@@ -509,8 +532,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
       completed: completed.length,
       total: mine.length,
     },
-    featured: featured ? decorateTicket(featured) : null,
-    activeTickets: active.slice(0, 3).map(decorateTicket),
+    featured: featured ? ticketForUser(featured, req.user) : null,
+    activeTickets: active.slice(0, 3).map((ticket) => ticketForUser(ticket, req.user)),
     updates,
     knowledge: knowledgeBase.filter((item) => item.hot).slice(0, 4),
     notifications: notes,
@@ -561,7 +584,7 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
   res.json({
-    tickets: list.map(decorateTicket),
+    tickets: list.map((ticket) => ticketForUser(ticket, req.user)),
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -596,7 +619,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   if (!canAccessTicket(req.user, ticket)) {
     return res.status(403).json({ message: '你只能查看自己的诉求工单。' })
   }
-  const decorated = decorateTicket(ticket)
+  const decorated = ticketForUser(ticket, req.user)
   const related = db.tickets
     .filter(
       (item) =>
@@ -605,7 +628,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
         (item.category === ticket.category || item.status !== 'completed'),
     )
     .slice(0, 3)
-    .map(decorateTicket)
+    .map((ticket) => ticketForUser(ticket, req.user))
   res.json({
     ticket: decorated,
     related,
@@ -719,7 +742,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), asyncRoute(async (
   })
 
   save()
-  res.status(201).json({ ticket: decorateTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
+  res.status(201).json({ ticket: ticketForUser(ticket, req.user), message: '诉求已提交，辅导员会尽快查看。' })
 }))
 
 app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, res) => {
@@ -764,7 +787,7 @@ app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, 
     tone: 'mint',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已确认办结，谢谢你的反馈。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已确认办结，谢谢你的反馈。' })
 })
 
 app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res) => {
@@ -783,7 +806,7 @@ app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('rated', '收到新的服务评价', `${score} 星 · ${ticket.rating.comment || '未填写评价'}`, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
 })
 
 app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (req, res) => {
@@ -807,7 +830,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已提醒辅导员，请耐心等待最新进展。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已提醒辅导员，请耐心等待最新进展。' })
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
@@ -821,23 +844,14 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
   )
   const today = new Date()
   const todayNew = tickets.filter((ticket) => dayDiff(ticket.createdAt, today) === 0)
-  const responseSamples = tickets
-    .map((ticket) => {
-      const assignedEvent = ticket.timeline.find((event) => event.type === 'assigned')
-      return assignedEvent ? hoursBetween(ticket.createdAt, assignedEvent.at) : null
-    })
-    .filter((value) => value !== null && Number.isFinite(value))
-  const avgResponse =
-    responseSamples.length > 0
-      ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : 2.4
+  const avgResponse = averageResponseHours(tickets)
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
   const satisfaction = ratings.length
     ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
+    : 0
   const onTimeCount = completed.filter(isOnTime).length
-  const onTimeRate = Math.round(((onTimeCount + 18) / (completed.length + 19)) * 100)
-  const closureRate = Math.round(((completed.length + 16) / (tickets.length + 18)) * 100)
+  const onTimeRate = completed.length ? Math.round(onTimeCount / completed.length * 100) : 0
+  const closureRate = tickets.length ? Math.round(completed.length / tickets.length * 100) : 0
   const queue = [...pending]
     .sort((a, b) => {
       const priority = { high: 0, medium: 1, low: 2 }
@@ -877,8 +891,8 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
       dormChecked: dormOverview.summary.checked,
     },
     brief: generateCounselorBrief(tickets),
-    urgent: urgent.map(decorateTicket),
-    queue: queue.map(decorateTicket),
+    urgent: urgent.map((ticket) => ticketForUser(ticket, req.user)),
+    queue: queue.map((ticket) => ticketForUser(ticket, req.user)),
     week: weeklySeries(tickets),
     categories: categoryStats(tickets).slice(0, 5),
     departments: departmentStats(tickets),
@@ -928,7 +942,7 @@ app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req
     tone: 'blue',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已审核并分派，学生会同步收到进展通知。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已审核并分派，学生会同步收到进展通知。' })
 })
 
 app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (req, res) => {
@@ -986,7 +1000,7 @@ app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (r
     return res.status(400).json({ message: '未知的进展操作。' })
   }
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '进展已更新。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '进展已更新。' })
 })
 
 app.patch('/api/tickets/:id/urge', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1008,7 +1022,7 @@ app.patch('/api/tickets/:id/urge', requireAuth, requireRole('counselor'), (req, 
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '催办已送达，工单 SLA 保持不变。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '催办已送达，工单 SLA 保持不变。' })
 })
 
 app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1020,7 +1034,7 @@ app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, r
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('note', '新增跟进备注', text, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '跟进备注已记录。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '跟进备注已记录。' })
 })
 
 app.post('/api/tickets/:id/split', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1082,8 +1096,8 @@ app.post('/api/tickets/:id/split', requireAuth, requireRole('counselor'), (req, 
   })
   save()
   res.json({
-    parent: decorateTicket(parent),
-    children: children.map(decorateTicket),
+    parent: ticketForUser(parent, req.user),
+    children: children.map((ticket) => ticketForUser(ticket, req.user)),
     message: `已拆分为 ${children.length} 张子工单。`,
   })
 })
@@ -1105,7 +1119,7 @@ app.patch('/api/tickets/:id/remind-confirm', requireAuth, requireRole('counselor
     tone: 'peach',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '确认提醒已发送。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '确认提醒已发送。' })
 })
 
 function getTicketOrNotFound(id, res) {
@@ -1119,7 +1133,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
   const satisfaction = ratings.length
     ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
+    : 0
   const categories = categoryStats(tickets)
   const tagCounts = new Map()
   tickets.forEach((ticket) => {
@@ -1154,10 +1168,10 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
       total: tickets.length,
       weekly: weeklyTotal,
       satisfaction,
-      onTimeRate: Math.round(((completed.filter(isOnTime).length + 18) / (completed.length + 19)) * 100),
-      closureRate: Math.round(((completed.length + 16) / (tickets.length + 18)) * 100),
+      onTimeRate: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : 0,
+      closureRate: tickets.length ? Math.round(completed.length / tickets.length * 100) : 0,
       highRisk: active.filter((ticket) => ticket.risk === 'high').length,
-      avgResponse: 2.4,
+      avgResponse: averageResponseHours(tickets),
     },
     week,
     categories,
@@ -1170,7 +1184,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
       low: active.filter((ticket) => ticket.risk === 'low').length,
     },
     suggestion: {
-      title: topCategory ? `「${topCategory.name}」是本周最集中的诉求类型` : '本周诉求分布平稳',
+      title: topCategory ? `「${topCategory.name}」是当前最集中的诉求类型` : '本周诉求分布平稳',
       body: topCategory
         ? `共 ${topCategory.value} 条，占全部诉求的 ${Math.round((topCategory.value / tickets.length) * 100)}%。建议联合${topDepartment?.short || '相关'}开展一次专项排查，把高频问题前置解决。`
         : '建议保持每周复盘，持续关注高风险与超时工单。',

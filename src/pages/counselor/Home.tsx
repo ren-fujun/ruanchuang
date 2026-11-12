@@ -131,7 +131,7 @@ export function CounselorHome() {
               <ArrowRight size={15} />
             </Link>
             <span>
-              本周闭环率 <strong>{stats.closureRate}%</strong>
+              工单闭环率 <strong>{stats.closureRate}%</strong>
             </span>
           </div>
         </section>

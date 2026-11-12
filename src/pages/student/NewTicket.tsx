@@ -17,7 +17,6 @@ import {
   MapPin,
   Mic,
   MoreHorizontal,
-  Phone,
   Shield,
   ShieldAlert,
   Sparkles,
@@ -424,7 +423,7 @@ export function NewTicket() {
               <h2>正在读懂你的诉求…</h2>
               <p>识别类型、风险与可协助的部门。</p>
             </section>
-          ) : precheckUnavailable ? (
+          ) : precheckUnavailable || !precheck ? (
             <section className="precheck-unavailable card">
               <div className="ai-badge"><Sparkles size={13} /> AI 暂时未能完成预检</div>
               <h2>你的描述已经为你保留</h2>
@@ -472,10 +471,9 @@ export function NewTicket() {
                 <section className="risk-alert-card">
                   <div className="risk-alert-icon"><ShieldAlert size={22} /></div>
                   <div>
-                    <strong>你不需要一个人扛着</strong>
+                    <strong>{precheck.analysis.category === '心理支持' ? '你不需要一个人扛着' : '这条诉求需要优先处理'}</strong>
                     <p>{precheck.analysis.riskReason}</p>
                     <div className="risk-alert-actions">
-                      <a href="tel:057188208125"><Phone size={13} /> 24h 心理援助</a>
                       <span>提交后辅导员会优先联系你</span>
                     </div>
                   </div>
