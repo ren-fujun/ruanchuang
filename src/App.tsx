@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from './context/AuthContext'
 import { AppShell } from './components/layout/AppShell'
+import { CounselorShell } from './components/layout/CounselorShell'
 import { BrandMark } from './components/ui'
 import { LoginPage } from './pages/Login'
 import { StudentHome } from './pages/student/Home'
@@ -74,7 +75,7 @@ export default function App() {
       <Route
         element={
           <RequireRole role="counselor">
-            <AppShell role="counselor" />
+            <CounselorShell />
           </RequireRole>
         }
       >

@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowUpRight,
   ChevronRight,
   CircleDot,
   Clock3,
-  Download,
   Flame,
   Lightbulb,
   Radar,
@@ -14,25 +13,24 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useApi } from '../../lib/useApi'
-import { useToast } from '../../context/ToastContext'
 import type { InsightsData } from '../../types'
 import { PageHeader } from '../../components/layout/AppShell'
 import { DeptAvatar, EmptyState, ProgressRing, SkeletonPage } from '../../components/ui'
 
+const categoryColors = ['#687f70', '#8fa495', '#b3c3b5', '#d0dcd1', '#9cae9d', '#dfe7e0', '#7a8e80', '#c1cec4']
+
 export function CounselorInsights() {
   const navigate = useNavigate()
-  const { toast } = useToast()
   const { data, loading, error, reload } = useApi<InsightsData>('/counselor/insights')
-  const [range, setRange] = useState<'7' | '30'>('7')
 
   const donut = useMemo(() => {
-    if (!data) return ''
+    if (!data?.categories.length) return '#e9eeea'
     const total = data.categories.reduce((sum, item) => sum + item.value, 0) || 1
     let cursor = 0
-    const stops = data.categories.map((item) => {
+    const stops = data.categories.map((item, index) => {
       const start = cursor
       cursor += (item.value / total) * 100
-      return `${item.color} ${start}% ${cursor}%`
+      return `${categoryColors[index % categoryColors.length]} ${start}% ${cursor}%`
     })
     return `conic-gradient(from -90deg, ${stops.join(', ')})`
   }, [data])
@@ -59,30 +57,13 @@ export function CounselorInsights() {
         eyebrow="INSIGHT STUDIO"
         title="协同洞察"
         right={
-          <div className="range-switch">
-            <button className={range === '7' ? 'active' : ''} onClick={() => setRange('7')}>7天</button>
-            <button
-              onClick={() => {
-                toast('近 30 天完整报表将在管理端开放，当前演示使用近 7 天数据。', 'info')
-              }}
-            >
-              30天
-            </button>
-          </div>
+          <span className="insight-period">近 7 日趋势</span>
         }
       />
 
       <section className="insight-hero">
         <div className="insight-hero-top">
           <span className="insight-live"><i className="live-dot" />AI 复盘已更新</span>
-          <button
-            onClick={() => {
-              toast('数据报表将在管理端版本开放导出。', 'info')
-            }}
-          >
-            <Download size={14} />
-            导出
-          </button>
         </div>
         <div className="insight-hero-main">
           <div>
@@ -130,7 +111,7 @@ export function CounselorInsights() {
         </div>
         <div className="chart-note">
           <TrendingUp size={14} />
-          晚间 18:00–24:00 是诉求提交高峰，占全部工单的 {Math.round(((timeSlots.find((slot) => slot.name === '晚间')?.value || 0) / summary.total) * 100)}%
+          晚间 18:00–24:00 的诉求占全部工单的 {Math.round(((timeSlots.find((slot) => slot.name === '晚间')?.value || 0) / Math.max(summary.total, 1)) * 100)}%
         </div>
       </section>
 
@@ -150,9 +131,9 @@ export function CounselorInsights() {
             </div>
           </div>
           <div className="donut-legend">
-            {categories.slice(0, 5).map((item) => (
+            {categories.slice(0, 5).map((item, index) => (
               <div key={item.name}>
-                <span><i style={{ background: item.color }} />{item.name}</span>
+                <span><i style={{ background: categoryColors[index % categoryColors.length] }} />{item.name}</span>
                 <strong>{Math.round((item.value / totalCategory) * 100)}%</strong>
               </div>
             ))}
@@ -212,6 +193,24 @@ export function CounselorInsights() {
         </div>
       </section>
 
+      <section className="ai-suggestion">
+        <span className="ai-suggestion-orb"><Lightbulb size={21} /></span>
+        <div>
+          <span className="eyebrow">AI SUGGESTION</span>
+          <h3>{suggestion.title}</h3>
+          <p>{suggestion.body}</p>
+          <button
+            onClick={() => {
+              navigate('/counselor/tickets?overdue=true')
+            }}
+          >
+            查看超时工单
+            <ArrowUpRight size={14} />
+          </button>
+        </div>
+        <span className="suggestion-scribble" />
+      </section>
+
       <section className="dept-performance">
         <div className="chart-head">
           <div><span className="eyebrow">DEPARTMENT PULSE</span><h2>部门协同效率</h2></div>
@@ -237,27 +236,11 @@ export function CounselorInsights() {
         </div>
       </section>
 
-      <section className="ai-suggestion">
-        <span className="ai-suggestion-orb"><Lightbulb size={21} /></span>
-        <div>
-          <span className="eyebrow">AI SUGGESTION</span>
-          <h3>{suggestion.title}</h3>
-          <p>{suggestion.body}</p>
-          <button
-            onClick={() => {
-              toast('专项治理建议已加入待办，可在管理端查看。', 'success')
-            }}
-          >
-            {suggestion.action}
-            <ArrowUpRight size={14} />
-          </button>
-        </div>
-        <span className="suggestion-scribble" />
-      </section>
+
 
       <div className="insight-footnote">
         <CircleDot size={12} />
-        数据每 10 分钟刷新 · 统计口径包含全部协同部门
+        统计口径包含全部协同部门
       </div>
     </div>
   )

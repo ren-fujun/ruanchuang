@@ -1,330 +1,292 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
-  AlertTriangle,
   ArrowRight,
   ArrowUpRight,
-  Bell,
-  ChevronRight,
-  CircleAlert,
+  CalendarDays,
+  CheckCheck,
   Clock3,
-  DoorOpen,
-  Flame,
   Inbox,
-  Radar,
   ShieldAlert,
   Sparkles,
-  TimerReset,
-  Users,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useApi } from '../../lib/useApi'
-import { greeting, shortCountdown, todayLabel } from '../../lib/format'
-import type { CounselorDashboard, Ticket } from '../../types'
-import { PageHeader } from '../../components/layout/AppShell'
+import { todayLabel } from '../../lib/format'
+import type { CounselorDashboard } from '../../types'
 import {
-  Avatar,
   EmptyState,
-  ProgressRing,
-  RiskBadge,
-  SectionHead,
   SkeletonPage,
-  SlaCountdown,
   StatusPill,
+  RiskBadge,
 } from '../../components/ui'
-import { TicketCard } from '../../components/TicketCard'
 
 export function CounselorHome() {
   const { user } = useAuth()
-  const navigate = useNavigate()
-  const { data, loading, error, reload } = useApi<CounselorDashboard>('/counselor/dashboard')
-
+  const { data, loading, error, reload } = useApi<CounselorDashboard>(
+    '/counselor/dashboard',
+  )
   if (loading && !data) return <SkeletonPage />
-  if (error && !data) {
+  if (error && !data)
     return (
-      <div className="page">
-        <EmptyState title="中枢暂时离线" body={error} action={<button className="primary-button small" onClick={reload}>重新连接</button>} />
-      </div>
-    )
-  }
-  if (!data || !user) return null
-
-  const { stats, brief, urgent, queue, week, departments, unread } = data
-  const topRisk = urgent.find((ticket) => ticket.risk === 'high') || urgent[0]
-  const weekMax = Math.max(...week.map((day) => Math.max(day.created, day.completed)), 1)
-  const weekTotal = week.reduce((sum, day) => sum + day.created, 0)
-
-  return (
-    <div className="page counselor-home">
-      <PageHeader
-        eyebrow="COMMAND CENTER"
-        title={`${greeting()}，陈老师`}
-        right={
-          <div className="counselor-head-actions">
-            <button className="icon-button" onClick={() => navigate('/counselor/messages')} aria-label="消息">
-              <Bell size={19} />
-              {unread > 0 && <i className="notification-dot">{unread}</i>}
-            </button>
-            <button onClick={() => navigate('/counselor/profile')} className="avatar-button" aria-label="我的">
-              <Avatar name={user.name} tone={user.avatarTone} size={42} online />
-            </button>
-          </div>
+      <EmptyState
+        title="概览加载失败"
+        body={error}
+        action={
+          <button className="primary-button" onClick={reload}>
+            重新加载
+          </button>
         }
       />
-
-      <div className="counselor-date-line">
-        <span>{todayLabel()}</span>
-        <span className="duty-pill"><i />值班中</span>
-      </div>
-
-      <section className="command-hero">
-        <div className="command-grid-lines" />
-        <div className="command-hero-top">
-          <span className="command-live"><i className="live-dot" />TODAY · 中枢实时</span>
-          <span className="command-ai"><Sparkles size={12} />AI 已梳理 {stats.todayNew} 条新动态</span>
+    )
+  if (!data) return null
+  const { stats, brief, urgent, queue, week, departments } = data
+  const weekMax = Math.max(
+    ...week.flatMap((day) => [day.created, day.completed]),
+    1,
+  )
+  const metrics = [
+    {
+      label: '待审核工单',
+      value: stats.pending,
+      note: '等待复核与分派',
+      icon: Inbox,
+      to: '?status=pending_review',
+    },
+    {
+      label: '协同处理中',
+      value: stats.processing,
+      note: '跟进部门办理进展',
+      icon: Clock3,
+      to: '?status=processing',
+    },
+    {
+      label: '超时待督办',
+      value: stats.overdue,
+      note: '及时联系经办部门',
+      icon: ShieldAlert,
+      to: '?overdue=true',
+    },
+    {
+      label: '已办结工单',
+      value: stats.completed,
+      note: '查看办理结果与评价',
+      icon: CheckCheck,
+      to: '?status=completed',
+    },
+  ]
+  return (
+    <div className="page overview-page">
+      <header className="overview-heading">
+        <div>
+          <h1>工作概览</h1>
+          <p>{user?.name}，你好。今天的协同工作，从这里开始。</p>
         </div>
-        <div className="command-hero-main">
-          <div className="command-copy">
-            <h1>{brief.headline}</h1>
-            <p>{brief.detail}</p>
-          </div>
-          <ProgressRing value={stats.closureRate} size={108} stroke={8} label={`${stats.closureRate}%`} sublabel="本周闭环" tone="lime" />
-        </div>
-        <div className="command-stats">
-          <button onClick={() => navigate('/counselor/tickets?status=pending_review')}>
-            <span>待审核</span>
-            <strong>{String(stats.pending).padStart(2, '0')}</strong>
-          </button>
-          <button onClick={() => navigate('/counselor/tickets?status=processing')}>
-            <span>处理中</span>
-            <strong>{String(stats.processing).padStart(2, '0')}</strong>
-          </button>
-          <button className={stats.overdue ? 'has-alert' : ''} onClick={() => navigate('/counselor/tickets?overdue=true')}>
-            <span>已超时</span>
-            <strong>{String(stats.overdue).padStart(2, '0')}</strong>
-          </button>
-        </div>
-        <div className="command-hero-foot">
-          <div className="command-actions">
-            {brief.actions.slice(0, 2).map((action) => (
-              <span key={action}><Sparkles size={11} />{action}</span>
-            ))}
-          </div>
-          <button onClick={() => navigate('/counselor/tickets')}>
-            进入工单台
-            <ArrowRight size={15} />
-          </button>
-        </div>
-        <span className="command-orbit orbit-c1" />
-        <span className="command-orbit orbit-c2" />
-      </section>
-
-      <section className="quick-command-grid">
-        <button onClick={() => navigate('/counselor/tickets?status=pending_review')}>
-          <span className="quick-command-icon mint"><Inbox size={18} /></span>
-          <strong>待我审核</strong>
-          <small>{stats.pending} 条</small>
-          <ChevronRight size={14} />
-        </button>
-        <button onClick={() => navigate('/counselor/tickets?risk=high')}>
-          <span className="quick-command-icon coral"><ShieldAlert size={18} /></span>
-          <strong>高风险</strong>
-          <small>{stats.highRisk} 条</small>
-          <ChevronRight size={14} />
-        </button>
-        <button onClick={() => navigate('/counselor/tickets?overdue=true')}>
-          <span className="quick-command-icon gold"><TimerReset size={18} /></span>
-          <strong>超时督办</strong>
-          <small>{stats.overdue} 条</small>
-          <ChevronRight size={14} />
-        </button>
-        <button onClick={() => navigate('/counselor/insights')}>
-          <span className="quick-command-icon blue"><Radar size={18} /></span>
-          <strong>数据洞察</strong>
-          <small>本周</small>
-          <ChevronRight size={14} />
-        </button>
-        <button className="quick-command-wide" onClick={() => navigate('/counselor/dorm-check')}>
-          <span className="quick-command-icon lime"><DoorOpen size={18} /></span>
-          <strong>宿舍查寝</strong>
-          <small>{stats.dormPending} 间待查</small>
-          <ChevronRight size={14} />
-        </button>
-      </section>
-
-      {topRisk && (
-        <section className="risk-radar-card">
-          <div className="risk-radar-visual">
-            <span className="radar-ring r1" />
-            <span className="radar-ring r2" />
-            <span className="radar-ring r3" />
-            <span className="radar-sweep" />
-            <span className="radar-blip" />
-            <ShieldAlert size={18} className="radar-icon" />
-          </div>
-          <div className="risk-radar-content">
-            <div className="risk-radar-top">
-              <span className="risk-live"><i />需要优先介入</span>
-              <span className="risk-student">
-                <Avatar name={topRisk.studentName} tone="peach" size={24} />
-                {topRisk.studentName}
-              </span>
+        <span className="overview-date">
+          <CalendarDays size={15} />
+          {todayLabel()}
+        </span>
+      </header>
+      <section className="overview-metrics" aria-label="工单统计">
+        {metrics.map(({ label, value, note, icon: Icon, to }) => (
+          <Link
+            className="overview-metric"
+            to={'/counselor/tickets' + to}
+            key={label}
+          >
+            <div>
+              <span>{label}</span>
+              <Icon size={17} />
             </div>
-            <h3>{topRisk.title}</h3>
-            <p>{topRisk.ai.riskReason}</p>
-            <div className="risk-radar-actions">
-              <button className="risk-cta" onClick={() => navigate(`/counselor/tickets/${topRisk.id}`)}>
-                查看并介入
-                <ArrowUpRight size={14} />
-              </button>
-              <span><Clock3 size={12} />{shortCountdown(topRisk.minutesLeft)}</span>
-            </div>
+            <strong>
+              {value}
+              <small>条</small>
+            </strong>
+            <p>
+              {note}
+              <ArrowUpRight size={14} />
+            </p>
+          </Link>
+        ))}
+      </section>
+      <div className="overview-grid">
+        <section className="overview-brief overview-panel" data-reveal>
+          <div className="overview-section-head">
+            <span className="overview-assistant">
+              <Sparkles size={15} />
+              今日协同简报
+            </span>
+            <span>新增 {stats.todayNew} 条</span>
+          </div>
+          <h2>{brief.headline}</h2>
+          <p>
+            待审核 {stats.pending} 条 · 超时 {stats.overdue} 条 · 高风险{' '}
+            {stats.highRisk} 条
+          </p>
+          <div className="overview-brief-bottom">
+            <Link
+              className="primary-button"
+              to="/counselor/tickets?status=pending_review"
+            >
+              开始处理
+              <ArrowRight size={15} />
+            </Link>
+            <span>
+              本周闭环率 <strong>{stats.closureRate}%</strong>
+            </span>
           </div>
         </section>
-      )}
-
-      <section className="home-section">
-        <SectionHead
-          eyebrow="SLA WATCH"
-          title="限时督办"
-          action="全部工单"
-          onAction={() => navigate('/counselor/tickets')}
-        />
-        {urgent.length ? (
-          <div className="urgent-track">
-            {urgent.slice(0, 4).map((ticket: Ticket) => (
-              <button
-                className={`urgent-card ${ticket.overdue ? 'overdue' : ''} ${ticket.risk === 'high' ? 'high' : ''}`}
-                key={ticket.id}
-                onClick={() => navigate(`/counselor/tickets/${ticket.id}`)}
-              >
-                <div className="urgent-card-top">
-                  <span className={`urgent-flag ${ticket.risk}`}>
-                    {ticket.overdue ? <Flame size={12} /> : <AlertTriangle size={12} />}
-                    {ticket.overdue ? '已超时' : ticket.risk === 'high' ? '高风险' : '临界'}
-                  </span>
-                  <span className="urgent-id">#{ticket.id.slice(-4)}</span>
+        <section className="overview-priority overview-panel" data-reveal>
+          <div className="overview-section-head">
+            <h2>
+              <ShieldAlert size={17} />
+              重点关注
+            </h2>
+            <Link to="/counselor/tickets?risk=high">
+              查看全部
+              <ArrowUpRight size={14} />
+            </Link>
+          </div>
+          <p className="overview-caption">
+            {stats.highRisk} 条高风险诉求，优先核实学生与现场情况
+          </p>
+          <div className="overview-priority-list">
+            {urgent.slice(0, 2).map((ticket) => (
+              <Link to={'/counselor/tickets/' + ticket.id} key={ticket.id}>
+                <span className="overview-priority-dot" />
+                <div>
+                  <strong>{ticket.title}</strong>
+                  <small>
+                    {ticket.studentName} ·{' '}
+                    {ticket.overdue ? '已超时，待跟进' : ticket.statusLabel}
+                  </small>
                 </div>
-                <h3>{ticket.title}</h3>
-                <div className="urgent-student">
-                  <Avatar name={ticket.studentName} tone="lime" size={22} />
+                <ArrowUpRight size={15} />
+              </Link>
+            ))}
+            {!urgent.length && (
+              <p className="overview-empty">当前没有需要优先督办的工单</p>
+            )}
+          </div>
+        </section>
+        <section className="overview-queue overview-panel" data-reveal>
+          <div className="overview-section-head">
+            <h2>
+              待我审核 <small>{stats.pending}</small>
+            </h2>
+            <Link to="/counselor/tickets?status=pending_review">
+              全部工单
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="overview-caption">
+            核实诉求，明确责任部门，让每件事有序推进。
+          </p>
+          <div className="overview-table-label">
+            <span>诉求 / 学生</span>
+            <span>风险</span>
+            <span>状态</span>
+          </div>
+          {queue.slice(0, 4).map((ticket) => (
+            <Link
+              className="overview-ticket-row"
+              key={ticket.id}
+              to={'/counselor/tickets/' + ticket.id}
+            >
+              <div>
+                <strong>{ticket.title}</strong>
+                <small>
                   {ticket.studentName} · {ticket.category}
+                </small>
+              </div>
+              <RiskBadge risk={ticket.risk} />
+              <StatusPill status={ticket.status} label={ticket.statusLabel} />
+            </Link>
+          ))}
+          {!queue.length && (
+            <p className="overview-empty">
+              审核队列已清空，新的诉求会显示在这里。
+            </p>
+          )}
+        </section>
+        <section className="overview-trend overview-panel" data-reveal>
+          <div className="overview-section-head">
+            <h2>诉求趋势</h2>
+            <span>近 7 日</span>
+          </div>
+          <div className="overview-trend-total">
+            <strong>{week.reduce((sum, day) => sum + day.created, 0)}</strong>
+            <span>条受理诉求</span>
+          </div>
+          <div className="overview-chart" aria-label="近七日受理与办结工单数量">
+            {week.map((day) => (
+              <div
+                className="overview-chart-col"
+                key={day.key}
+                tabIndex={0}
+                aria-label={
+                  day.label +
+                  '，受理 ' +
+                  day.created +
+                  '，办结 ' +
+                  day.completed
+                }
+              >
+                <div className="overview-bars">
+                  <span
+                    style={{ height: (day.created / weekMax) * 100 + '%' }}
+                  />
+                  <span
+                    style={{ height: (day.completed / weekMax) * 100 + '%' }}
+                  />
                 </div>
-                <div className="urgent-card-foot">
-                  <SlaCountdown ticket={ticket} compact />
-                  <span>进入工单 <ArrowUpRight size={12} /></span>
-                </div>
-              </button>
+                <small>{day.label}</small>
+                <span className="overview-chart-tip">
+                  受理 {day.created} · 办结 {day.completed}
+                </span>
+              </div>
             ))}
           </div>
-        ) : (
-          <EmptyState title="所有工单都在时限内" body="今天没有需要紧急介入的督办事项。" />
-        )}
-      </section>
-
-      <section className="home-section">
-        <SectionHead
-          eyebrow="REVIEW QUEUE"
-          title="待我审核"
-          action={`${stats.pending} 条待处理`}
-          onAction={() => navigate('/counselor/tickets?status=pending_review')}
-        />
-        <div className="counselor-queue">
-          {queue.length ? (
-            queue.slice(0, 3).map((ticket) => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                showStudent
-                compact
-                onClick={() => navigate(`/counselor/tickets/${ticket.id}`)}
-              />
-            ))
-          ) : (
-            <EmptyState icon={<CircleAlert size={22} />} title="审核队列已清空" body="新的学生诉求会在这里出现。" />
-          )}
-        </div>
-      </section>
-
-      <section className="week-card">
-        <div className="week-card-head">
-          <div>
-            <span className="eyebrow">WEEKLY RHYTHM</span>
-            <h3>本周诉求节奏</h3>
+          <div className="overview-chart-legend">
+            <span>
+              <i />
+              受理
+            </span>
+            <span>
+              <i />
+              办结
+            </span>
+            <Link to="/counselor/insights">
+              查看洞察
+              <ArrowUpRight size={13} />
+            </Link>
           </div>
-          <div className="week-total">
-            <strong>{weekTotal}</strong>
-            <span>条新诉求</span>
+        </section>
+        <section className="overview-departments overview-panel" data-reveal>
+          <div className="overview-section-head">
+            <h2>部门协同</h2>
+            <Link to="/counselor/insights">
+              协同效率
+              <ArrowRight size={14} />
+            </Link>
           </div>
-        </div>
-        <div className="week-chart">
-          {week.map((day) => (
-            <div className="week-col" key={day.key}>
-              <div className="week-bars">
-                <span
-                  className="week-bar created"
-                  style={{ height: `${Math.max(4, (day.created / weekMax) * 100)}%` }}
-                  title={`受理 ${day.created}`}
-                />
-                <span
-                  className="week-bar completed"
-                  style={{ height: `${Math.max(4, (day.completed / weekMax) * 100)}%` }}
-                  title={`办结 ${day.completed}`}
-                />
-              </div>
-              <em>{day.label}</em>
-            </div>
-          ))}
-        </div>
-        <div className="week-legend">
-          <span><i className="created" />受理</span>
-          <span><i className="completed" />办结</span>
-          <span className="week-insight"><Sparkles size={11} />高峰集中在晚间</span>
-        </div>
-      </section>
-
-      <section className="home-section">
-        <SectionHead
-          eyebrow="COLLABORATION LOAD"
-          title="部门协同负载"
-          action="查看权责"
-          onAction={() => navigate('/counselor/profile')}
-        />
-        <div className="dept-load-list">
-          {departments.slice(0, 4).map((department) => (
-            <div className="dept-load-row" key={department.id}>
-              <span className="dept-load-icon" style={{ background: department.soft, color: department.color }}>
-                {department.short.slice(0, 1)}
-              </span>
-              <div className="dept-load-main">
+          <div className="overview-department-grid">
+            {departments.slice(0, 6).map((department) => (
+              <div className="overview-department" key={department.id}>
+                <span className="overview-department-icon">
+                  {department.short.slice(0, 1)}
+                </span>
                 <div>
                   <strong>{department.short}</strong>
-                  <span>{department.active} 个在办</span>
+                  <small>{department.active} 条在办</small>
                 </div>
-                <div className="dept-load-bar">
-                  <i style={{ width: `${department.load || 30}%`, background: department.color }} />
-                </div>
+                <span>
+                  {department.onTime}%<small>按时办结</small>
+                </span>
               </div>
-              <span className="dept-load-avg">{department.avgHours}h</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="counselor-satisfaction">
-        <div>
-          <span className="eyebrow">SERVICE PULSE</span>
-          <h3>被认真对待的诉求，正在变成信任。</h3>
-          <p>近 30 天平均满意度 <strong>{stats.satisfaction}</strong> / 5.0，按时办结率 <strong>{stats.onTimeRate}%</strong>。</p>
-        </div>
-        <div className="satisfaction-ring">
-          <ProgressRing value={stats.onTimeRate} size={80} stroke={6} label={`${stats.onTimeRate}%`} sublabel="按时" tone="coral" />
-        </div>
-      </section>
-
-      <footer className="app-footer">
-        <Sparkles size={13} />
-        今日中枢已同步 · 所有工单均可追溯
-      </footer>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }
