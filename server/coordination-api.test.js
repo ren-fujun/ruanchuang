@@ -65,6 +65,14 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
     assert.equal(insights.summary.avgResponse, null)
     const created = await call('/tickets', { token: student.token, body: { description: '图书馆空调故障持续影响同学', location: '图书馆二楼' } })
     const id = created.ticket.id
+    const repeated = await fetch(`${base}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${student.token}` }, body: JSON.stringify({ description: '图书馆空调故障持续影响同学', location: '图书馆二楼' }) })
+    assert.equal(repeated.status, 409)
+    assert.equal((await repeated.json()).code, 40901)
+    const otherLocation = await call('/tickets', { token: student.token, body: { description: '图书馆空调故障持续影响同学', location: '图书馆三楼' } })
+    assert.notEqual(otherLocation.ticket.id, id)
+    const concurrentBody = JSON.stringify({ description: '教学楼灯具故障需要维修', location: '教学楼一楼' })
+    const submissions = await Promise.all([1, 2].map(() => fetch(`${base}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${student.token}` }, body: concurrentBody })))
+    assert.deepEqual(submissions.map((response) => response.status).sort(), [201, 409])
     const assigned = await call(`/tickets/${id}/review`, { method: 'PATCH', token: counselor.token, body: { departmentIds: ['library', 'logistics'], note: '私人审核备注' } })
     assert.equal(assigned.ticket.status, 'assigned')
     await call(`/tickets/${id}/urge`, { method: 'PATCH', token: counselor.token, body: { note: '督办内部说明' } })
@@ -86,6 +94,8 @@ test('协同记录仅辅导员可见，学生可查看工单进度', async () =>
     const confirmed = await call(`/tickets/${id}/confirm`, { token: student.token, body: { score: 5, comment: '已确认' } })
     assert.equal(confirmed.ticket.status, 'completed')
     assert.doesNotMatch(JSON.stringify(confirmed), /私人审核备注|内部跟进|督办内部说明/)
+    const afterCompletion = await call('/tickets', { token: student.token, body: { description: '图书馆空调故障持续影响同学', location: '图书馆二楼' } })
+    assert.notEqual(afterCompletion.ticket.id, id)
   } finally {
     child.kill()
     await new Promise((resolve) => child.once('exit', resolve))

@@ -584,6 +584,16 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
     urgency: req.body?.urgency,
   })
   const analysis = await refineAnalysis(text, baseAnalysis, location)
+  // Check after the optional async AI call so concurrent requests cannot both create a ticket.
+  const normalizeSubmission = (value) => String(value || '').trim().replace(/\s+/g, ' ')
+  const requestLocation = normalizeSubmission(location || '未填写地点')
+  const duplicate = db.tickets.some((ticket) => {
+    const age = Date.now() - new Date(ticket.createdAt).getTime()
+    return ticket.studentId === req.user.id && ticket.status !== 'completed' && age >= 0 && age < 30000 &&
+      normalizeSubmission(ticket.description) === normalizeSubmission(text) &&
+      normalizeSubmission(ticket.location) === requestLocation
+  })
+  if (duplicate) return res.status(409).json({ message: '刚刚已提交相同诉求，请先查看工单列表，避免重复提交。' })
   const createdAt = nowIso()
   const id = nextTicketId()
   const timeline = [
