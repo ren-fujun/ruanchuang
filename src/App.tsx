@@ -1,3 +1,4 @@
+import { StudentAssistant } from './features/b/Assistant'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from './context/AuthContext'
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/student/home" element={<StudentHome />} />
         <Route path="/student/tickets" element={<StudentTickets />} />
         <Route path="/student/tickets/:id" element={<StudentTicketDetail />} />
+        <Route path="/student/assistant" element={<StudentAssistant />} />
         <Route path="/student/new" element={<NewTicket />} />
         <Route path="/student/messages" element={<MessagesPage />} />
         <Route path="/student/profile" element={<ProfilePage />} />

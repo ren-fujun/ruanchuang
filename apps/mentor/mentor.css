@@ -1,0 +1,43 @@
+.portal form {
+  display: grid;
+  gap: 16px;
+  max-width: 680px;
+}
+.portal label {
+  display: grid;
+  gap: 6px;
+}
+.portal input,
+.portal textarea,
+.portal select {
+  padding: 12px;
+  border: 1px solid #ccd7d0;
+  border-radius: 8px;
+  font: inherit;
+  width: 100%;
+  background: #fff;
+}
+.portal textarea {
+  min-height: 110px;
+}
+.portal main button {
+  background: #e8efea;
+  margin: 4px 8px 4px 0;
+}
+.portal button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.portal .case-row {
+  display: block;
+  width: 100%;
+}
+.portal .error {
+  background: #f9ece8;
+  color: #814e42;
+  padding: 16px;
+}
+.portal li {
+  border-bottom: 1px solid #e1e7e3;
+  padding: 12px 0;
+}

@@ -1,3 +1,4 @@
+import { mountB } from './b/routes.js'
 import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -159,6 +160,7 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !['/api/auth/logout', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   req.user = user
   next()
 }
@@ -1252,6 +1254,8 @@ app.post('/api/notifications/:id/read', requireAuth, (req, res) => {
   save()
   res.json({ ok: true })
 })
+
+mountB(app, {db, save, requireAuth})
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: '接口不存在。' })

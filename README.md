@@ -1,5 +1,9 @@
 # 智汇中枢 · 校园诉求协同督办系统
 
+## B 成员导师与 AI 交付
+
+分支 `feat/b-mentor-ai`：导师登录与学业跟进、受限协同、知识审核版本、学生追问与工单转人工。运行 `npm run demo:b`，完整接口、账号与验收见 [B 五端交付](docs/B五端交付.md)。
+
 ## 五端开发方案（2026-11-14）
 
 最新骨架分支：`feat/five-portals-plan`。详见 [五端开发方案与四人分工](docs/五端开发方案与四人分工.md)。五端独立启动命令为 `dev:student`、`dev:counselor`、`dev:academic`、`dev:logistics`、`dev:mentor`，分别使用 5191–5195 端口。`npm run build:portals` 生成五份独立产物。新增三端为明确标识的开发骨架，尚未实现认证和业务接口。
