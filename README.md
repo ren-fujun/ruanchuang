@@ -1,5 +1,10 @@
 # 智汇中枢 · 校园诉求协同督办系统
 
+## 五端开发方案（2026-11-14）
+
+最新骨架分支：`feat/five-portals-plan`。详见 [五端开发方案与四人分工](docs/五端开发方案与四人分工.md)。五端独立启动命令为 `dev:student`、`dev:counselor`、`dev:academic`、`dev:logistics`、`dev:mentor`，分别使用 5191–5195 端口。`npm run build:portals` 生成五份独立产物。新增三端为明确标识的开发骨架，尚未实现认证和业务接口。
+
+
 ## 明日演示入口（2026-11-12 更新）
 
 当前可运行的集成版本在 **feat/counselor-neo-ui** 分支，包含学生端、已接后端的辅导员桌面/手机界面、AI 认知链路。进入仓库根目录执行 `npm run demo`，打开 http://127.0.0.1:18792 。首次运行先 `npm ci`。

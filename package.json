@@ -18,7 +18,18 @@
     "typecheck": "tsc --noEmit",
     "demo": "npm run build && node scripts/demo.mjs",
     "test:e2e:api": "node scripts/e2e/api.mjs",
-    "test:e2e:ui": "node scripts/e2e/ui.mjs"
+    "test:e2e:ui": "node scripts/e2e/ui.mjs",
+    "dev:student": "vite --config apps/student/vite.config.mjs",
+    "build:student": "vite build --config apps/student/vite.config.mjs",
+    "dev:counselor": "vite --config apps/counselor/vite.config.mjs",
+    "build:counselor": "vite build --config apps/counselor/vite.config.mjs",
+    "dev:academic": "vite --config apps/academic/vite.config.mjs",
+    "build:academic": "vite build --config apps/academic/vite.config.mjs",
+    "dev:logistics": "vite --config apps/logistics/vite.config.mjs",
+    "build:logistics": "vite build --config apps/logistics/vite.config.mjs",
+    "dev:mentor": "vite --config apps/mentor/vite.config.mjs",
+    "build:mentor": "vite build --config apps/mentor/vite.config.mjs",
+    "build:portals": "npm run build:student && npm run build:counselor && npm run build:academic && npm run build:logistics && npm run build:mentor"
   },
   "dependencies": {
     "express": "^4.21.2",
