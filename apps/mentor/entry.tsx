@@ -1,3 +1,13 @@
+import {
+  BookOpen,
+  GraduationCap,
+  LayoutDashboard,
+  Library,
+  LogOut,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+} from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../shared/portal.css'
@@ -120,28 +130,54 @@ function App() {
     setKnowledge((await call('/b/knowledge')).items)
   }
   return (
-    <div className="portal">
+    <div className="portal mentor-purple">
       <aside>
-        <strong>智汇中枢 · 导师工作台</strong>
-        <p>{user?.name || '学业支持与协同'}</p>
+        <div className="mentor-brand">
+          <span>
+            <GraduationCap size={25} />
+          </span>
+          <div>
+            <strong>智汇中枢</strong>
+            <small>导师工作台 · 学业陪伴</small>
+          </div>
+        </div>
+        <div className="mentor-account">
+          <span>{user?.name?.slice(-2) || '你好'}</span>
+          <div>
+            <strong>{user?.name || '欢迎来到工作台'}</strong>
+            <small>
+              {user
+                ? (
+                    {
+                      mentor: '导师',
+                      academic: '教务老师',
+                      counselor: '辅导员',
+                    } as Record<string, string>
+                  )[user.role]
+                : '每一步成长，都值得关注'}
+            </small>
+          </div>
+        </div>
         {user && (
           <nav>
             <button
+              aria-current={tab === 'cases' ? 'page' : undefined}
               onClick={() => {
                 setTab('cases')
                 void run(refresh)
               }}
             >
-              学业跟进
+              <LayoutDashboard size={18} /> 学业跟进
             </button>
             {user.role === 'counselor' && (
               <button
+                aria-current={tab === 'knowledge' ? 'page' : undefined}
                 onClick={() => {
                   setTab('knowledge')
                   void run(loadKb)
                 }}
               >
-                知识审核与版本
+                <Library size={18} /> 知识审核与版本
               </button>
             )}
             <button
@@ -157,25 +193,92 @@ function App() {
                 })
               }
             >
-              退出登录
+              <LogOut size={18} /> 退出登录
             </button>
           </nav>
         )}
+        <div className="mentor-sidebar-note">
+          <ShieldCheck size={18} />
+          <p>
+            温和陪伴，认真跟进。
+            <br />
+            每一份记录，只对有权人员可见。
+          </p>
+        </div>
       </aside>
       <main>
-        <h1>{tab === 'knowledge' ? '知识审核与版本' : '学业跟进'}</h1>
+        <header className="mentor-heading">
+          <div>
+            <span className="mentor-eyebrow">CAMPUS COMPANION</span>
+            <h1>{tab === 'knowledge' ? '知识审核与版本' : '学业跟进'}</h1>
+            <p>
+              {user
+                ? '把每一次联系，变成有回应的陪伴。'
+                : '从这里，开启今天的学业陪伴。'}
+            </p>
+          </div>
+          <span className="mentor-date">
+            {new Intl.DateTimeFormat('zh-CN', {
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long',
+            }).format(new Date())}
+          </span>
+        </header>
+        <div className="mentor-welcome">
+          <div>
+            <span className="mentor-welcome-label">
+              <Sparkles size={15} /> 学业陪伴 · 协同有序
+            </span>
+            <h2>
+              {tab === 'knowledge'
+                ? '让每一份解答，都有据可循。'
+                : '关注成长，也照顾每一步。'}
+            </h2>
+            <p>
+              {tab === 'knowledge'
+                ? '整理、审核与更新知识，让学生获得可靠的帮助。'
+                : '联系、面谈与后续跟进，在这里清晰衔接。'}
+            </p>
+          </div>
+          <span className="mentor-hero-icon">
+            <BookOpen size={56} strokeWidth={1.25} />
+          </span>
+        </div>
+        {user && tab === 'cases' && (
+          <div className="mentor-stats">
+            {[
+              [
+                '待联系',
+                items.filter((c) => c.status === 'pending_contact').length,
+              ],
+              [
+                '跟进中',
+                items.filter(
+                  (c) => !['pending_contact', 'completed'].includes(c.status),
+                ).length,
+              ],
+              ['已完成', items.filter((c) => c.status === 'completed').length],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>
+                  {value}
+                  <small>项</small>
+                </strong>
+              </div>
+            ))}
+          </div>
+        )}
         {error && (
           <p role="alert" className="error">
             {error}
           </p>
         )}
         {!user ? (
-          <section>
-            <h2>账号登录</h2>
-            <p>
-              请使用已分配的导师、教务或辅导员账号。演示账号仅在 B_DEMO
-              模式中配置。
-            </p>
+          <section className="mentor-login">
+            <h2>欢迎回来</h2>
+            <p>使用你的工作账号登录，查看授权范围内的学业任务。</p>
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -223,13 +326,24 @@ function App() {
                 <button
                   key={c.id}
                   className="case-row"
+                  aria-pressed={selected === c.id}
                   onClick={() => {
                     setSelected(c.id)
                     setText('')
                     setType('contact')
                   }}
                 >
-                  {c.studentName} · {c.course} · {labels[c.status]}
+                  <span className="mentor-student-avatar">
+                    {c.studentName.slice(-2)}
+                  </span>
+                  <span className="mentor-case-copy">
+                    <strong>{c.studentName}</strong>
+                    <small>{c.course}</small>
+                  </span>
+                  <span className={`mentor-status ${c.status}`}>
+                    {labels[c.status]}
+                  </span>
+                  <ChevronRight size={17} />
                 </button>
               ))}
             </section>
