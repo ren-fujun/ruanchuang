@@ -18,3 +18,7 @@ test('rejects empty lists and invalid versions', () => {
   assert.throws(() => prepareAcademicBatch([]))
   assert.throws(() => prepareAcademicBatch([row], { previousVersion: -1 }))
 })
+test('rejects sparse rows and overflowing version numbers', () => {
+  assert.equal(prepareAcademicBatch(new Array(1)).valid, false)
+  assert.throws(() => prepareAcademicBatch([row], { previousVersion: Number.MAX_SAFE_INTEGER }))
+})

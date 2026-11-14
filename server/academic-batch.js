@@ -6,12 +6,12 @@ export function prepareAcademicBatch(rows, { previousVersion = 0 } = {}) {
   if (!Array.isArray(rows) || rows.length === 0 || rows.length > 1000) {
     throw new Error('名单必须包含 1 至 1000 行')
   }
-  if (!Number.isSafeInteger(previousVersion) || previousVersion < 0) {
+  if (!Number.isSafeInteger(previousVersion) || previousVersion < 0 || previousVersion >= Number.MAX_SAFE_INTEGER) {
     throw new Error('版本号无效')
   }
   const errors = []
   const seen = new Set()
-  const items = rows.map((row, index) => {
+  const items = Array.from(rows, (row, index) => {
     const studentId = typeof row?.studentId === 'string' ? row.studentId.trim() : ''
     const course = typeof row?.course === 'string' ? row.course.trim() : ''
     const mentorId = typeof row?.mentorId === 'string' ? row.mentorId.trim() : ''
