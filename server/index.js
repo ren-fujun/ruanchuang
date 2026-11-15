@@ -7,6 +7,7 @@ import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
 import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
+import { createIssueBundle } from './issue-bundles.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -1251,6 +1252,23 @@ app.post('/api/notifications/:id/read', requireAuth, (req, res) => {
   note.read = true
   save()
   res.json({ ok: true })
+})
+
+// Drafts only: saving a bundle does not dispatch or modify the individual tickets.
+app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundles = db.issueBundles || []
+  try {
+    const bundle = createIssueBundle({ ticketIds: req.body?.ticketIds, note: req.body?.note ?? '', tickets: db.tickets, bundles, actorId: req.user.id })
+    db.issueBundles = [...bundles, bundle]
+    save()
+    return res.status(201).json({ bundle })
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+})
+
+app.get('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
+  res.json({ bundles: (db.issueBundles || []).filter(bundle => bundle.createdBy === req.user.id) })
 })
 
 app.use('/api', (req, res) => {
