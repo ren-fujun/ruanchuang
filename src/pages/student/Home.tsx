@@ -60,6 +60,7 @@ export function StudentHome() {
 
   return (
     <div className="page student-home student-home-v3 student-home-v4">
+      <button className="secondary-button" onClick={() => navigate('/student/assistant')}>AI 咨询与追问</button>
       <header className="home-greeting">
         <div className="home-date-line">
           <span className="station-label"><i />{todayLabel()}</span>

@@ -3,9 +3,12 @@ dist/
 screenshots/
 artifacts/
 server/data/
+scripts/ai/out/
 .tmp/
 *.log
 .env
 .env.local
 .env.*.local
 .DS_Store
+
+dist-portals/

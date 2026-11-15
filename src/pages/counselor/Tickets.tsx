@@ -31,9 +31,9 @@ export function CounselorTickets() {
   const [status, setStatus] = useState(filters.some((item) => item.key === initialStatus) ? initialStatus : 'all')
   const [risk, setRisk] = useState(initialRisk)
   const [overdue, setOverdue] = useState(searchParams.get('overdue') === 'true')
-  const [query, setQuery] = useState('')
-  const [draftQuery, setDraftQuery] = useState('')
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState(searchParams.get('q') || '')
+  const [draftQuery, setDraftQuery] = useState(searchParams.get('q') || '')
+  const [searchOpen, setSearchOpen] = useState(searchParams.has('q') || searchParams.has('search'))
 
   const params = new URLSearchParams()
   params.set('status', statusQuery[status])
@@ -48,12 +48,16 @@ export function CounselorTickets() {
     const nextStatus = searchParams.get('status')
     const nextRisk = searchParams.get('risk')
     const nextOverdue = searchParams.get('overdue') === 'true'
-    if (nextStatus && filters.some((item) => item.key === nextStatus)) setStatus(nextStatus)
-    if (nextRisk) setRisk(nextRisk)
+    setStatus(filters.some((item) => item.key === nextStatus) ? nextStatus! : 'all')
+    setRisk(nextRisk || 'all')
     setOverdue(nextOverdue)
+    const nextQuery = searchParams.get('q') || ''
+    setQuery(nextQuery)
+    setDraftQuery(nextQuery)
+    if (nextQuery || searchParams.has('search')) setSearchOpen(true)
   }, [searchParams])
 
-  const syncParams = (next: { status?: string; risk?: string; overdue?: boolean }) => {
+  const syncParams = (next: { status?: string; risk?: string; overdue?: boolean; query?: string }) => {
     const nextParams = new URLSearchParams()
     const nextStatus = next.status ?? status
     const nextRisk = next.risk ?? risk
@@ -61,6 +65,7 @@ export function CounselorTickets() {
     if (nextStatus !== 'all') nextParams.set('status', nextStatus)
     if (nextRisk !== 'all') nextParams.set('risk', nextRisk)
     if (nextOverdue) nextParams.set('overdue', 'true')
+    if (next.query ?? query) nextParams.set('q', next.query ?? query)
     setSearchParams(nextParams, { replace: true })
   }
 
@@ -84,6 +89,7 @@ export function CounselorTickets() {
 
   const submitSearch = () => {
     setQuery(draftQuery.trim())
+    syncParams({ query: draftQuery.trim() })
   }
 
   const counts = data?.counts
@@ -125,6 +131,7 @@ export function CounselorTickets() {
           <Search size={17} />
           <input
             autoFocus
+            aria-label="搜索工单、学生、类型或编号"
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -210,7 +217,7 @@ export function CounselorTickets() {
 
       <div className="ops-ai-note">
         <span><Sparkles size={15} /></span>
-        <p><strong>AI 建议</strong> 优先处理高风险与超时工单，可让本周按时办结率再提升 6%。</p>
+        <p><strong>办理提示</strong> 优先核实高风险诉求，跟进超时工单的办理进展。</p>
       </div>
     </div>
   )

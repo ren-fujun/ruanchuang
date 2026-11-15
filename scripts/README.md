@@ -16,15 +16,28 @@ node scripts\e2e\api.mjs
 node scripts\screenshots\core-pages.mjs
 ```
 
+## ai/ · B 部分（AI 与认知层）自检与演示
+
+| 脚本 | 作用 | 产出 |
+| --- | --- | --- |
+| `smoke-b.mjs` | 冒烟自检：跑通一条认知链路并打印图谱 / 知识库 / 风险词典规模 | 控制台 |
+| `eval-b.mjs` | 认知链路评测：15 条链路用例 + 3 条护栏用例（`--llm` 可连模型一起跑） | 控制台 + 退出码 |
+| `demo-graphrag.mjs` | GraphRAG 检索匹配演示样例（含会签、复合工单、派单路径、卡点归因） | `scripts/ai/out/graphrag-demo.json` |
+| `demo-risk.mjs` | 风险预警 Demo：情绪维度 + 行为时序融合，稳定触发高/中/低标签 | `scripts/ai/out/risk-demo.json` |
+| `drill-degrade.mjs` | 容灾降级与幻觉护栏演练：无 Key 兜底、4 种故障注入、熔断、护栏、知识库阈值 | `scripts/ai/out/degrade-drill.json` |
+
+**全部可离线运行**（不需要 API Key，也不需要先起服务），退出码即结论。详见 [ai/README.md](ai/README.md)
+与 [../docs/B部分演示与验收.md](../docs/B部分演示与验收.md)。
+
 ## e2e/ · 端到端校验
 
 | 脚本 | 前置服务 | 作用 |
 | --- | --- | --- |
 | `api.mjs` | `npm start`（API `8787`） | 接口全链路：登录 → 提交诉求 → 审核分派 → 部门接单 → 处置 → 确认评价 → 归档 |
-| `ui.mjs` | 需在 `8788` 起服务 | 390×844 移动视口走查，收集控制台报错，截图落在 `screenshots/e2e/` |
+| `ui.mjs` | `npm start`（默认 `8787`，支持 `E2E_BASE_URL`） | 390×844 移动视口走查，收集控制台报错，截图落在 `screenshots/e2e/` |
 | `contract-mock.mjs` | `npm run dev`（`5180`） | 校验前后端契约：MSW 模拟数据与真实接口返回结构是否一致 |
 
-> `ui.mjs` 里的基址是历史遗留的 `8788`，若本机服务不在该端口，请先改脚本首行的 `base`。
+> `api.mjs` 和 `ui.mjs` 默认访问 `8787`，可通过 `E2E_BASE_URL` 指定独立测试服务。测试会创建工单，请勿对正式数据运行。
 
 ## screenshots/ · 截图产出
 

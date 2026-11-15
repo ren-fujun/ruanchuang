@@ -1,4 +1,5 @@
-const base = 'http://127.0.0.1:8787/api'
+import assert from 'node:assert/strict'
+const base = `${process.env.E2E_BASE_URL || 'http://127.0.0.1:8787'}/api`
 
 async function call(path, { token, method = 'GET', body } = {}) {
   const response = await fetch(base + path, {
@@ -11,7 +12,7 @@ async function call(path, { token, method = 'GET', body } = {}) {
   })
   const payload = await response.json()
   if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${payload.message}`)
-  return payload
+  return typeof payload.code === 'number' ? payload.data : payload
 }
 
 const student = await call('/auth/login', {
@@ -89,4 +90,38 @@ const note = await call(`/tickets/${id}/note`, {
 })
 console.log('note ok:', note.ticket.notes.length)
 
-console.log('E2E_OK')
+
+
+assert.equal(created.ticket.status, 'pending_review')
+assert.equal(reviewed.ticket.status, 'assigned')
+assert.equal(accepted.ticket.status, 'processing')
+assert.equal(resolved.ticket.status, 'awaiting_confirm')
+assert.equal(confirmed.ticket.status, 'completed')
+assert.equal(confirmed.ticket.rating.score, 5)
+const privateText = '内部备注隔离验收-' + Date.now()
+await call('/tickets/' + id + '/note', { token: counselor.token, method: 'POST', body: { text: privateText } })
+for (const path of ['/tickets/' + id, '/tickets', '/student/home']) {
+  const data = await call(path, { token: student.token })
+  assert(!JSON.stringify(data).includes(privateText), '学生响应不应包含内部备注: ' + path)
+  assert(!JSON.stringify(data).includes('请今日上门处理并检查柜体。'), '学生响应不应包含督办备注: ' + path)
+}
+assert(JSON.stringify(await call('/tickets/' + id, { token: counselor.token })).includes(privateText))
+const unauth = await fetch(base + '/tickets')
+assert.equal(unauth.status, 401)
+const forbidden = await fetch(base + '/counselor/dashboard', { headers: { Authorization: 'Bearer ' + student.token } })
+assert.equal(forbidden.status, 403)
+console.log('LIFECYCLE_AND_PRIVACY_OK')
+
+const dashboard = await call('/counselor/dashboard', { token: counselor.token })
+const insights = await call('/counselor/insights', { token: counselor.token })
+assert.equal(dashboard.stats.closureRate, Math.round(dashboard.stats.completed / dashboard.stats.total * 100))
+assert.equal(insights.summary.closureRate, dashboard.stats.closureRate)
+assert.equal(insights.summary.avgResponse, dashboard.stats.avgResponse)
+console.log('STATISTICS_OK')
+
+const allTickets = await call('/tickets', { token: counselor.token })
+const otherTicket = allTickets.tickets.find(ticket => ticket.studentId !== student.user.id)
+assert(otherTicket, '演示种子应包含其他学生工单')
+const crossStudent = await fetch(base + '/tickets/' + otherTicket.id, { headers: { Authorization: 'Bearer ' + student.token } })
+assert.equal(crossStudent.status, 403)
+console.log('CROSS_STUDENT_ACCESS_BLOCKED; E2E_OK')

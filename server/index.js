@@ -1,3 +1,4 @@
+import { mountB } from './b/routes.js'
 import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -5,16 +6,23 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
-import { llmEnabled, refineAnalysis } from './llm.js'
+import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
+import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
-  STATUS_LABELS,
-  URGENCY_LABELS,
-  RISK_LABELS,
-  analyzeRequest,
-  generateCounselorBrief,
-  precheckRequest,
-} from './ai.js'
+  AGENT_VERSION,
+  agentManifest,
+  attributionAgent,
+  invokeAgent,
+  runCognitionChain,
+  ticketAiSnapshot,
+} from './ai/agents.js'
+import { graphSummary, graphVisualization, dutySubgraph, queryGraph, rankBottlenecks } from './ai/graphrag.js'
+import { knowledgeIndexStats, searchKnowledgeDetailed } from './ai/knowledge.js'
+import { riskLexiconSummary, scanRisk } from './ai/riskAgent.js'
+import { guardSummary } from './ai/guard.js'
+import { promptVersions } from './ai/prompts.js'
+import { FAULT_MODE_LIST } from './ai/llmClient.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.join(__dirname, '..')
@@ -75,11 +83,44 @@ const decorateTicket = (ticket) => {
   }
 }
 
+// Keep counselor-only follow-up content out of every student ticket response.
+const ticketForUser = (ticket, user) => {
+  const decorated = decorateTicket(ticket)
+  if (user?.role !== 'student') return decorated
+  return {
+    ...decorated,
+    notes: [],
+    timeline: (decorated.timeline || []).filter((event) => event.type !== 'note').map((event) => {
+      if (event.type === 'assigned') return { ...event, desc: String(event.desc || '').split('。督办备注：')[0] }
+      if (event.type === 'urge') return { ...event, desc: '辅导员已跟进督办，请留意后续进展。' }
+      return event
+    }),
+  }
+}
+
 const publicUser = (user) => {
   if (!user) return null
   const { password, ...safe } = user
   return safe
 }
+
+/**
+ * 风险筛查 Agent 需要的「行为时序特征」原始输入：
+ * 只取时序与结果字段，避免把整张工单塞进特征计算。
+ */
+const studentHistory = (studentId, excludeId = null) =>
+  db.tickets
+    .filter((ticket) => ticket.studentId === studentId && ticket.id !== excludeId)
+    .map((ticket) => ({
+      id: ticket.id,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+      resolvedAt: ticket.resolvedAt || ticket.timeline?.findLast((event) => event.type === 'awaiting_confirm')?.at,
+      dueAt: ticket.dueAt,
+      category: ticket.category,
+      risk: ticket.risk,
+      status: ticket.status,
+    }))
 
 const addNotification = ({ userId, type, title, body, ticketId = null, tone = 'mint' }) => {
   db.notifications.unshift({
@@ -119,6 +160,7 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !['/api/auth/logout', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   req.user = user
   next()
 }
@@ -129,6 +171,25 @@ const requireRole = (role) => (req, res, next) => {
   }
   next()
 }
+
+const riskInput = (user, body = {}) => {
+  const text = String(body.text || '').trim()
+  const staff = user.role === 'counselor'
+  const studentId = staff ? body.studentId : user.id
+  const history = staff && Array.isArray(body.history)
+    ? body.history
+    : studentId ? studentHistory(studentId) : []
+  return {
+    text,
+    history,
+    category: body.category,
+    location: String(body.location || ''),
+    baseRisk: staff && Object.hasOwn(RISK_LABELS, body.baseRisk) ? body.baseRisk : detectRisk(text).level,
+    useLlm: body.useLlm !== false,
+  }
+}
+
+const asyncRoute = (handler) => (req, res, next) => handler(req, res).catch(next)
 
 const getTicketOr404 = (id, res) => {
   const ticket = db.tickets.find((item) => item.id === id)
@@ -200,6 +261,14 @@ const categoryStats = (tickets) => {
     .sort((a, b) => b.value - a.value)
 }
 
+const averageResponseHours = (tickets) => {
+  const samples = tickets.map((ticket) => {
+    const assigned = ticket.timeline.find((event) => event.type === 'assigned')
+    return assigned ? hoursBetween(ticket.createdAt, assigned.at) : null
+  }).filter((value) => value !== null && Number.isFinite(value))
+  return samples.length ? Number((samples.reduce((sum, value) => sum + value, 0) / samples.length).toFixed(1)) : 0
+}
+
 const departmentStats = (tickets) => {
   return db.departments.map((department) => {
     const assigned = tickets.filter((ticket) => ticket.departmentIds?.includes(department.id))
@@ -213,14 +282,14 @@ const departmentStats = (tickets) => {
       .filter((value) => value !== null && Number.isFinite(value))
     const avgHours = responseSamples.length
       ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : department.avgHours
+      : 0
     return {
       ...department,
       active: active.length,
       completed: completed.length,
       total: assigned.length,
       avgHours,
-      onTime: department.onTime,
+      onTime: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : 0,
       load: Math.min(100, 24 + active.length * 16),
     }
   })
@@ -294,31 +363,135 @@ app.get('/api/knowledge', requireAuth, (req, res) => {
   res.json({ items })
 })
 
-app.post('/api/ai/precheck', requireAuth, async (req, res) => {
+app.post('/api/ai/precheck', requireAuth, asyncRoute(async (req, res) => {
   const text = String(req.body?.text || '').trim()
   if (text.length < 4) {
     return res.status(400).json({ message: '再多描述一点，AI 才能更准确地帮你判断。' })
   }
   const location = String(req.body?.location || '')
-  const result = precheckRequest({
+  const chain = await runCognitionChain({
     text,
     category: req.body?.category,
     location,
+    urgency: Object.hasOwn(URGENCY_LABELS, req.body?.urgency) ? req.body.urgency : undefined,
+    history: req.user.role === 'student' ? studentHistory(req.user.id) : [],
+    useLlm: req.body?.useLlm !== false,
   })
-  const baseAnalysis = result.analysis
-  result.analysis = await refineAnalysis(text, baseAnalysis, location)
-  if (result.analysis.risk !== 'low' || ['high', 'urgent'].includes(result.analysis.urgency)) {
-    const wasSelfService = result.canSelfSolve
-    result.canSelfSolve = false
-    result.needsTicket = true
-    if (wasSelfService) {
-      result.answer =
-        result.analysis.risk === 'high'
-          ? '这件事需要被优先看见。请直接提交诉求，辅导员会尽快联系你；如果你正处于紧急危险中，请立即拨打 120 / 110。'
-          : '这件事需要人工协同处理，建议直接提交给辅导员，由中枢协调对应部门。'
-    }
+  res.json({
+    analysis: chain.analysis,
+    knowledge: chain.knowledge,
+    answer: chain.answer,
+    canSelfSolve: chain.canSelfSolve,
+    needsTicket: chain.needsTicket,
+    quickReplies: chain.quickReplies,
+    // B 部分新增：图谱路由与风险筛查结果，供 C 端展示、D 端训练使用
+    graph: chain.graph,
+    risk: chain.risk,
+    trace: chain.trace,
+    latencyMs: chain.latencyMs,
+    engine: chain.engine,
+  })
+}))
+
+// ── B 部分 · AI 能力开放接口（图谱 / 风险 / Agent / 健康度）────────────
+// 接口契约与字段说明见 docs/B部分交付说明.md
+
+app.get('/api/ai/health', requireAuth, (req, res) => {
+  res.json({
+    agentVersion: AGENT_VERSION,
+    engine: llmEnabled() ? 'deepseek+rules' : 'local-rules',
+    llm: getLlmStatus(),
+    faultMode: currentLlmFault(),
+    faultModes: FAULT_MODE_LIST,
+    knowledge: knowledgeIndexStats(),
+    graph: graphSummary().stats,
+    risk: riskLexiconSummary(),
+    guard: guardSummary(),
+    prompts: promptVersions(),
+    at: nowIso(),
+  })
+})
+
+app.get('/api/ai/agents', requireAuth, (req, res) => {
+  res.json(agentManifest())
+})
+
+app.post('/api/ai/agents/:name', requireAuth, asyncRoute(async (req, res) => {
+  const name = String(req.params.name || '')
+  if (name === 'attribution' && req.user.role !== 'counselor') {
+    return res.status(403).json({ message: '复盘归因涉及全校工单数据，仅辅导员可用。' })
   }
-  res.json({ ...result, engine: llmEnabled() ? 'deepseek' : 'local-rules' })
+  const body = req.body || {}
+  const payload = name === 'risk' ? riskInput(req.user, body) : { ...body }
+  if (name === 'attribution' && !Array.isArray(payload.tickets)) {
+    payload.tickets = db.tickets
+  }
+  const result = await invokeAgent(name, payload)
+  if (!result.ok && result.warnings?.length) return res.status(400).json(result)
+  res.json(result)
+}))
+
+app.get('/api/ai/graph', requireAuth, (req, res) => {
+  const summary = graphSummary()
+  if (String(req.query.full || '') === '1') {
+    res.json({ ...summary, ...graphVisualization() })
+    return
+  }
+  res.json(summary)
+})
+
+app.get('/api/ai/graph/duty/:id', requireAuth, (req, res) => {
+  const subgraph = dutySubgraph(String(req.params.id || ''))
+  if (!subgraph) return res.status(404).json({ message: '未找到该权责事项节点。' })
+  res.json(subgraph)
+})
+
+app.post('/api/ai/graph/query', requireAuth, (req, res) => {
+  const text = String(req.body?.text || '').trim()
+  if (text.length < 2) return res.status(400).json({ message: '请提供需要检索的诉求文本。' })
+  const preferredDepts = Array.isArray(req.body?.preferredDepts)
+    ? req.body.preferredDepts.filter((id) => departmentMap[id])
+    : []
+  res.json(
+    queryGraph(text, {
+      category: req.body?.category,
+      preferredDepts,
+      riskLevel: req.body?.riskLevel,
+      limit: Number(req.body?.limit) || 3,
+    }),
+  )
+})
+
+app.get('/api/ai/kb/search', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim()
+  if (!q) return res.status(400).json({ message: '请提供检索关键词。' })
+  res.json(searchKnowledgeDetailed(q))
+})
+
+app.post('/api/ai/risk-scan', requireAuth, (req, res) => {
+  const input = riskInput(req.user, req.body || {})
+  if (input.text.length < 2) return res.status(400).json({ message: '请提供需要筛查的诉求文本。' })
+  res.json(scanRisk(input))
+})
+
+app.post('/api/ai/attribution', requireAuth, requireRole('counselor'), async (req, res) => {
+  const result = await attributionAgent({ tickets: db.tickets, limit: Number(req.body?.limit) || 5 })
+  res.json({ ...result.output, bottlenecks: rankBottlenecks(db.tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
+})
+
+// 容灾演练开关：模拟大模型超时 / 离线 / 脏 JSON / 5xx，验证自动回退到规则链路
+app.post('/api/ai/llm/fault', requireAuth, requireRole('counselor'), (req, res) => {
+  const mode = req.body?.mode ?? null
+  try {
+    const applied = simulateLlmFault(mode)
+    res.json({ ok: true, faultMode: applied, hint: applied ? '后续 AI 调用将按该故障模式降级，请在演练后重置' : '已恢复正常' })
+  } catch (error) {
+    res.status(400).json({ message: error.message, modes: FAULT_MODE_LIST })
+  }
+})
+
+app.post('/api/ai/llm/reset', requireAuth, requireRole('counselor'), (req, res) => {
+  res.json({ ok: true, llm: resetLlm() })
 })
 
 app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => {
@@ -339,7 +512,7 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
   const awaiting = mine.filter((ticket) => ticket.status === 'awaiting_confirm')
   const updates = mine
     .flatMap((ticket) =>
-      ticket.timeline.map((event) => ({
+      ticketForUser(ticket, req.user).timeline.map((event) => ({
         ...event,
         ticketId: ticket.id,
         ticketTitle: ticket.title,
@@ -361,8 +534,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
       completed: completed.length,
       total: mine.length,
     },
-    featured: featured ? decorateTicket(featured) : null,
-    activeTickets: active.slice(0, 3).map(decorateTicket),
+    featured: featured ? ticketForUser(featured, req.user) : null,
+    activeTickets: active.slice(0, 3).map((ticket) => ticketForUser(ticket, req.user)),
     updates,
     knowledge: knowledgeBase.filter((item) => item.hot).slice(0, 4),
     notifications: notes,
@@ -413,7 +586,7 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
   res.json({
-    tickets: list.map(decorateTicket),
+    tickets: list.map((ticket) => ticketForUser(ticket, req.user)),
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -448,7 +621,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   if (!canAccessTicket(req.user, ticket)) {
     return res.status(403).json({ message: '你只能查看自己的诉求工单。' })
   }
-  const decorated = decorateTicket(ticket)
+  const decorated = ticketForUser(ticket, req.user)
   const related = db.tickets
     .filter(
       (item) =>
@@ -457,7 +630,7 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
         (item.category === ticket.category || item.status !== 'completed'),
     )
     .slice(0, 3)
-    .map(decorateTicket)
+    .map((ticket) => ticketForUser(ticket, req.user))
   res.json({
     ticket: decorated,
     related,
@@ -484,26 +657,52 @@ app.get('/api/tickets/:id', requireAuth, (req, res) => {
   })
 })
 
-app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) => {
+app.post('/api/tickets', requireAuth, requireRole('student'), asyncRoute(async (req, res) => {
   const text = String(req.body?.description || '').trim()
   if (text.length < 6) {
     return res.status(400).json({ message: '请至少用一句话描述你遇到的问题。' })
   }
   const category = req.body?.category && req.body.category !== '智能识别' ? req.body.category : undefined
   const location = String(req.body?.location || '')
-  const baseAnalysis = analyzeRequest({
+  // B 侧认知链路：意图解析 → 风险筛查 / GraphRAG 路由 / 知识库检索 → 规则修正 → 护栏
+  const chain = await runCognitionChain({
     text,
     category,
     location,
-    urgency: req.body?.urgency,
+    urgency: Object.hasOwn(URGENCY_LABELS, req.body?.urgency) ? req.body.urgency : undefined,
+    history: studentHistory(req.user.id),
   })
-  const analysis = await refineAnalysis(text, baseAnalysis, location)
+  const analysis = chain.analysis
   const createdAt = nowIso()
   const id = nextTicketId()
   const timeline = [
     makeTimelineEvent('created', '诉求已提交', 'AI 已完成初步识别，等待辅导员审核', req.user.name),
     makeTimelineEvent('ai', 'AI 完成要素提取', `已生成标准化工单草稿，风险等级：${RISK_LABELS[analysis.risk]}`, '智汇中枢'),
   ]
+  if (chain.graph?.matched) {
+    timeline.push(
+      makeTimelineEvent(
+        'ai',
+        'GraphRAG 完成权责路由',
+        `命中权责事项「${chain.graph.primaryDuty.name}」，主责${departmentMap[chain.graph.primaryDept]?.short || chain.graph.primaryDept}${
+          chain.graph.countersign.required
+            ? `，需会签：${(chain.graph.countersign.departments.map((item) => item.short).join('、') || chain.graph.countersign.jointOwners.map((deptId) => departmentMap[deptId]?.short).join('、'))}`
+            : ''
+        }`,
+        '智汇中枢',
+      ),
+    )
+  }
+  if (chain.risk && chain.risk.level !== 'low') {
+    timeline.push(
+      makeTimelineEvent(
+        'risk',
+        '风险筛查 Agent 输出标签',
+        `${chain.risk.levelLabel}（融合分 ${chain.risk.score}）：${chain.risk.signals.slice(0, 3).map((item) => item.label).join('；') || '行为时序特征异常'}`,
+        '智汇中枢',
+      ),
+    )
+  }
   const ticket = {
     id,
     title: String(req.body?.title || '').trim() || text.slice(0, 24),
@@ -521,16 +720,7 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
     updatedAt: createdAt,
     dueAt: new Date(Date.now() + analysis.slaMinutes * 60000).toISOString(),
     slaMinutes: analysis.slaMinutes,
-    ai: {
-      summary: analysis.summary,
-      risk: analysis.risk,
-      riskReason: analysis.riskReason,
-      sentiment: analysis.sentiment,
-      confidence: analysis.confidence,
-      suggestedDepartments: analysis.suggestedDepartments,
-      tags: analysis.tags,
-      draft: analysis.draft,
-    },
+    ai: ticketAiSnapshot(chain),
     attachments: Array.isArray(req.body?.attachments) ? req.body.attachments.slice(0, 6) : [],
     rating: null,
     timeline,
@@ -554,8 +744,8 @@ app.post('/api/tickets', requireAuth, requireRole('student'), async (req, res) =
   })
 
   save()
-  res.status(201).json({ ticket: decorateTicket(ticket), message: '诉求已提交，辅导员会尽快查看。' })
-})
+  res.status(201).json({ ticket: ticketForUser(ticket, req.user), message: '诉求已提交，辅导员会尽快查看。' })
+}))
 
 app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, res) => {
   const ticket = getTicketOr404(req.params.id, res)
@@ -599,7 +789,7 @@ app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, 
     tone: 'mint',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已确认办结，谢谢你的反馈。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已确认办结，谢谢你的反馈。' })
 })
 
 app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res) => {
@@ -618,7 +808,7 @@ app.post('/api/tickets/:id/rate', requireAuth, requireRole('student'), (req, res
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('rated', '收到新的服务评价', `${score} 星 · ${ticket.rating.comment || '未填写评价'}`, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '评价已提交，谢谢你帮助我们把服务做得更好。' })
 })
 
 app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (req, res) => {
@@ -642,7 +832,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已提醒辅导员，请耐心等待最新进展。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已提醒辅导员，请耐心等待最新进展。' })
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
@@ -656,23 +846,14 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
   )
   const today = new Date()
   const todayNew = tickets.filter((ticket) => dayDiff(ticket.createdAt, today) === 0)
-  const responseSamples = tickets
-    .map((ticket) => {
-      const assignedEvent = ticket.timeline.find((event) => event.type === 'assigned')
-      return assignedEvent ? hoursBetween(ticket.createdAt, assignedEvent.at) : null
-    })
-    .filter((value) => value !== null && Number.isFinite(value))
-  const avgResponse =
-    responseSamples.length > 0
-      ? Number((responseSamples.reduce((sum, value) => sum + value, 0) / responseSamples.length).toFixed(1))
-      : 2.4
+  const avgResponse = averageResponseHours(tickets)
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
   const satisfaction = ratings.length
     ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
+    : 0
   const onTimeCount = completed.filter(isOnTime).length
-  const onTimeRate = Math.round(((onTimeCount + 18) / (completed.length + 19)) * 100)
-  const closureRate = Math.round(((completed.length + 16) / (tickets.length + 18)) * 100)
+  const onTimeRate = completed.length ? Math.round(onTimeCount / completed.length * 100) : 0
+  const closureRate = tickets.length ? Math.round(completed.length / tickets.length * 100) : 0
   const queue = [...pending]
     .sort((a, b) => {
       const priority = { high: 0, medium: 1, low: 2 }
@@ -712,8 +893,8 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
       dormChecked: dormOverview.summary.checked,
     },
     brief: generateCounselorBrief(tickets),
-    urgent: urgent.map(decorateTicket),
-    queue: queue.map(decorateTicket),
+    urgent: urgent.map((ticket) => ticketForUser(ticket, req.user)),
+    queue: queue.map((ticket) => ticketForUser(ticket, req.user)),
     week: weeklySeries(tickets),
     categories: categoryStats(tickets).slice(0, 5),
     departments: departmentStats(tickets),
@@ -763,7 +944,7 @@ app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req
     tone: 'blue',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '已审核并分派，学生会同步收到进展通知。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '已审核并分派，学生会同步收到进展通知。' })
 })
 
 app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (req, res) => {
@@ -821,7 +1002,7 @@ app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (r
     return res.status(400).json({ message: '未知的进展操作。' })
   }
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '进展已更新。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '进展已更新。' })
 })
 
 app.patch('/api/tickets/:id/urge', requireAuth, requireRole('counselor'), (req, res) => {
@@ -843,7 +1024,7 @@ app.patch('/api/tickets/:id/urge', requireAuth, requireRole('counselor'), (req, 
     tone: 'gold',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '催办已送达，工单 SLA 保持不变。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '催办已送达，工单 SLA 保持不变。' })
 })
 
 app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, res) => {
@@ -855,7 +1036,7 @@ app.post('/api/tickets/:id/note', requireAuth, requireRole('counselor'), (req, r
   ticket.updatedAt = nowIso()
   ticket.timeline.push(makeTimelineEvent('note', '新增跟进备注', text, req.user.name))
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '跟进备注已记录。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '跟进备注已记录。' })
 })
 
 app.post('/api/tickets/:id/split', requireAuth, requireRole('counselor'), (req, res) => {
@@ -917,8 +1098,8 @@ app.post('/api/tickets/:id/split', requireAuth, requireRole('counselor'), (req, 
   })
   save()
   res.json({
-    parent: decorateTicket(parent),
-    children: children.map(decorateTicket),
+    parent: ticketForUser(parent, req.user),
+    children: children.map((ticket) => ticketForUser(ticket, req.user)),
     message: `已拆分为 ${children.length} 张子工单。`,
   })
 })
@@ -940,7 +1121,7 @@ app.patch('/api/tickets/:id/remind-confirm', requireAuth, requireRole('counselor
     tone: 'peach',
   })
   save()
-  res.json({ ticket: decorateTicket(ticket), message: '确认提醒已发送。' })
+  res.json({ ticket: ticketForUser(ticket, req.user), message: '确认提醒已发送。' })
 })
 
 function getTicketOrNotFound(id, res) {
@@ -954,7 +1135,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
   const satisfaction = ratings.length
     ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))
-    : 4.8
+    : 0
   const categories = categoryStats(tickets)
   const tagCounts = new Map()
   tickets.forEach((ticket) => {
@@ -989,10 +1170,10 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
       total: tickets.length,
       weekly: weeklyTotal,
       satisfaction,
-      onTimeRate: Math.round(((completed.filter(isOnTime).length + 18) / (completed.length + 19)) * 100),
-      closureRate: Math.round(((completed.length + 16) / (tickets.length + 18)) * 100),
+      onTimeRate: completed.length ? Math.round(completed.filter(isOnTime).length / completed.length * 100) : 0,
+      closureRate: tickets.length ? Math.round(completed.length / tickets.length * 100) : 0,
       highRisk: active.filter((ticket) => ticket.risk === 'high').length,
-      avgResponse: 2.4,
+      avgResponse: averageResponseHours(tickets),
     },
     week,
     categories,
@@ -1005,7 +1186,7 @@ app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, 
       low: active.filter((ticket) => ticket.risk === 'low').length,
     },
     suggestion: {
-      title: topCategory ? `「${topCategory.name}」是本周最集中的诉求类型` : '本周诉求分布平稳',
+      title: topCategory ? `「${topCategory.name}」是当前最集中的诉求类型` : '本周诉求分布平稳',
       body: topCategory
         ? `共 ${topCategory.value} 条，占全部诉求的 ${Math.round((topCategory.value / tickets.length) * 100)}%。建议联合${topDepartment?.short || '相关'}开展一次专项排查，把高频问题前置解决。`
         : '建议保持每周复盘，持续关注高风险与超时工单。',
@@ -1073,6 +1254,8 @@ app.post('/api/notifications/:id/read', requireAuth, (req, res) => {
   save()
   res.json({ ok: true })
 })
+
+mountB(app, {db, save, requireAuth})
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: '接口不存在。' })

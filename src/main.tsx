@@ -12,6 +12,9 @@ import './styles/student-purple.css'
 import './styles/counselor.css'
 import './styles/dorm.css'
 import './features/contract-demo/contract-demo.css'
+import './styles/counselor-workspace.css'
+import './styles/counselor-dashboard.css'
+import './styles/counselor-surfaces.css'
 
 async function bootstrap() {
   if (import.meta.env.VITE_USE_MOCK === 'true') {
