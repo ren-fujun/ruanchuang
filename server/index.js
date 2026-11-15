@@ -8,6 +8,7 @@ import { departmentMap, knowledgeBase } from './seed.js'
 import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
+import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -908,8 +909,8 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
 app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req, res) => {
   const ticket = getTicketOr404(req.params.id, res)
   if (!ticket) return
-  if ((db.issueBundles || []).some(bundle => bundle.status === 'draft' && bundle.ticketIds.includes(ticket.id))) {
-    return res.status(409).json({ message: '该工单在问题包草稿中，请先调整或取消草稿。' })
+  if ((db.issueBundles || []).some(bundle => ['draft', 'dispatched'].includes(bundle.status) && bundle.ticketIds.includes(ticket.id))) {
+    return res.status(409).json({ message: '该工单在问题包中，请通过问题包流程处理。' })
   }
   if (ticket.status !== 'pending_review') {
     return res.status(409).json({ message: '这张工单已经审核过了。' })
@@ -952,6 +953,7 @@ app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req
 app.patch('/api/tickets/:id/progress', requireAuth, requireRole('counselor'), (req, res) => {
   const ticket = getTicketOr404(req.params.id, res)
   if (!ticket) return
+  if ((db.issueBundles || []).some(bundle => bundle.status === 'dispatched' && bundle.ticketIds.includes(ticket.id))) return res.status(409).json({ message: '该工单已交由后勤处理，请使用问题包流程。' })
   const action = req.body?.action
   const result = String(req.body?.result || '').trim()
 
@@ -1261,6 +1263,12 @@ app.post('/api/notifications/:id/read', requireAuth, (req, res) => {
 app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
   const bundles = db.issueBundles || []
   try {
+    if (!Array.isArray(req.user.studentIds)) return res.status(403).json({ message: '尚未配置辅导员负责的学生范围。' })
+    const allowed = new Set(req.user.studentIds)
+    if (!Array.isArray(req.body?.ticketIds) || req.body.ticketIds.some(id => {
+      const ticket = db.tickets.find(item => item.id === (typeof id === 'string' ? id.trim() : id))
+      return !ticket || !allowed.has(ticket.studentId)
+    })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
     const bundle = createIssueBundle({ ticketIds: req.body?.ticketIds, note: req.body?.note ?? '', tickets: db.tickets, bundles, actorId: req.user.id })
     db.issueBundles = [...bundles, bundle]
     save()
@@ -1271,7 +1279,8 @@ app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res)
 })
 
 app.get('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
-  res.json({ bundles: (db.issueBundles || []).filter(bundle => bundle.createdBy === req.user.id) })
+  const allowed = new Set(Array.isArray(req.user.studentIds) ? req.user.studentIds : [])
+  res.json({ bundles: (db.issueBundles || []).filter(bundle => bundle.createdBy === req.user.id && bundle.ticketIds.every(id => { const ticket = db.tickets.find(item => item.id === id); return ticket && allowed.has(ticket.studentId) })) })
 })
 
 app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1280,6 +1289,9 @@ app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req,
   if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
   try {
     const original = bundles[index]
+    const allowed = new Set(Array.isArray(req.user.studentIds) ? req.user.studentIds : [])
+    const candidate = req.body?.ticketIds ?? original.ticketIds
+    if (!Array.isArray(candidate) || [...original.ticketIds, ...candidate].some(id => { const ticket = db.tickets.find(item => item.id === (typeof id === 'string' ? id.trim() : id)); return !ticket || !allowed.has(ticket.studentId) })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
     const updated = reviseIssueBundle({ bundle: original, ticketIds: req.body?.ticketIds ?? original.ticketIds, note: req.body?.note ?? original.note, tickets: db.tickets, bundles, actorId: req.user.id })
     db.issueBundles[index] = updated
     save()
@@ -1290,11 +1302,89 @@ app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req,
 app.post('/api/issue-bundles/:id/cancel', requireAuth, requireRole('counselor'), (req, res) => {
   const bundle = (db.issueBundles || []).find(item => item.id === req.params.id && item.createdBy === req.user.id)
   if (!bundle) return res.status(404).json({ message: '问题包不存在。' })
+  const allowed = new Set(Array.isArray(req.user.studentIds) ? req.user.studentIds : [])
+  if (bundle.ticketIds.some(id => { const ticket = db.tickets.find(item => item.id === id); return !ticket || !allowed.has(ticket.studentId) })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
   if (bundle.status !== 'draft') return res.status(409).json({ message: '只有草稿可以取消。' })
   bundle.status = 'cancelled'
   bundle.updatedAt = nowIso()
   save()
   return res.json({ bundle })
+})
+
+app.post('/api/issue-bundles/:id/dispatch', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundles = db.issueBundles || []
+  const index = bundles.findIndex(item => item.id === req.params.id && item.createdBy === req.user.id)
+  if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  try {
+    const recipient = db.users.find(user => user.id === req.body?.recipientId)
+    const next = dispatchBundle({ bundle: bundles[index], counselor: req.user, recipient, tickets: db.tickets })
+    const at = next.dispatchedAt
+    for (const id of next.ticketIds) {
+      const ticket = db.tickets.find(item => item.id === id)
+      ticket.status = 'assigned'; ticket.departmentIds = ['logistics']; ticket.updatedAt = at
+      ticket.timeline.push(makeTimelineEvent('assigned', '辅导员已转交', '问题已转交后勤，等待接收。', req.user.name))
+    }
+    db.issueBundles[index] = next; save()
+    return res.json({ bundle: next })
+  } catch (error) { return res.status(400).json({ message: error.message }) }
+})
+
+app.get('/api/logistics/work-orders', requireAuth, requireRole('logistics'), (req, res) => {
+  const bundles = (db.issueBundles || []).filter(bundle => bundle.status === 'dispatched' && bundle.recipientId === req.user.id)
+  // Only explicitly assigned issue details are returned; no internal notes or student profiles.
+  const items = bundles.flatMap(bundle => bundle.items.map(item => {
+    const ticket = db.tickets.find(record => record.id === item.ticketId)
+    return ticket ? { bundleId: bundle.id, ticketId: ticket.id, title: ticket.title, description: ticket.description, location: ticket.location, status: item.status, history: item.history } : null
+  }).filter(Boolean))
+  return res.json({ items })
+})
+
+app.post('/api/logistics/work-orders/:bundleId/:ticketId', requireAuth, requireRole('logistics'), (req, res) => {
+  const bundles = db.issueBundles || []
+  const index = bundles.findIndex(bundle => bundle.id === req.params.bundleId && bundle.recipientId === req.user.id)
+  if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  const ticket = db.tickets.find(item => item.id === req.params.ticketId)
+  if (!ticket) return res.status(404).json({ message: '工单不存在。' })
+  try {
+    const action = req.body?.action
+    if ((action === 'accept' && ticket.status !== 'assigned') || (action === 'resolve' && ticket.status !== 'processing')) return res.status(409).json({ message: '工单状态已变更。' })
+    const next = applyLogisticsAction({ bundle: bundles[index], recipient: req.user, ticketId: ticket.id, action, result: req.body?.result })
+    ticket.status = action === 'accept' ? 'processing' : 'awaiting_confirm'
+    ticket.updatedAt = nowIso()
+    ticket.timeline.push(makeTimelineEvent(action === 'accept' ? 'accepted' : 'awaiting_confirm', action === 'accept' ? '后勤已接收' : '处置完成，等待学生确认', action === 'accept' ? '后勤已接收工单。' : req.body.result.trim(), req.user.name))
+    db.issueBundles[index] = next; save()
+    return res.json({ item: next.items.find(item => item.ticketId === ticket.id) })
+  } catch (error) { return res.status(400).json({ message: error.message }) }
+})
+
+app.post('/api/tickets/:id/reopen', requireAuth, requireRole('student'), (req, res) => {
+  const ticket = db.tickets.find(item => item.id === req.params.id && item.studentId === req.user.id)
+  if (!ticket) return res.status(404).json({ message: '工单不存在。' })
+  if (ticket.status !== 'awaiting_confirm') return res.status(409).json({ message: '当前状态不能反馈未解决。' })
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : ''
+  if (!reason || reason.length > 1000) return res.status(400).json({ message: '请填写未解决的原因，最多1000字。' })
+  const bundle = (db.issueBundles || []).find(item => item.status === 'dispatched' && item.items?.some(entry => entry.ticketId === ticket.id && entry.status === 'resolved'))
+  if (!bundle) return res.status(409).json({ message: '当前工单尚不支持此操作。' })
+  const item = bundle.items.find(entry => entry.ticketId === ticket.id)
+  const at = nowIso()
+  item.status = 'disputed'; item.history.push({ id: crypto.randomUUID(), action:'disputed', actorId:req.user.id, at, reason })
+  ticket.status = 'pending_review'; ticket.updatedAt = at
+  ticket.timeline.push(makeTimelineEvent('reopened', '学生反馈尚未解决', reason, req.user.name))
+  bundle.updatedAt = at; save()
+  return res.json({ ticket: ticketForUser(ticket, req.user) })
+})
+
+app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundle = (db.issueBundles || []).find(item => item.id === req.params.bundleId && item.createdBy === req.user.id && item.status === 'dispatched')
+  const ticket = db.tickets.find(item => item.id === req.params.ticketId)
+  if (!bundle || !ticket || !Array.isArray(req.user.studentIds) || !req.user.studentIds.includes(ticket.studentId)) return res.status(404).json({ message: '工单不存在或无权访问。' })
+  const item = bundle.items.find(entry => entry.ticketId === ticket.id)
+  if (!item || item.status !== 'disputed' || ticket.status !== 'pending_review') return res.status(409).json({ message: '当前状态不能重新转交。' })
+  const at = nowIso(); item.status = 'sent'; item.history.push({ id:crypto.randomUUID(), action:'redispatched', actorId:req.user.id, at })
+  ticket.status = 'assigned'; ticket.updatedAt = at
+  ticket.timeline.push(makeTimelineEvent('assigned', '辅导员重新转交', '辅导员已将反馈重新转交后勤。', req.user.name))
+  bundle.updatedAt = at; save()
+  return res.json({ item })
 })
 
 app.use('/api', (req, res) => {
