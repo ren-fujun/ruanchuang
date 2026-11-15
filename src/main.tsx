@@ -16,6 +16,8 @@ import './styles/counselor-workspace.css'
 import './styles/counselor-dashboard.css'
 import './styles/counselor-surfaces.css'
 
+import './features/c/portal.css'
+
 async function bootstrap() {
   if (import.meta.env.VITE_USE_MOCK === 'true') {
     try {
