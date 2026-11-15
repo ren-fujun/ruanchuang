@@ -13,3 +13,10 @@ export function createIssueBundle({ ticketIds, tickets, bundles = [], actorId, n
   if (bundles.some(bundle => bundle.status === 'draft' && bundle.ticketIds.some(id => ids.includes(id)))) throw new Error('工单已经存在于待转交问题包')
   return { id: crypto.randomUUID(), status: 'draft', ticketIds: ids, note: note.trim(), createdBy: actorId, createdAt: new Date().toISOString() }
 }
+
+export function reviseIssueBundle({ bundle, ticketIds, tickets, bundles, actorId, note }) {
+  if (!bundle || bundle.createdBy !== actorId) throw new Error('问题包不存在或无权访问')
+  if (bundle.status !== 'draft') throw new Error('只有草稿可以修改')
+  const checked = createIssueBundle({ ticketIds, tickets, bundles: bundles.filter(item => item.id !== bundle.id), actorId, note })
+  return { ...bundle, ticketIds: checked.ticketIds, note: checked.note, updatedAt: new Date().toISOString() }
+}

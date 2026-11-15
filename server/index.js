@@ -7,7 +7,7 @@ import { db, save } from './store.js'
 import { departmentMap, knowledgeBase } from './seed.js'
 import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault } from './llm.js'
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
-import { createIssueBundle } from './issue-bundles.js'
+import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -908,6 +908,9 @@ app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req,
 app.patch('/api/tickets/:id/review', requireAuth, requireRole('counselor'), (req, res) => {
   const ticket = getTicketOr404(req.params.id, res)
   if (!ticket) return
+  if ((db.issueBundles || []).some(bundle => bundle.status === 'draft' && bundle.ticketIds.includes(ticket.id))) {
+    return res.status(409).json({ message: '该工单在问题包草稿中，请先调整或取消草稿。' })
+  }
   if (ticket.status !== 'pending_review') {
     return res.status(409).json({ message: '这张工单已经审核过了。' })
   }
@@ -1269,6 +1272,29 @@ app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res)
 
 app.get('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
   res.json({ bundles: (db.issueBundles || []).filter(bundle => bundle.createdBy === req.user.id) })
+})
+
+app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundles = db.issueBundles || []
+  const index = bundles.findIndex(bundle => bundle.id === req.params.id && bundle.createdBy === req.user.id)
+  if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  try {
+    const original = bundles[index]
+    const updated = reviseIssueBundle({ bundle: original, ticketIds: req.body?.ticketIds ?? original.ticketIds, note: req.body?.note ?? original.note, tickets: db.tickets, bundles, actorId: req.user.id })
+    db.issueBundles[index] = updated
+    save()
+    return res.json({ bundle: updated })
+  } catch (error) { return res.status(400).json({ message: error.message }) }
+})
+
+app.post('/api/issue-bundles/:id/cancel', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundle = (db.issueBundles || []).find(item => item.id === req.params.id && item.createdBy === req.user.id)
+  if (!bundle) return res.status(404).json({ message: '问题包不存在。' })
+  if (bundle.status !== 'draft') return res.status(409).json({ message: '只有草稿可以取消。' })
+  bundle.status = 'cancelled'
+  bundle.updatedAt = nowIso()
+  save()
+  return res.json({ bundle })
 })
 
 app.use('/api', (req, res) => {
