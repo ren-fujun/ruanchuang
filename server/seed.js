@@ -251,6 +251,16 @@ export const userProfiles = [
     scope: '信息工程学院 2023 级',
     studentCount: 286,
     onDuty: '本周值班 · 周一 / 周四',
+    studentIds: ['stu-lin', 'stu-xu', 'stu-zhou', 'stu-wang', 'stu-zhao', 'stu-chen', 'stu-su', 'stu-zheng', 'stu-gu'],
+  },
+  {
+    id: 'logistics-demo',
+    role: 'logistics',
+    name: '周明',
+    account: 'logistics',
+    password: '123456',
+    title: '后勤保障处 · 维修调度',
+    department: '后勤保障处',
   },
 ]
 
