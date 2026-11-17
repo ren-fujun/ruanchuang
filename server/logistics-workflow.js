@@ -19,9 +19,10 @@ export function applyLogisticsAction({ bundle, recipient, ticketId, action, resu
  const item=bundle.items[index]
  if(action==='accept' && item.status!=='sent') throw new Error('当前状态不能接收')
  if(action==='resolve' && item.status!=='accepted') throw new Error('请先接收工单')
- if(!['accept','resolve'].includes(action)) throw new Error('未知操作')
- if(action==='resolve' && (typeof result!=='string' || !result.trim() || result.trim().length>1000)) throw new Error('请填写处理结果，最多1000字')
+ if(action==='return' && !['sent','accepted'].includes(item.status)) throw new Error('当前状态不能退回')
+ if(!['accept','resolve','return'].includes(action)) throw new Error('未知操作')
+ if(['resolve','return'].includes(action) && (typeof result!=='string' || !result.trim() || result.trim().length>1000)) throw new Error('请填写处理说明，最多1000字')
  const at=new Date().toISOString()
- const next={...item, status:action==='accept'?'accepted':'resolved', history:[...item.history,{id:crypto.randomUUID(), action, actorId:recipient.id, at, ...(action==='resolve'?{result:result.trim()}:{})}]}
+ const next={...item, status:action==='accept'?'accepted':action==='return'?'returned':'resolved', history:[...item.history,{id:crypto.randomUUID(), action, actorId:recipient.id, at, ...(['resolve','return'].includes(action)?{result:result.trim()}:{})}]}
  return {...bundle, updatedAt:at, items:bundle.items.map((old,i)=>i===index?next:old)}
 }

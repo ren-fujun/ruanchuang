@@ -11,6 +11,7 @@ import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { planStudentTicketChange } from './c-student.js'
+import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -163,7 +164,8 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
-  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !['/api/auth/logout', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/[^/]+\/dispatch)?$/.test(req.path)
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   req.user = user
   next()
 }
@@ -1457,12 +1459,12 @@ app.post('/api/logistics/work-orders/:bundleId/:ticketId', requireAuth, requireR
   if (!ticket) return res.status(404).json({ message: '工单不存在。' })
   try {
     const action = req.body?.action
-    if ((action === 'accept' && ticket.status !== 'assigned') || (action === 'resolve' && ticket.status !== 'processing')) return res.status(409).json({ message: '工单状态已变更。' })
+    if ((action === 'accept' && ticket.status !== 'assigned') || (action === 'resolve' && ticket.status !== 'processing') || (action === 'return' && !['assigned','processing'].includes(ticket.status))) return res.status(409).json({ message: '工单状态已变更。' })
     const next = applyLogisticsAction({ bundle: bundles[index], recipient: req.user, ticketId: ticket.id, action, result: req.body?.result })
     next.version = (bundles[index].version || 1) + 1
-    ticket.status = action === 'accept' ? 'processing' : 'awaiting_confirm'
+    ticket.status = action === 'accept' ? 'processing' : action === 'return' ? 'pending_review' : 'awaiting_confirm'
     ticket.updatedAt = nowIso()
-    ticket.timeline.push(makeTimelineEvent(action === 'accept' ? 'accepted' : 'awaiting_confirm', action === 'accept' ? '后勤已接收' : '处置完成，等待学生确认', action === 'accept' ? '后勤已接收工单。' : req.body.result.trim(), req.user.name))
+    ticket.timeline.push(makeTimelineEvent(action === 'accept' ? 'accepted' : action === 'return' ? 'returned' : 'awaiting_confirm', action === 'accept' ? '后勤已接收' : action === 'return' ? '后勤已退回' : '处置完成，等待学生确认', action === 'accept' ? '后勤已接收工单。' : req.body.result.trim(), req.user.name))
     db.issueBundles[index] = next; save()
     return res.json({ item: next.items.find(item => item.ticketId === ticket.id) })
   } catch (error) { return res.status(400).json({ message: error.message }) }
@@ -1502,12 +1504,56 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   const ticket = db.tickets.find(item => item.id === req.params.ticketId)
   if (!bundle || !ticket || !Array.isArray(req.user.studentIds) || !req.user.studentIds.includes(ticket.studentId)) return res.status(404).json({ message: '工单不存在或无权访问。' })
   const item = bundle.items.find(entry => entry.ticketId === ticket.id)
-  if (!item || item.status !== 'disputed' || ticket.status !== 'pending_review') return res.status(409).json({ message: '当前状态不能重新转交。' })
+  if (!item || !['disputed','returned'].includes(item.status) || ticket.status !== 'pending_review') return res.status(409).json({ message: '当前状态不能重新转交。' })
   const at = nowIso(); item.status = 'sent'; item.history.push({ id:crypto.randomUUID(), action:'redispatched', actorId:req.user.id, at })
   ticket.status = 'assigned'; ticket.updatedAt = at
   ticket.timeline.push(makeTimelineEvent('assigned', '辅导员重新转交', '辅导员已将反馈重新转交后勤。', req.user.name))
   bundle.version = (bundle.version || 1) + 1; bundle.updatedAt = at; save()
   return res.json({ item })
+})
+
+app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
+  const batches = db.academicBatches || []
+  const previous = req.body?.previousId ? batches.find(batch => batch.id === req.body.previousId) : null
+  if (req.body?.previousId && (!previous || !canReadAcademicVersion(req.user, previous))) return res.status(404).json({ message:'名单不存在。' })
+  if (previous && (previous.dispatchedAt || batches.some(batch => batch.previousId === previous.id))) return res.status(409).json({ message:'该版本已分发或已有更新版本，请人工核对。' })
+  try {
+    const result = createAcademicVersion({ user:req.user, rows:req.body?.rows, users:db.users, previous, expectedVersion:req.body?.expectedVersion ?? 0 })
+    if (!result.valid) return res.status(400).json({ message:'名单校验失败。', errors:result.errors })
+    const mismatch = result.batch.items.some(row => {
+      const student = db.users.find(user => user.id === row.studentId)
+      const mentor = db.users.find(user => user.id === row.mentorId)
+      const counselor = db.users.find(user => user.id === row.counselorId)
+      return !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || student.counselor !== counselor.name
+    })
+    if (mismatch) return res.status(400).json({ message:'学生、导师学院或辅导员关系不匹配。' })
+    db.academicBatches = [...batches, result.batch]; save()
+    return res.status(201).json({ item:result.batch })
+  } catch (error) { return res.status(400).json({ message:error.message }) }
+})
+
+app.get('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
+  res.json({ items:(db.academicBatches || []).filter(batch => canReadAcademicVersion(req.user, batch)) })
+})
+
+app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academic'), (req, res) => {
+  const batch = (db.academicBatches || []).find(item => item.id === req.params.id && canReadAcademicVersion(req.user, item))
+  if (!batch) return res.status(404).json({ message:'名单不存在。' })
+  if (batch.dispatchedAt || (db.academicBatches || []).some(item => item.previousId === batch.id) || req.body?.version !== batch.version) return res.status(409).json({ message:'名单已分发、已更新或版本冲突。' })
+  const cases = db.b?.cases
+  if (!Array.isArray(cases)) return res.status(503).json({ message:'学业服务尚未准备好。' })
+  for (const row of batch.items) {
+    const student = db.users.find(user => user.id === row.studentId && user.role === 'student')
+    const mentor = db.users.find(user => user.id === row.mentorId && user.role === 'mentor')
+    const counselor = db.users.find(user => user.id === row.counselorId && user.role === 'counselor')
+    if (!student || !mentor || !counselor || !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || student.counselor !== counselor.name) return res.status(409).json({ message:'人员关系已变化，请重新核对名单。' })
+    if (cases.some(item => item.studentId === row.studentId && item.course === row.course && item.status !== 'completed')) return res.status(409).json({ message:'名单中存在尚未结束的同课程任务。' })
+  }
+  const at = nowIso()
+  const created = batch.items.map(row => ({ id:crypto.randomUUID(), studentId:row.studentId, studentName:db.users.find(user => user.id === row.studentId).name, college:req.user.college, mentorId:row.mentorId, counselorId:row.counselorId, course:row.course, status:'pending_contact', version:1, result:null, records:[], createdAt:at, academicBatchId:batch.id }))
+  db.b.cases.push(...created)
+  batch.dispatchedAt = at; batch.caseIds = created.map(item => item.id); save()
+  return res.json({ item:batch, createdCount:created.length })
 })
 
 app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, res) => {
