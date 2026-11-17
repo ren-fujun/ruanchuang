@@ -24,5 +24,7 @@ export function fivePortalFixture() {
   const template = db.users.find(u => u.id === 'stu-lin')
   for (const s of scenarios) db.users.push({ ...template, id: s.id, name: s.name,
     account: s.account, studentNo: s.account, phone: '测试无联系方式', room: '虚构测试楼101' })
+  const counselor = db.users.find(user => user.id === 'cou-chen')
+  counselor.studentIds = [...new Set([...(counselor.studentIds || []), ...scenarios.map(s => s.id)])]
   return db
 }

@@ -99,6 +99,7 @@ try {
   const id = student.url().split("/").pop();
   await student.getByRole("link", { name: "补充材料", exact: true }).click();
   await student.getByLabel("补充说明").fill("补充说明：在三号楼二层东侧。");
+  await student.route("**/api/tickets/*/supplements", (r) => r.fulfill({status:501, contentType:'application/json', body:JSON.stringify({message:'服务尚未接入'})}));
   await student.getByRole("button", { name: "确认提交", exact: true }).click();
   await student
     .getByRole("alert")
@@ -107,9 +108,7 @@ try {
   assert.ok(
     (await student.getByLabel("补充说明").inputValue()).includes("三号楼"),
   );
-  await student.route("**/api/tickets/*/supplements", (r) =>
-    fulfill(r, { ok: true }),
-  );
+  await student.unroute("**/api/tickets/*/supplements");
   await student.getByRole("button", { name: "确认提交", exact: true }).click();
   await student.getByText("补充说明已提交", { exact: true }).waitFor();
 
@@ -155,6 +154,7 @@ try {
   await boxes.first().check();
   await boxes.nth(1).check();
   await teacher.getByLabel("我已逐条核对诉求、风险和目标部门").check();
+  await teacher.route("**/api/issue-bundles", (r) => r.request().method() === 'POST' ? r.fulfill({status:501, contentType:'application/json', body:JSON.stringify({message:'服务尚未接入'})}) : r.continue());
   await teacher.getByRole("button", { name: "建立待转交问题包" }).click();
   await teacher
     .getByRole("alert")
@@ -167,6 +167,7 @@ try {
   );
   let created;
   const bundle = example.bundle.data.item;
+  await teacher.unroute("**/api/issue-bundles");
   await teacher.route("**/api/issue-bundles", async (route) => {
     if (route.request().method() === "POST") {
       created = route.request().postDataJSON();
