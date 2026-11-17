@@ -7,6 +7,8 @@ export interface BundleItem {
   result?: string;
   studentConfirmed?: boolean;
   reopened?: boolean;
+  workStatus?: string;
+  returnReason?: string;
 }
 export interface Bundle {
   id: string;

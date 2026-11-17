@@ -184,7 +184,7 @@ try {
   await teacher
     .getByText("已回执 1 / 2 项，学生已确认 0 项", { exact: true })
     .waitFor();
-  await teacher.getByText("处理中 · 已重新办理", { exact: true }).waitFor();
+  await teacher.getByText("处理中 · 曾反馈未解决", { exact: true }).waitFor();
   await teacher.screenshot({ path: path.join(out, "bundle-contract.png") });
 
   await teacher.goto(teacherBase + "/counselor/appointments");

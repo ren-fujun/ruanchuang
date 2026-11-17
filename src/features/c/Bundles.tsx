@@ -227,12 +227,19 @@ export function BundleDetail() {
                   </Link>
                   <p>
                     {statusLabel(i.status)}
-                    {i.reopened ? " · 已重新办理" : ""}
+                    {i.reopened ? " · 曾反馈未解决" : ""}
                   </p>
                   <p>{i.result || "等待部门反馈单项结果"}</p>
+                  {i.workStatus === "returned" && <p>后勤退回原因：{i.returnReason || "请联系后勤核实"}</p>}
                   <small>
                     {i.studentConfirmed ? "学生已确认" : "学生待确认"}
                   </small>
+                  {["disputed", "returned"].includes(i.workStatus || "") && (
+                    <button type="button" disabled={action.busy} onClick={() => void action.run(
+                      () => write(`/issue-bundles/${encodeURIComponent(b.id)}/${encodeURIComponent(i.ticketId)}/redispatch`, {}),
+                      "已重新转交后勤",
+                    )}>重新转交此事项</button>
+                  )}
                 </article>
               ))}
             </Panel>

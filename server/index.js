@@ -1285,7 +1285,8 @@ const bundleForC = (bundle) => ({
     const ticket = db.tickets.find(item => item.id === id)
     const entry = bundle.items?.find(item => item.ticketId === id)
     const result = [...(entry?.history || [])].reverse().find(event => event.action === 'resolve')?.result
-    return { ticketId: id, title: ticket?.title || '', status: ticket?.status || '', result, studentConfirmed: ticket?.status === 'completed', reopened: Boolean(entry?.history?.some(event => event.action === 'disputed')) }
+    const returnReason = [...(entry?.history || [])].reverse().find(event => event.action === 'return')?.result
+    return { ticketId: id, title: ticket?.title || '', status: ticket?.status || '', result, workStatus:entry?.status, returnReason:entry?.status === 'returned' ? returnReason : undefined, studentConfirmed: ticket?.status === 'completed', reopened: Boolean(entry?.history?.some(event => event.action === 'disputed')) }
   }),
 })
 // The same request ID may only replay the same operation by the same user.
@@ -1436,7 +1437,7 @@ app.get('/api/logistics/work-orders', requireAuth, requireRole('logistics'), (re
   // Only explicitly assigned issue details are returned; no internal notes or student profiles.
   const items = bundles.flatMap(bundle => bundle.items.map(item => {
     const ticket = db.tickets.find(record => record.id === item.ticketId)
-    return ticket ? { bundleId: bundle.id, ticketId: ticket.id, title: ticket.title, description: ticket.description, location: ticket.location, status: item.status, history: item.history } : null
+    return ticket ? { bundleId: bundle.id, ticketId: ticket.id, title: ticket.title, description: ticket.description, location: ticket.location, status: item.status === 'resolved' && ticket.status === 'completed' ? 'completed' : item.status, history: item.history } : null
   }).filter(Boolean))
   return res.json({ items })
 })

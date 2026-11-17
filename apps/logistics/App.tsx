@@ -12,7 +12,9 @@ const statusMeta: Record<
   sent: { label: '待接收', tone: 'pending' },
   accepted: { label: '处理中', tone: 'active' },
   resolved: { label: '已处理，待学生确认', tone: 'done' },
+  completed: { label: '学生已确认', tone: 'done' },
   disputed: { label: '学生反馈未解决', tone: 'danger' },
+  returned: { label: '已退回辅导员', tone: 'danger' },
 }
 
 export function LogisticsApp() {
@@ -97,7 +99,7 @@ export function LogisticsApp() {
 
   async function handleAction(
     item: LogisticsWorkItem,
-    action: 'accept' | 'resolve',
+    action: 'accept' | 'resolve' | 'return',
     result?: string,
   ) {
     const key = `${item.bundleId}:${item.ticketId}`
@@ -116,7 +118,7 @@ export function LogisticsApp() {
       setNotice(
         action === 'accept'
           ? '事项已接收，可以开始办理。'
-          : '处理结果已提交，等待学生确认。',
+          : action === 'return' ? '事项已退回辅导员核对。' : '处理结果已提交，等待学生确认。',
       )
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '事项操作失败。')
@@ -330,7 +332,7 @@ function BundleCard({
   actionBusy: string
   onAction: (
     item: LogisticsWorkItem,
-    action: 'accept' | 'resolve',
+    action: 'accept' | 'resolve' | 'return',
     result?: string,
   ) => void
 }) {
@@ -370,12 +372,13 @@ function WorkItemCard({
   busy: boolean
   onAction: (
     item: LogisticsWorkItem,
-    action: 'accept' | 'resolve',
+    action: 'accept' | 'resolve' | 'return',
     result?: string,
   ) => void
 }) {
   const meta = statusMeta[item.status] || statusMeta.sent
   const [result, setResult] = useState('')
+  const [returnReason, setReturnReason] = useState('')
   const latestResult = [...item.history]
     .reverse()
     .find((entry) => entry.action === 'resolve')?.result
@@ -447,6 +450,14 @@ function WorkItemCard({
       {item.status === 'disputed' && (
         <p className="disputed-note">学生反馈尚未解决，等待辅导员重新转交。</p>
       )}
+      {['sent', 'accepted'].includes(item.status) && (
+        <div className="resolve-form">
+          <label htmlFor={`return-${item.ticketId}`}>退回原因</label>
+          <textarea id={`return-${item.ticketId}`} value={returnReason} maxLength={1000} disabled={busy} onChange={(event) => setReturnReason(event.target.value)} />
+          <button type="button" disabled={busy || !returnReason.trim()} onClick={() => onAction(item, 'return', returnReason.trim())}>退回辅导员</button>
+        </div>
+      )}
+      {item.status === 'returned' && <p className="disputed-note">已退回，等待辅导员核对。</p>}
     </section>
   )
 }

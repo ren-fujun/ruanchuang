@@ -69,7 +69,6 @@ export function TicketChanges() {
                 <p>
                   请填写必要的事项说明。涉及证明文件时，请按老师提供的渠道补交。
                 </p>
-                {action.feedback}
                 <button
                   className="c-primary"
                   disabled={action.busy || text.trim().length < 6}
@@ -80,6 +79,7 @@ export function TicketChanges() {
             ) : (
               <p>当前状态暂不支持此操作，请返回查看最新进展。</p>
             )}
+            {action.feedback}
           </Panel>
         )}
       </LoadState>

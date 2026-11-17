@@ -201,6 +201,20 @@ try {
   assert.equal(firstAfter.status, 'awaiting_confirm')
   assert.equal(secondAfter.status, 'assigned')
 
+  await page.evaluate(token => localStorage.setItem('zhihui_token', token), logisticsAfterBrowserLogin)
+  await page.reload()
+  await secondItem.getByLabel('退回原因').fill('请核对具体楼层')
+  await secondItem.getByRole('button',{name:'退回辅导员'}).click()
+  await secondItem.getByText('已退回，等待辅导员核对。').waitFor()
+  await teacher.evaluate(token => localStorage.setItem('zhihui_token', token), counselor)
+  await teacher.goto(`${teacherBase}/counselor/bundles/${bundle.id}`)
+  const returnedItem=teacher.locator('article.c-review').filter({hasText:secondTicket.title})
+  await returnedItem.getByText('后勤退回原因：请核对具体楼层').waitFor()
+  await returnedItem.getByRole('button',{name:'重新转交此事项'}).click()
+  await teacher.getByText('已重新转交后勤',{exact:true}).waitFor()
+  await page.reload()
+  await secondItem.getByRole('button',{name:'接收此事项'}).waitFor()
+
   studentVite = await createViteServer({configFile:'apps/student/vite.config.mjs', server:{port:await freePort(),open:false}})
   await studentVite.listen()
   const studentPage=await browser.newPage()
@@ -212,8 +226,19 @@ try {
   await studentPage.getByRole('button',{name:'确认办结',exact:true}).click()
   await studentPage.getByRole('button',{name:'暂不评价，直接确认'}).click()
   await studentPage.getByText('这件事，已收尾。').waitFor()
+  await page.reload()
+  await firstItem.locator('.status-pill').filter({hasText:'学生已确认'}).waitFor()
+  await studentPage.getByRole('link',{name:'不满意，申请重新办理'}).click()
+  await studentPage.getByLabel('未解决的问题与重开原因').fill('问题再次出现，请重新处理。')
+  await studentPage.getByRole('button',{name:'确认提交'}).click()
+  try { await studentPage.getByText('重新办理申请已提交',{exact:true}).waitFor({timeout:5000}) }
+  catch { throw new Error(`学生重开失败：${await studentPage.locator('body').innerText()}`) }
   const student=await login('20230118','student')
-  assert.equal((await call(`/tickets/${firstTicket.id}`,student)).ticket.status,'completed')
+  assert.equal((await call(`/tickets/${firstTicket.id}`,student)).ticket.status,'pending_review')
+  await teacher.goto(`${teacherBase}/counselor/bundles/${bundle.id}`)
+  const disputedItem=teacher.locator('article.c-review').filter({hasText:firstTicket.title})
+  await disputedItem.getByRole('button',{name:'重新转交此事项'}).click()
+  await teacher.getByText('已重新转交后勤',{exact:true}).waitFor()
 
   const finalSecond = (
     await call(`/tickets/${secondTicket.id}`, counselor)
@@ -231,10 +256,12 @@ try {
   )
 
   console.log('PASS C辅导员页面创建并转交真实问题包')
+  console.log('PASS D页面退回后C页面核对并重新转交')
   console.log('PASS 后勤问题包列表与接收人范围隔离')
   console.log('PASS 后勤页面逐项接收并提交处理结果')
   console.log('PASS 单事项完成不关闭同包其他事项')
   console.log('PASS C学生页面确认后原工单正确办结')
+  console.log('PASS C学生反馈未解决后辅导员可再次转交')
   console.log('PASS 后勤身份不能进入辅导员看板')
   console.log('PASS 390px 手机宽度无横向溢出')
 } finally {

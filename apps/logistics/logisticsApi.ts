@@ -24,7 +24,7 @@ export interface LogisticsWorkItem {
   title: string
   description: string
   location: string
-  status: 'sent' | 'accepted' | 'resolved' | 'disputed'
+  status: 'sent' | 'accepted' | 'resolved' | 'completed' | 'disputed' | 'returned'
   history: LogisticsHistoryItem[]
 }
 
@@ -69,7 +69,8 @@ export const logisticsApi = {
     ticketId: string,
     body:
       | { action: 'accept' }
-      | { action: 'resolve'; result: string },
+      | { action: 'resolve'; result: string }
+      | { action: 'return'; result: string },
   ) {
     return request<{ item: LogisticsWorkItem }>(
       `/logistics/work-orders/${encodeURIComponent(bundleId)}/${encodeURIComponent(ticketId)}`,
