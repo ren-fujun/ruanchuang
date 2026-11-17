@@ -197,6 +197,50 @@ try {
   assert.equal(secondAfter.status, 'assigned')
 
   const student = await login('20230118', 'student')
+  await call(`/tickets/${firstTicket.id}/reopen`, student, {
+    reason: '处理后仍有异常，需要再次检查。',
+  })
+  const reopenedTicket = (
+    await call(`/tickets/${firstTicket.id}`, counselor)
+  ).ticket
+  const reopenedOrders = await call(
+    '/logistics/work-orders',
+    logisticsAfterBrowserLogin,
+  )
+  assert.equal(reopenedTicket.status, 'pending_review')
+  assert.equal(
+    reopenedOrders.items.find((item) => item.ticketId === firstTicket.id)?.status,
+    'disputed',
+  )
+
+  await call(
+    `/issue-bundles/${bundle.id}/${firstTicket.id}/redispatch`,
+    counselor,
+    {},
+  )
+  const redispatched = await call(
+    '/logistics/work-orders',
+    logisticsAfterBrowserLogin,
+  )
+  assert.equal(
+    redispatched.items.find((item) => item.ticketId === firstTicket.id)?.status,
+    'sent',
+  )
+  await call(
+    `/logistics/work-orders/${bundle.id}/${firstTicket.id}`,
+    logisticsAfterBrowserLogin,
+    { action: 'accept' },
+  )
+  await call(
+    `/logistics/work-orders/${bundle.id}/${firstTicket.id}`,
+    logisticsAfterBrowserLogin,
+    { action: 'resolve', result: '已完成第二次检查并重新处置。' },
+  )
+  const readyAgain = (
+    await call(`/tickets/${firstTicket.id}`, counselor)
+  ).ticket
+  assert.equal(readyAgain.status, 'awaiting_confirm')
+
   const confirmed = (
     await call(`/tickets/${firstTicket.id}/confirm`, student, {
       score: 5,
@@ -224,6 +268,7 @@ try {
   console.log('PASS 后勤问题包列表与接收人范围隔离')
   console.log('PASS 后勤页面逐项接收并提交处理结果')
   console.log('PASS 单事项完成不关闭同包其他事项')
+  console.log('PASS 学生反馈未解决后重新转交并再次办理')
   console.log('PASS 学生确认后原工单正确办结')
   console.log('PASS 后勤身份不能进入辅导员看板')
   console.log('PASS 390px 手机宽度无横向溢出')
