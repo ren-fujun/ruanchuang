@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -388,6 +388,12 @@ export function StudentTicketDetail() {
           </button>
         </div>
       )}
+
+      <section className="c-panel">
+        <h2>继续处理</h2>
+        {ticket.status !== 'completed' && <Link className="c-outline" to={'/student/tickets/'+id+'/supplement'}>补充材料</Link>}
+        {['completed','awaiting_confirm'].includes(ticket.status) && <Link className="c-outline" to={'/student/tickets/'+id+'/reopen'}>不满意，申请重新办理</Link>}
+      </section>
 
       <Sheet
         open={ratingOpen}

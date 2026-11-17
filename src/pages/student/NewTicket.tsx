@@ -69,7 +69,7 @@ export function NewTicket() {
   const [category, setCategory] = useState(
     categoryOptions.some((item) => item.name === initialCategory) ? initialCategory! : savedDraft?.category || '智能识别',
   )
-  const [text, setText] = useState(savedDraft?.text || '')
+  const [text, setText] = useState(searchParams.get('description') || savedDraft?.text || '')
   const [location, setLocation] = useState(savedDraft?.location || '')
   const [urgency, setUrgency] = useState(savedDraft?.urgency || 'normal')
   const [attachments, setAttachments] = useState<{ name: string; type: string; size: string }[]>([])

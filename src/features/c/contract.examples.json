@@ -1,0 +1,52 @@
+{
+  "bundle": {
+    "code": 0,
+    "msg": "ok",
+    "data": {
+      "item": {
+        "id": "bundle-demo",
+        "title": "宿舍设施维修",
+        "departmentId": "logistics",
+        "status": "processing",
+        "version": 3,
+        "items": [
+          {
+            "ticketId": "ticket-a",
+            "title": "宿舍漏水",
+            "status": "awaiting_confirm",
+            "result": "已更换密封件",
+            "studentConfirmed": false
+          },
+          {
+            "ticketId": "ticket-b",
+            "title": "照明故障",
+            "status": "processing",
+            "reopened": true,
+            "studentConfirmed": false
+          }
+        ]
+      }
+    }
+  },
+  "slots": {
+    "code": 0,
+    "msg": "ok",
+    "data": {
+      "items": [
+        {
+          "id": "slot-demo",
+          "startsAt": "2027-01-05T06:00:00.000Z",
+          "endsAt": "2027-01-05T06:30:00.000Z",
+          "ownerName": "陈老师",
+          "available": true
+        }
+      ]
+    }
+  },
+  "conflict": {
+    "code": 40901,
+    "msg": "数据已更新，请核对最新记录后重试。",
+    "data": null
+  },
+  "unavailable": { "code": 50101, "msg": "该服务尚未接入", "data": null }
+}
