@@ -1,5 +1,5 @@
-# 导师端
+# 导师端（B业务已接通）
 
-独立入口：npm run dev:mentor，端口 5195。独立构建：npm run build:mentor，产物 dist-portals/mentor。
+运行 `npm run demo:b` 启动隔离API、导师端和学生端。导师页面 http://127.0.0.1:5195 ，完整说明见 [B五端交付](../../docs/B五端交付.md)。
 
-本次仅提供模块导航、空态与功能边界，不包含登录、真实数据或写入动作。后续必须实现服务端角色与数据范围校验，不能用辅导员账号替代本角色。修改 modules.ts 配置与本目录页面，公共布局放 apps/shared。
+生产业务模式仍可用 `npm run dev:mentor`，默认代理8787，设置 PORTAL_API_URL 可调整。独立构建 `npm run build:mentor`。任务权限由后端校验，不以本地端口作为权限边界。
