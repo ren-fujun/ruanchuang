@@ -376,7 +376,7 @@ export const analyzeRequest = ({ text = '', category: explicitCategory, location
   const draft =
     risk.level === 'high'
       ? '同学你好，我看到你的消息了，谢谢你愿意告诉我。我现在马上联系你，我们先确认你此刻是安全的，好吗？'
-      : `同学你好，已收到你关于「${category}」的反馈。我们已联系${deptNames}跟进，有进展会第一时间同步给你。`
+      : `同学你好，已收到你关于「${category}」的描述。建议由${deptNames}核实处理，实际受理进度以提交后的记录为准。`
 
   return {
     category,

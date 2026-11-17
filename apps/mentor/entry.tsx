@@ -12,13 +12,19 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../shared/portal.css'
 import './mentor.css'
+import { AcademicCollaboration } from '../../src/features/b/Collaboration'
+import { LeavePanel } from '../../src/features/b/Leaves'
 type RecordItem = {
   type: string
   text?: string
   at: string
   scheduledAt?: string
+  summary?: string
 }
 type Case = {
+  mentorId: string
+  counselorId: string
+  collaboration?: { status: string }
   id: string
   studentName: string
   course: string
@@ -68,6 +74,8 @@ function App() {
     [text, setText] = useState(''),
     [type, setType] = useState('contact'),
     [scheduledAt, setScheduledAt] = useState(''),
+    [summary, setSummary] = useState(''),
+    [visibility, setVisibility] = useState('private'),
     [tab, setTab] = useState('cases'),
     [knowledge, setKnowledge] = useState<Knowledge[]>([])
   const [draft, setDraft] = useState({
@@ -180,6 +188,7 @@ function App() {
                 <Library size={18} /> 知识审核与版本
               </button>
             )}
+            {(user.role === 'counselor' || user.classAdvisor) && <button aria-current={tab === 'leaves' ? 'page' : undefined} onClick={() => setTab('leaves')}>请假审批</button>}
             <button
               onClick={() =>
                 void run(async () => {
@@ -210,7 +219,7 @@ function App() {
         <header className="mentor-heading">
           <div>
             <span className="mentor-eyebrow">CAMPUS COMPANION</span>
-            <h1>{tab === 'knowledge' ? '知识审核与版本' : '学业跟进'}</h1>
+            <h1>{tab === 'leaves' ? '请假审批' : tab === 'knowledge' ? '知识审核与版本' : '学业跟进'}</h1>
             <p>
               {user
                 ? '把每一次联系，变成有回应的陪伴。'
@@ -249,13 +258,13 @@ function App() {
           <div className="mentor-stats">
             {[
               [
-                '待联系',
-                items.filter((c) => c.status === 'pending_contact').length,
+                '待协商',
+                items.filter((c) => c.status !== 'completed' && c.collaboration?.status !== 'agreed').length,
               ],
               [
                 '跟进中',
                 items.filter(
-                  (c) => !['pending_contact', 'completed'].includes(c.status),
+                  (c) => c.status !== 'completed' && c.collaboration?.status === 'agreed',
                 ).length,
               ],
               ['已完成', items.filter((c) => c.status === 'completed').length],
@@ -317,7 +326,7 @@ function App() {
               <button disabled={busy}>登录</button>
             </form>
           </section>
-        ) : tab === 'cases' ? (
+        ) : tab === 'leaves' ? <section><LeavePanel role={user.role} call={call} /></section> : tab === 'cases' ? (
           <>
             <section>
               <h2>授权任务 · {items.length}</h2>
@@ -330,6 +339,8 @@ function App() {
                   onClick={() => {
                     setSelected(c.id)
                     setText('')
+                    setSummary('')
+                    setVisibility('private')
                     setType('contact')
                   }}
                 >
@@ -341,7 +352,7 @@ function App() {
                     <small>{c.course}</small>
                   </span>
                   <span className={`mentor-status ${c.status}`}>
-                    {labels[c.status]}
+                    {c.status !== 'completed' && c.collaboration?.status !== 'agreed' ? '待协商' : labels[c.status]}
                   </span>
                   <ChevronRight size={17} />
                 </button>
@@ -355,6 +366,7 @@ function App() {
                 <p>
                   状态：{labels[current.status]} · 版本 {current.version}
                 </p>
+                {['mentor', 'counselor'].includes(user.role) && <AcademicCollaboration key={current.id} item={current} userId={user.id} call={call} refresh={refresh} />}
                 {current.result && (
                   <p>
                     正式结果：
@@ -370,7 +382,7 @@ function App() {
                     <li key={i}>
                       {labels[r.type] || r.type} ·{' '}
                       {new Date(r.at).toLocaleString()}
-                      <p>{r.text || '仅共享办理状态，详细记录受权限限制'}</p>
+                      <p>{r.text || r.summary || '仅共享办理状态，详细记录受权限限制'}</p>
                       {r.scheduledAt && (
                         <p>
                           下次联系：{new Date(r.scheduledAt).toLocaleString()}
@@ -379,7 +391,7 @@ function App() {
                     </li>
                   ))}
                 </ul>
-                {user.role === 'mentor' && current.status !== 'completed' && (
+                {['mentor', 'counselor'].includes(user.role) && current.status !== 'completed' && current.collaboration?.status === 'agreed' && (
                   <form
                     onSubmit={(e) => {
                       e.preventDefault()
@@ -387,6 +399,9 @@ function App() {
                         await call('/b/cases/' + current.id + '/events', {
                           type,
                           text,
+                          summary,
+                          visibility,
+                          requestId: crypto.randomUUID(),
                           scheduledAt: scheduledAt
                             ? new Date(scheduledAt).toISOString()
                             : undefined,
@@ -422,6 +437,14 @@ function App() {
                       />
                     </label>
                     <label>
+                      记录可见范围
+                      <select value={visibility} onChange={e => setVisibility(e.target.value)}>
+                        <option value="private">正文仅本人可见</option>
+                        <option value="shared">正文向本事项关联导师和辅导员共享</option>
+                      </select>
+                    </label>
+                    <label>协同摘要（对关联双方可见，选填）<textarea maxLength={500} value={summary} onChange={e => setSummary(e.target.value)} /></label>
+                    <label>
                       下次联系时间（选填）
                       <input
                         type="datetime-local"
@@ -430,7 +453,7 @@ function App() {
                       />
                     </label>
                     <p>
-                      不记录专业心理咨询详情；转介请求只向辅导员共享必要状态。
+                      不记录专业心理咨询详情；协同支持请求只共享必要状态。
                     </p>
                     <button disabled={busy}>保存记录</button>
                   </form>

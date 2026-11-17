@@ -1,6 +1,10 @@
 import express from 'express'
 import crypto from 'node:crypto'
 import { scanRisk } from '../ai/riskAgent.js'
+import { mountLeaves } from './leaves.js'
+import { mountCollaboration, caseView } from './collaboration.js'
+import { operation } from './operations.js'
+import { workflowGuidance } from './policy.js'
 const id = () => crypto.randomUUID(),
   now = () => new Date().toISOString()
 export function mountB(app, { db, save, requireAuth }) {
@@ -54,6 +58,7 @@ export function mountB(app, { db, save, requireAuth }) {
   }
   const r = express.Router()
   r.use(requireAuth)
+  r.use((req, res, next) => req.user.disabled ? res.status(403).json({ message: '账号已停用' }) : next())
   const audit = (req, action, target) => {
     state.audit.push({
       id: id(),
@@ -76,17 +81,9 @@ export function mountB(app, { db, save, requireAuth }) {
         : u.role === 'academic'
           ? c.college === u.college
           : false
-  const projected = (c, u) =>
-    u.role === 'mentor'
-      ? c
-      : {
-          ...c,
-          records: c.records.map(({ type, at, actor }) => ({
-            type,
-            at,
-            actor,
-          })),
-        }
+  const projected = caseView
+  mountLeaves(r, { db, save, state, audit })
+  mountCollaboration(r, { db, save, state, visible, audit })
   const fail = (res, msg, status = 400) =>
     res.status(status).json({ message: msg })
   r.post('/cases', allowed(['academic']), (req, res) => {
@@ -110,7 +107,7 @@ export function mountB(app, { db, save, requireAuth }) {
       !student ||
       !mentor ||
       !counselor ||
-      student.counselor !== counselor.name ||
+      !(Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name) ||
       typeof course !== 'string' ||
       !course.trim() ||
       course.length > 100
@@ -153,33 +150,20 @@ export function mountB(app, { db, save, requireAuth }) {
         .map((c) => projected(c, req.user)),
     }),
   )
-  r.post('/cases/:id/events', allowed(['mentor']), (req, res) => {
+  r.post('/cases/:id/events', allowed(['mentor', 'counselor']), (req, res) => {
     const c = state.cases.find(
       (c) => c.id === req.params.id && visible(c, req.user),
     )
     if (!c) return fail(res, '无权访问该学业任务', 403)
-    const { type, text = '', scheduledAt, version } = req.body || {}
+    const finish = operation(req, res, state, 'event:' + c.id); if (!finish) return
+    const { type, text = '', scheduledAt, version, summary = '', visibility = 'private' } = req.body || {}
     if (version !== c.version) return fail(res, '任务已更新，请刷新后重试', 409)
     if (c.status === 'completed')
       return fail(res, '已结束任务不能追加办理动作', 409)
-    const transitions = {
-      contact: [
-        'pending_contact',
-        'contacted',
-        'interviewed',
-        'awaiting_result',
-      ],
-      interview: ['contacted', 'interviewed', 'awaiting_result'],
-      remind: ['interviewed', 'awaiting_result'],
-      referral: [
-        'pending_contact',
-        'contacted',
-        'interviewed',
-        'awaiting_result',
-      ],
-    }
-    if (!transitions[type]?.includes(c.status))
-      return fail(res, '请先完成联系，再记录面谈与重修提醒', 409)
+    if (c.collaboration?.status !== 'agreed') return fail(res, '请先协商并由被指定人确认安排', 409)
+    if (!['contact', 'interview', 'remind', 'referral'].includes(type)) return fail(res, '不支持的跟进动作')
+    if (!['private', 'shared'].includes(visibility) || typeof summary !== 'string' || summary.length > 500)
+      return fail(res, '请检查可见范围与500字以内的协同摘要')
     if (typeof text !== 'string' || !text.trim() || text.length > 2000)
       return fail(res, '请填写不超过2000字的必要工作记录')
     if (
@@ -192,6 +176,8 @@ export function mountB(app, { db, save, requireAuth }) {
       id: id(),
       type,
       text: text.trim(),
+      visibility,
+      summary: summary.trim(),
       scheduledAt: scheduledAt || null,
       at: now(),
       actor: req.user.id,
@@ -201,12 +187,13 @@ export function mountB(app, { db, save, requireAuth }) {
     if (type === 'interview') c.status = 'interviewed'
     if (type === 'remind') c.status = 'awaiting_result'
     if (type === 'referral') {
-      c.referral = { status: 'requested', recipient: c.counselorId, at: now() }
+      const recipient = req.user.id === c.mentorId ? c.counselorId : c.mentorId
+      c.referral = { status: 'requested', recipient, at: now() }
       db.notifications.unshift({
         id: id(),
-        userId: c.counselorId,
+        userId: recipient,
         type: 'system',
-        title: '导师请求协同支持',
+        title: '学业事项请求协同支持',
         body: '学业任务需要人工跟进，请查看授权范围内的任务。',
         ticketId: null,
         tone: 'gold',
@@ -216,7 +203,7 @@ export function mountB(app, { db, save, requireAuth }) {
     }
     c.version++
     audit(req, type, c.id)
-    res.json({ item: c })
+    finish({ item: projected(c, req.user) }); save()
   })
   r.patch('/cases/:id/result', allowed(['academic']), (req, res) => {
     const c = state.cases.find(
@@ -362,6 +349,7 @@ export function mountB(app, { db, save, requireAuth }) {
     c.turns.push(text)
     const combined = c.turns.join('；')
     const risk = scanRisk({ text: combined })
+    const guidance = workflowGuidance(text, req.user)
     const score = (k) =>
       k.keywords.reduce((n, w) => n + (combined.includes(w) ? w.length : 0), 0)
     const matches = state.knowledge
@@ -386,6 +374,8 @@ export function mountB(app, { db, save, requireAuth }) {
       result.answer =
         '这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。'
       result.action = 'urgent_handoff'
+    } else if (guidance) {
+      result = { ...result, action: 'guidance', ...guidance, policyVersion: '2026-11-17', source: null }
     } else if (risk.level !== 'low') {
       result.answer = '当前情况建议由辅导员进一步核实，可确认提交对话摘要。'
     } else if (certain) {

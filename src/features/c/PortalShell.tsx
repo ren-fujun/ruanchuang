@@ -28,6 +28,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
         ["tickets", "进度", ClipboardList],
         ["messages", "消息", Bell],
         ["academic", "学业支持", GraduationCap],
+        ["leaves", "我的请假", ClipboardList],
         ["appointments", "预约", CalendarDays],
         ["profile", "我的", UserRound],
       ] as const)
@@ -36,6 +37,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
         ["tickets", "工单", ClipboardList],
         ["bundles", "问题包", Layers],
         ["academic", "学业跟进", BookOpen],
+        ["leaves", "请假审批", ClipboardList],
         ["insights", "协同洞察", ChartNoAxesColumn],
         ["appointments", "预约排班", CalendarDays],
         ["knowledge", "知识纠错", BookOpen],

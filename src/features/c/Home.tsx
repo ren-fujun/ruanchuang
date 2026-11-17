@@ -24,6 +24,7 @@ import type { PortalRole } from "./config";
 const quickLinks = [
   ["tickets", "工作台", ClipboardList],
   ["academic", "学业跟进", BookOpen],
+  ["leaves", "请假审批", ClipboardList],
   ["insights", "协同洞察", ChartNoAxesColumn],
   ["bundles", "问题包", Layers],
 ] as const;
@@ -195,6 +196,7 @@ export function PortalHome({ role }: { role: PortalRole }) {
                   <BookOpen />
                   AI 问答
                 </Link>
+                <Link to="/student/leaves"><ClipboardList />我的请假</Link>
               </div>
             </section>
           )}

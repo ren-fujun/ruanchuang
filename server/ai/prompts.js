@@ -8,7 +8,7 @@
  * 3. 输出一律要求严格 JSON，由 guard.js 做白名单校验后才允许进入业务链路（幻觉可控）。
  */
 
-const JSON_ONLY = '只输出一个 JSON 对象，不要输出 Markdown 代码块、解释或多余文字。'
+const JSON_ONLY = '只输出一个 JSON 对象，不要输出 Markdown 代码块、解释或多余文字。业务约束：报修直接提交后勤，辅导员查看进度并按需协调；不满意反馈后勤且协调留终止结论，不无限返工。本科生请假由所属辅导员审批，研究生由所属班导师审批；学业行动由导师和辅导员协商。AI不得自动批假、判责、分配学业职责或结案，不得声称已实际接单或已通知。'
 
 /** 允许模型输出的部门 id 由调用方注入（与 seed.js 部门字典保持一致，避免模型编造部门） */
 const deptLine = (ids) => `suggestedDepartments / countersignDepartments 只能从这些 id 中选择：${ids.join('、')}。`
@@ -108,7 +108,7 @@ export const PROMPTS = {
         '- answer：不超过 160 字的口语化作答，保留条目中的关键地点 / 电话 / 时限。',
         '- steps：办理步骤数组，最多 4 条，必须来自条目。',
         '- grounded：布尔值，答案是否完全来自条目。',
-        '如果条目不足以回答学生的问题，grounded 返回 false，answer 说明「建议提交工单由辅导员协调」。',
+        '如果条目不足以回答学生的问题，grounded 返回 false，answer 说明「请通过对应业务入口提交，由有权人员核实」。',
       ].join('\n'),
       user: [
         `学生问题：${text}`,

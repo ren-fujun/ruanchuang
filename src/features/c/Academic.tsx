@@ -2,8 +2,12 @@ import { Link } from "react-router-dom";
 import { Panel, LoadState, statusLabel, useCData } from "./ui";
 import type { AcademicCase } from "./api";
 import type { PortalRole } from "./config";
+import { AcademicCollaboration } from "../b/Collaboration";
+import { request } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
 
 export function Academic({ role }: { role: PortalRole }) {
+  const { user } = useAuth();
   const resource = useCData<{ items: AcademicCase[] }>(
     role === "counselor" ? "/b/cases" : "/academic/cases/mine",
   );
@@ -51,6 +55,7 @@ export function Academic({ role }: { role: PortalRole }) {
                   {new Date(r.at).toLocaleString("zh-CN")}
                 </p>
               ))}
+              {role === "counselor" && user && <AcademicCollaboration item={c} userId={user.id} refresh={async () => { resource.reload(); }} call={(path, body, method = 'POST') => request(path, { method: body === undefined ? 'GET' : method, body: body === undefined ? undefined : JSON.stringify(body) })} />}
               <Link to={"/" + role + "/appointments"}>安排联系与回访 →</Link>
             </Panel>
           ))

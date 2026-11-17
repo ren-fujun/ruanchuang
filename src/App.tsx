@@ -8,6 +8,7 @@ import { TicketChanges } from "./features/c/TicketChanges";
 import { Appointments } from "./features/c/Appointments";
 import { Academic } from "./features/c/Academic";
 import { StudentAssistant } from "./features/b/Assistant";
+import { LeavePage } from "./features/b/LeavePage";
 import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "./context/AuthContext";
@@ -99,6 +100,7 @@ export default function App() {
             element={<StudentTicketDetail />}
           />
           <Route path="/student/assistant" element={<StudentAssistant />} />
+          <Route path="/student/leaves" element={<LeavePage />} />
           <Route
             path="/student/academic"
             element={<Academic role="student" />}
@@ -149,6 +151,7 @@ export default function App() {
             element={<Academic role="counselor" />}
           />
           <Route path="/counselor/dorm-check" element={<DormCheck />} />
+          <Route path="/counselor/leaves" element={<LeavePage />} />
           <Route path="/counselor/insights" element={<CounselorInsights />} />
           <Route path="/counselor/messages" element={<MessagesPage />} />
           <Route path="/counselor/profile" element={<ProfilePage />} />

@@ -73,7 +73,9 @@ export function StudentAssistant() {
           发送
         </button>
       </form>
-      {reply && (
+      {reply?.action === 'guidance' && <p>业务流程提示 · {reply.policyVersion} · 不代表审批或办理结果</p>}
+      {reply?.next && <button className="primary-button" disabled={busy} onClick={() => navigate(reply.next.path)}>{reply.next.label}</button>}
+      {reply && reply.action !== 'guidance' && (
         <button
           className="secondary-button"
           disabled={busy}

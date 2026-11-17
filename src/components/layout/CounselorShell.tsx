@@ -19,6 +19,7 @@ const navigation = [
   { to: '/counselor/home', label: '工作概览', icon: LayoutDashboard },
   { to: '/counselor/tickets', label: '工单管理', icon: Inbox },
   { to: '/counselor/insights', label: '协同洞察', icon: ChartNoAxesCombined },
+  { to: '/counselor/leaves', label: '请假审批', icon: ChartNoAxesCombined },
   { to: '/counselor/dorm-check', label: '宿舍查寝', icon: DoorOpen },
   { to: '/counselor/messages', label: '消息中心', icon: Bell },
 ]

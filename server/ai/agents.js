@@ -22,6 +22,7 @@ import { guardAnalysis, guardAnswerText, extractFacts } from './guard.js'
 import { searchKnowledgeDetailed } from './knowledge.js'
 import { attributionSummary, queryGraph } from './graphrag.js'
 import { refineRiskScan, scanRisk } from './riskAgent.js'
+import { workflowGuidance } from '../b/policy.js'
 
 export const AGENT_VERSION = 'b-1.0.0'
 const CATEGORIES = CATEGORY_META.map((item) => item.name).concat('其他')
@@ -258,7 +259,7 @@ const applyRuleCorrections = (analysis, { graph, risk, text, location }) => {
   }
 
   if (graph?.matched) {
-    const hint = DEPT_CATEGORY_HINT[graph.primaryDept]
+    const hint = ['duty-dorm-repair', 'duty-dorm-power'].includes(graph.primaryDuty?.id) ? '宿舍生活' : DEPT_CATEGORY_HINT[graph.primaryDept]
     // 图谱证据足够强时以图谱权责归属修正分类；心理危机分类由危机词判定，不覆盖
     const strongGraph = (graph.duties?.[0]?.score || 0) >= 4
     if (hint && hint !== corrected.category && strongGraph && corrected.category !== '心理支持') {
@@ -318,13 +319,15 @@ export const runCognitionChain = async ({ text = '', category, location = '', ur
   const risk = riskResult.output
   const graph = routeResult.output
   const { corrected, notes } = applyRuleCorrections(baseAnalysis, { graph, risk, text, location })
+  const guidance = workflowGuidance(text, {})
+  if (guidance && corrected.risk !== 'high') corrected.draft = guidance.answer
   if (notes.length) trace.push({ agent: 'rules', degraded: false, ms: 0, warnings: [], notes })
 
   // 高风险或紧急时，自助通道一律关闭（与既有后端行为保持一致）
-  const canSelfSolve = Boolean(risk && kbResult.output?.canSelfSolve && corrected.risk === 'low' && corrected.urgency === 'normal')
+  const canSelfSolve = Boolean(!guidance && risk && kbResult.output?.canSelfSolve && corrected.risk === 'low' && corrected.urgency === 'normal')
   const answer = corrected.risk === 'high'
     ? '这件事需要优先处理。请直接提交诉求，辅导员会尽快跟进。'
-    : kbResult.output?.answer || MANUAL_REVIEW_ANSWER
+    : guidance?.answer || kbResult.output?.answer || MANUAL_REVIEW_ANSWER
 
   const analysis = {
     ...corrected,
@@ -335,7 +338,7 @@ export const runCognitionChain = async ({ text = '', category, location = '', ur
 
   return {
     analysis,
-    knowledge: kbResult.output?.knowledge || null,
+    knowledge: guidance ? null : kbResult.output?.knowledge || null,
     answer,
     canSelfSolve,
     needsTicket: !canSelfSolve,

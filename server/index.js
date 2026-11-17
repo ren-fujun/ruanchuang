@@ -1536,7 +1536,7 @@ const academicRelationsValid = (user, rows) => rows.every(row => {
   const student = db.users.find(item => item.id === row.studentId)
   const mentor = db.users.find(item => item.id === row.mentorId)
   const counselor = db.users.find(item => item.id === row.counselorId)
-  return Boolean(user.college && student && mentor && counselor && student.college === user.college && mentor.college === user.college && student.counselor === counselor.name)
+  return Boolean(user.college && student && mentor && counselor && student.college === user.college && mentor.college === user.college && (Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name))
 })
 app.post('/api/academic/batches/preview', requireAuth, requireRole('academic'), (req, res) => {
   try {
@@ -1576,7 +1576,7 @@ app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academi
     const student = db.users.find(user => user.id === row.studentId && user.role === 'student')
     const mentor = db.users.find(user => user.id === row.mentorId && user.role === 'mentor')
     const counselor = db.users.find(user => user.id === row.counselorId && user.role === 'counselor')
-    if (!student || !mentor || !counselor || !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || student.counselor !== counselor.name) return res.status(409).json({ message:'人员关系已变化，请重新核对名单。' })
+    if (!student || !mentor || !counselor || !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || !(Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name)) return res.status(409).json({ message:'人员关系已变化，请重新核对名单。' })
     if (cases.some(item => item.studentId === row.studentId && item.course === row.course && item.status !== 'completed')) return res.status(409).json({ message:'名单中存在尚未结束的同课程任务。' })
   }
   const at = nowIso()

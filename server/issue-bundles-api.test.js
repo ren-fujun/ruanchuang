@@ -136,7 +136,9 @@ try {
   assert.equal((await request(`/api/academic/batches/${batchId}/dispatch`,academic,{version:2})).status,409)
   let task=(await request('/api/b/cases',mentor)).body.items[0]; assert.equal(task.course,'测试数学')
   assert.equal((await request('/api/b/cases',counselor)).body.items.some(item=>item.id===task.id),true)
-  for (const type of ['contact','interview','remind']) { const response=await request(`/api/b/cases/${task.id}/events`,mentor,{type,text:'跟进记录',version:task.version}); assert.equal(response.status,200); task=response.body.item }
+  task=(await request(`/api/b/cases/${task.id}/collaboration`,counselor,{action:'propose',assigneeId:'test-mentor',plan:'导师负责联系学生',version:task.version,requestId:'academic-propose-1'})).body.item
+  task=(await request(`/api/b/cases/${task.id}/collaboration`,mentor,{action:'accept',version:task.version,requestId:'academic-accept-1'})).body.item
+  for (const type of ['contact','interview','remind']) { const response=await request(`/api/b/cases/${task.id}/events`,mentor,{type,text:'跟进记录',version:task.version,requestId:`academic-event-${type}`}); assert.equal(response.status,200); task=response.body.item }
   const result=await request(`/api/b/cases/${task.id}/result`,academic,{result:'failed',source:'教务测试结果',version:task.version},'PATCH'); assert.equal(result.body.item.status,'pending_contact')
   const passed=await request(`/api/b/cases/${task.id}/result`,academic,{result:'passed',source:'教务测试结果',version:result.body.item.version},'PATCH'); assert.equal(passed.body.item.status,'completed')
  })

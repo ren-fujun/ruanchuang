@@ -34,7 +34,7 @@ const CASES = [
     expect: {
       risk: 'high',
       category: '宿舍生活',
-      primaryDept: 'dorm',
+      primaryDept: 'logistics',
       compound: true,
       countersignIncludes: ['security'],
     },
