@@ -27,7 +27,12 @@ try {
   const counselor=(await request('/api/auth/demo',null,{role:'counselor'})).body.token
   const student=(await request('/api/auth/demo',null,{role:'student'})).body.token
   const unscoped=(await request('/api/auth/login',null,{account:'no-scope',password:'test'})).body.token
+  assert.equal((await request('/api/academic/cases/mine',student)).status,501)
+  assert.equal((await request('/api/academic/cases/mine',counselor)).status,403)
   const tickets=(await request('/api/tickets',counselor)).body.tickets
+  const page=(await request('/api/tickets?page=1&pageSize=1',counselor)).body
+  assert.equal(page.tickets.length,1); assert.equal(page.hasMore,true)
+  assert.equal((await request('/api/tickets?page=0&pageSize=1',counselor)).status,400)
   const id=tickets.find(t=>t.status==='pending_review' && t.studentId==='stu-lin')?.id; assert.ok(id)
   const own = (await request(`/api/tickets/${id}`,student)).body.ticket
   const supplement = { text:'补充说明楼层及地点', expectedUpdatedAt:own.updatedAt, requestId:'supplement-one' }
@@ -78,6 +83,9 @@ try {
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'accept'})).status,200)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'resolve',result:'再次处理'})).status,200)
   assert.equal((await request(`/api/tickets/${id}/confirm`,student,{})).body.ticket.status,'completed')
+  const completed=(await request(`/api/tickets/${id}`,student)).body.ticket
+  const completedReopen={text:'办理完成后问题再次出现',expectedUpdatedAt:completed.updatedAt,requestId:'reopen-completed'}
+  assert.equal((await request(`/api/tickets/${id}/reopen`,student,completedReopen)).body.ticket.status,'pending_review')
  })
 } finally {
  child.kill(); await new Promise(r=>setTimeout(r,100)); await rm(dir,{recursive:true,force:true})

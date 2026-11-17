@@ -10,7 +10,9 @@ export function planStudentTicketChange({ ticket, bundle, actorId, text, expecte
   if (prior) return prior.text === text.trim() && prior.action === action && prior.expectedUpdatedAt === expectedUpdatedAt ? { ok: true, replay: true, ticket } : failure(409, 'requestId已用于其他请求。')
   if (ticket.updatedAt !== expectedUpdatedAt) return failure(409, '工单已更新，请刷新后重试。')
   if (action === 'reopen') {
-    if (ticket.status !== 'awaiting_confirm' || !bundle || bundle.status !== 'dispatched' || !bundle.items?.some(item => item.ticketId === ticket.id && item.status === 'resolved')) return failure(409, '当前状态不能反馈未解决。')
+    if (!['awaiting_confirm', 'completed'].includes(ticket.status)) return failure(409, '当前状态不能反馈未解决。')
+    if (ticket.status === 'awaiting_confirm' && (!bundle || bundle.status !== 'dispatched' || !bundle.items?.some(item => item.ticketId === ticket.id && item.status === 'resolved'))) return failure(409, '当前工单尚不支持此操作。')
+    if (bundle && (bundle.status !== 'dispatched' || !bundle.items?.some(item => item.ticketId === ticket.id && item.status === 'resolved'))) return failure(409, '问题包状态已变化。')
   } else if (action === 'supplement') {
     if (!['pending_review', 'assigned', 'processing', 'awaiting_confirm'].includes(ticket.status)) return failure(409, '当前状态不能补充说明。')
   } else return failure(400, '操作类型无效。')
@@ -22,10 +24,21 @@ export function planStudentTicketChange({ ticket, bundle, actorId, text, expecte
   let nextBundle
   if (action === 'reopen') {
     next.status = 'pending_review'
+    if (next.rating) { next.previousRatings = [...(next.previousRatings || []), next.rating]; next.rating = null }
+    if (bundle) {
+      nextBundle = structuredClone(bundle)
+      const item = nextBundle.items.find(item => item.ticketId === ticket.id)
+      item.status = 'disputed'
+      item.history = [...(item.history || []), { id: entry.id, action: 'disputed', actorId, at: now, reason: entry.text, requestId }]
+      nextBundle.version = (nextBundle.version || 1) + 1
+      nextBundle.updatedAt = now
+    }
+  }
+  if (action === 'supplement' && bundle?.status === 'dispatched') {
     nextBundle = structuredClone(bundle)
     const item = nextBundle.items.find(item => item.ticketId === ticket.id)
-    item.status = 'disputed'
-    item.history = [...(item.history || []), { id: entry.id, action: 'disputed', actorId, at: now, reason: entry.text, requestId }]
+    if (!item) return failure(409, '问题包状态已变化。')
+    item.history = [...(item.history || []), { id:entry.id, action:'supplement', actorId, at:now, text:entry.text }]
     nextBundle.version = (nextBundle.version || 1) + 1
     nextBundle.updatedAt = now
   }

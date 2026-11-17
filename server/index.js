@@ -588,8 +588,17 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     if (priority[a.risk] !== priority[b.risk]) return priority[a.risk] - priority[b.risk]
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
+  let hasMore = false
+  if (req.query.page !== undefined || req.query.pageSize !== undefined) {
+    const page = Number(req.query.page ?? 1), pageSize = Number(req.query.pageSize ?? 20)
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) return res.status(400).json({ message: '分页参数无效。' })
+    const start = (page - 1) * pageSize
+    hasMore = start + pageSize < list.length
+    list = list.slice(start, start + pageSize)
+  }
   res.json({
     tickets: list.map((ticket) => ticketForUser(ticket, req.user)),
+    hasMore,
     counts: {
       all: db.tickets.filter((ticket) =>
         req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
@@ -1463,7 +1472,7 @@ const cStudentTicketChange = (req, res, action) => {
   const index = db.tickets.findIndex(item => item.id === req.params.id && item.studentId === req.user.id)
   if (index < 0) return res.status(404).json({ message: '工单不存在。' })
   const ticket = db.tickets[index]
-  const bundleIndex = (db.issueBundles || []).findIndex(item => item.status === 'dispatched' && item.items?.some(entry => entry.ticketId === ticket.id && entry.status === 'resolved'))
+  const bundleIndex = (db.issueBundles || []).findIndex(item => item.status === 'dispatched' && item.items?.some(entry => entry.ticketId === ticket.id && (action === 'supplement' || entry.status === 'resolved')))
   const plan = planStudentTicketChange({ ticket, bundle:bundleIndex >= 0 ? db.issueBundles[bundleIndex] : null, actorId:req.user.id, text:req.body?.text, expectedUpdatedAt:req.body?.expectedUpdatedAt, requestId:req.body?.requestId, action })
   if (!plan.ok) return res.status(plan.status).json({ message:plan.message })
   if (!plan.replay) { db.tickets[index] = plan.ticket; if (plan.bundle) db.issueBundles[bundleIndex] = plan.bundle; save() }
@@ -1499,6 +1508,16 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   ticket.timeline.push(makeTimelineEvent('assigned', '辅导员重新转交', '辅导员已将反馈重新转交后勤。', req.user.name))
   bundle.version = (bundle.version || 1) + 1; bundle.updatedAt = at; save()
   return res.json({ item })
+})
+
+app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, res) => {
+  if (db.settings?.studentAcademicViewEnabled !== true) return res.status(501).json({ message: '学生学业信息展示尚未开放。' })
+  const items = (db.b?.cases || []).filter(item => item.studentId === req.user.id).map(item => ({
+    id:item.id, studentName:req.user.name, course:item.course, status:item.status, version:item.version,
+    result:item.result ? { value:item.result.value, source:'', at:item.result.at } : null,
+    records:(item.records || []).filter(record => record.type === 'official_result').map(record => ({ type:record.type, at:record.at, actor:'' })),
+  }))
+  return res.json({ items })
 })
 
 mountB(app, {db, save, requireAuth})

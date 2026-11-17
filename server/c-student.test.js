@@ -28,5 +28,16 @@ test('replays idempotently and rejects request id reuse', () => {
 test('supplements eligible tickets only', () => {
   assert.equal(planStudentTicketChange(args({ action: 'supplement' })).ok, true)
   assert.equal(planStudentTicketChange(args({ action: 'supplement', ticket: ticket('processing') })).ok, true)
+  const result=planStudentTicketChange(args({ action:'supplement' }))
+  assert.equal(result.bundle.version,2)
+  assert.equal(result.bundle.items[0].history[0].action,'supplement')
+})
+test('reopens completed tickets and preserves prior rating', () => {
+  const old={...ticket('completed'), rating:{score:5}}
+  const result=planStudentTicketChange(args({ticket:old,bundle:null}))
+  assert.equal(result.ticket.status,'pending_review')
+  assert.equal(result.ticket.rating,null)
+  assert.equal(result.ticket.previousRatings[0].score,5)
+  assert.equal(old.rating.score,5)
 })
 
