@@ -16,8 +16,9 @@ const ensureLoaded = () => {
       const raw = fs.readFileSync(dataFile, 'utf8')
       const parsed = JSON.parse(raw)
       if (parsed && Array.isArray(parsed.tickets) && Array.isArray(parsed.users)) return parsed
+      throw new Error('数据结构不完整')
     } catch (error) {
-      console.error('读取本地数据失败，将重新初始化演示数据：', error.message)
+      throw new Error(`读取数据失败，已保留原文件，请检查或恢复备份：${error.message}`)
     }
   }
   const initial = seedData()

@@ -74,6 +74,10 @@ try {
   assert.equal((await request(`/api/issue-bundles/${b}/dispatch`,counselor,{recipientId:'test-logistics'})).status,400)
   const log=(await request('/api/auth/login',null,{account:'log-test',password:'test'})).body.token
   const other=(await request('/api/auth/login',null,{account:'other-test',password:'test'})).body.token
+  const outside=tickets.find(ticket => ticket.id !== id && ticket.id !== 'ZXTESTBUNDLE002')
+  assert.ok(outside)
+  assert.equal((await request(`/api/logistics/work-orders/${b}/${outside.id}`,log,{action:'accept'})).status,404)
+  assert.equal((await request(`/api/logistics/work-orders/${b}/not-a-ticket`,log,{action:'accept'})).status,404)
   assert.equal((await request('/api/logistics/work-orders',other)).body.items.length,0)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,other,{action:'accept'})).status,404)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'resolve',result:'处理完成'})).status,409)

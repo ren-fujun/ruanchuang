@@ -1455,6 +1455,7 @@ app.post('/api/logistics/work-orders/:bundleId/:ticketId', requireAuth, requireR
   const bundles = db.issueBundles || []
   const index = bundles.findIndex(bundle => bundle.id === req.params.bundleId && bundle.recipientId === req.user.id)
   if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  if (!bundles[index].items?.some(item => item.ticketId === req.params.ticketId)) return res.status(404).json({ message: '工单不存在。' })
   const ticket = db.tickets.find(item => item.id === req.params.ticketId)
   if (!ticket) return res.status(404).json({ message: '工单不存在。' })
   try {
