@@ -12,6 +12,7 @@ import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { planStudentTicketChange } from './c-student.js'
 import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
+import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -36,6 +37,8 @@ try {
   // .env is optional; environment variables still work.
 }
 const PORT = Number(process.env.PORT || 8787)
+const trialMode = process.env.TRIAL_MODE === 'true'
+const loginLimiter = createLoginLimiter()
 const app = express()
 
 app.use(express.json({ limit: '6mb' }))
@@ -104,7 +107,7 @@ const ticketForUser = (ticket, user) => {
 
 const publicUser = (user) => {
   if (!user) return null
-  const { password, ...safe } = user
+  const { password, passwordHash, ...safe } = user
   return safe
 }
 
@@ -156,7 +159,10 @@ const getAuth = (req) => {
   const token = header.slice(7)
   const session = db.sessions.find((item) => item.token === token)
   if (!session) return null
-  return db.users.find((user) => user.id === session.userId) || null
+  if (trialMode && (session.trial !== true || !Number.isFinite(Date.parse(session.expiresAt)) || Date.parse(session.expiresAt) <= Date.now())) return null
+  const user = db.users.find((item) => item.id === session.userId)
+  if (!user || user.disabled || (user.expiresAt && (!Number.isFinite(Date.parse(user.expiresAt)) || Date.parse(user.expiresAt) <= Date.now()))) return null
+  return user
 }
 
 const requireAuth = (req, res, next) => {
@@ -165,7 +171,8 @@ const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
   const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/[^/]+\/dispatch)?$/.test(req.path)
-  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
   next()
 }
@@ -320,23 +327,25 @@ app.get('/api/health', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const { account = '', password = '', role } = req.body || {}
   const normalized = String(account).trim()
-  const user = db.users.find(
-    (item) =>
-      item.account === normalized &&
-      item.password === String(password) &&
-      (!role || item.role === role),
-  )
+  const limitKey = req.ip || 'unknown'
+  if (trialMode && !loginLimiter.allowed(limitKey)) return res.status(429).json({ message:'登录尝试过多，请稍后再试。' })
+  const candidate = db.users.find(item => item.account === normalized && (!role || item.role === role))
+  const validAccount = candidate && !candidate.disabled && (!candidate.expiresAt || (Number.isFinite(Date.parse(candidate.expiresAt)) && Date.parse(candidate.expiresAt) > Date.now()))
+  const user = validAccount && (trialMode ? verifyPassword(String(password), candidate.passwordHash) : candidate.password === String(password)) ? candidate : null
   if (!user) {
-    return res.status(401).json({ message: '账号或密码不正确，请使用下方演示账号。' })
+    if (trialMode) loginLimiter.fail(limitKey)
+    return res.status(401).json({ message: trialMode ? '账号或密码不正确。' : '账号或密码不正确，请使用下方演示账号。' })
   }
+  if (trialMode) loginLimiter.clear(limitKey)
   const token = crypto.randomUUID()
   db.sessions = db.sessions.filter((session) => session.userId !== user.id).slice(-40)
-  db.sessions.push({ token, userId: user.id, at: nowIso() })
+  db.sessions.push({ token, userId: user.id, at: nowIso(), ...(trialMode ? { trial:true, expiresAt:new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() } : {}) })
   save()
   res.json({ token, user: publicUser(user) })
 })
 
 app.post('/api/auth/demo', (req, res) => {
+  if (trialMode) return res.status(403).json({ message:'试用模式不支持演示直登。' })
   const role = req.body?.role === 'counselor' ? 'counselor' : 'student'
   const user = db.users.find((item) => item.role === role)
   if (!user) return res.status(404).json({ message: '演示账号暂未配置。' })
@@ -353,6 +362,23 @@ app.post('/api/auth/logout', requireAuth, (req, res) => {
   db.sessions = db.sessions.filter((session) => session.token !== token)
   save()
   res.json({ ok: true })
+})
+
+app.post('/api/auth/change-password', requireAuth, (req, res) => {
+  if (!trialMode) return res.status(404).json({ message:'该服务未启用。' })
+  const key = req.ip || 'unknown'
+  if (!loginLimiter.allowed(key)) return res.status(429).json({ message:'尝试次数过多，请稍后再试。' })
+  const { currentPassword, newPassword } = req.body || {}
+  if (!verifyPassword(currentPassword, req.user.passwordHash)) { loginLimiter.fail(key); return res.status(401).json({message:'当前密码不正确。'}) }
+  if (currentPassword === newPassword) return res.status(400).json({ message:'新密码不能与当前密码相同。' })
+  let nextHash
+  try { nextHash = hashPassword(newPassword) } catch (error) { return res.status(400).json({message:error.message}) }
+  const currentToken = (req.headers.authorization || '').slice(7)
+  req.user.passwordHash = nextHash
+  req.user.mustChangePassword = false
+  db.sessions = db.sessions.filter(session => session.userId !== req.user.id || session.token === currentToken)
+  loginLimiter.clear(key); save()
+  return res.json({ok:true})
 })
 
 app.get('/api/me', requireAuth, (req, res) => {
