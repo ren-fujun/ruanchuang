@@ -9,6 +9,7 @@ import { seedData } from './seed.js'
 const dir = await mkdtemp(path.join(os.tmpdir(), 'bundle-api-'))
 const data = seedData()
 data.users.find(user => user.role === 'counselor').studentIds = [...new Set(data.tickets.map(ticket => ticket.studentId))]
+data.users.find(user => user.role === 'counselor').logisticsRecipientId = 'test-logistics'
 data.users.push({id:'test-logistics',role:'logistics',name:'后勤测试',account:'log-test',password:'test'}, {id:'test-other',role:'logistics',name:'其他后勤',account:'other-test',password:'test'}, {id:'test-unscoped',role:'counselor',name:'未分配辅导员',account:'no-scope',password:'test'})
 await writeFile(path.join(dir, 'data.json'), JSON.stringify(data))
 const port = 20000 + Math.floor(Math.random()*20000)
@@ -28,10 +29,18 @@ try {
   const unscoped=(await request('/api/auth/login',null,{account:'no-scope',password:'test'})).body.token
   const tickets=(await request('/api/tickets',counselor)).body.tickets
   const id=tickets.find(t=>t.status==='pending_review' && t.studentId==='stu-lin')?.id; assert.ok(id)
+  const own = (await request(`/api/tickets/${id}`,student)).body.ticket
+  const supplement = { text:'补充说明楼层及地点', expectedUpdatedAt:own.updatedAt, requestId:'supplement-one' }
+  assert.equal((await request(`/api/tickets/${id}/supplements`,student,supplement)).status,200)
+  assert.equal((await request(`/api/tickets/${id}/supplements`,student,supplement)).status,200)
+  assert.equal((await request(`/api/tickets/${id}/supplements`,student,{...supplement,text:'另一条完全不同的说明'})).status,409)
   assert.equal((await request('/api/issue-bundles',student,{ticketIds:[id]})).status,403)
   assert.equal((await request('/api/issue-bundles',null,{ticketIds:[id]})).status,401)
   assert.equal((await request('/api/issue-bundles',unscoped,{ticketIds:[id]})).status,403)
-  const created=await request('/api/issue-bundles',counselor,{ticketIds:[id],title:'宿舍维修',departmentId:'logistics',reviewed:true}); assert.equal(created.status,201); assert.equal(created.body.bundle.status,'draft')
+  const input={ticketIds:[id],title:'宿舍维修',departmentId:'logistics',reviewed:true,requestId:'create-test'}
+  const created=await request('/api/issue-bundles',counselor,input); assert.equal(created.status,201); assert.equal(created.body.bundle.status,'draft')
+  assert.equal((await request('/api/issue-bundles',counselor,input)).body.item.id,created.body.item.id)
+  assert.equal((await request('/api/issue-bundles',counselor,{...input,title:'不同标题'})).status,409)
   assert.equal(created.body.item.title,'宿舍维修'); assert.equal(created.body.item.items[0].ticketId,id)
   assert.equal((await request('/api/issue-bundles',counselor,{ticketIds:[id]})).status,400)
   assert.equal((await request('/api/issue-bundles',counselor)).body.bundles.length,1)
@@ -47,7 +56,10 @@ try {
   assert.equal((await request(`/api/issue-bundles/${bundleId}/cancel`,counselor,{})).status,409)
   const second=(await request('/api/issue-bundles',counselor,{ticketIds:[id]})); assert.equal(second.status,201)
   const b=second.body.bundle.id
-  assert.equal((await request(`/api/issue-bundles/${b}/dispatch`,counselor,{recipientId:'test-logistics'})).status,200)
+  const send={version:1,reviewed:true,reason:'已经核对',requestId:'send-test'}
+  assert.equal((await request(`/api/issue-bundles/${b}/send`,counselor,send)).status,200)
+  assert.equal((await request(`/api/issue-bundles/${b}/send`,counselor,send)).status,200)
+  assert.equal((await request(`/api/issue-bundles/${b}/urge`,counselor,{version:1,reason:'请处理',requestId:'urge-old'})).status,409)
   assert.equal((await request(`/api/issue-bundles/${b}/dispatch`,counselor,{recipientId:'test-logistics'})).status,400)
   const log=(await request('/api/auth/login',null,{account:'log-test',password:'test'})).body.token
   const other=(await request('/api/auth/login',null,{account:'other-test',password:'test'})).body.token
@@ -57,8 +69,11 @@ try {
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'accept'})).status,200)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'resolve',result:'处理完成'})).status,200)
   assert.equal((await request(`/api/tickets/${id}`,counselor)).body.ticket.status,'awaiting_confirm')
-  assert.equal((await request(`/api/tickets/${id}/reopen`,student,{reason:'仍未解决'})).status,200)
-  assert.equal((await request(`/api/tickets/${id}/reopen`,student,{reason:'重复'})).status,409)
+  const resolved=(await request(`/api/tickets/${id}`,student)).body.ticket
+  const reopen={text:'处理后问题仍然没有解决',expectedUpdatedAt:resolved.updatedAt,requestId:'reopen-one'}
+  assert.equal((await request(`/api/tickets/${id}/reopen`,student,reopen)).status,200)
+  assert.equal((await request(`/api/tickets/${id}/reopen`,student,reopen)).status,200)
+  assert.equal((await request(`/api/tickets/${id}/reopen`,student,{...reopen,requestId:'reopen-two'})).status,409)
   assert.equal((await request(`/api/issue-bundles/${b}/${id}/redispatch`,counselor,{})).status,200)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'accept'})).status,200)
   assert.equal((await request(`/api/logistics/work-orders/${b}/${id}`,log,{action:'resolve',result:'再次处理'})).status,200)

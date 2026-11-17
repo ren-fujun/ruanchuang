@@ -10,6 +10,7 @@ import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault }
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
+import { planStudentTicketChange } from './c-student.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -1276,6 +1277,7 @@ const bundleForC = (bundle) => ({
   id: bundle.id,
   title: bundle.title || '待转交问题包',
   departmentId: bundle.departmentId || 'logistics',
+  reason: bundle.reason,
   status: bundle.status === 'dispatched' ? 'sent' : bundle.status,
   version: bundle.version || 1,
   items: bundle.ticketIds.map(id => {
@@ -1285,6 +1287,24 @@ const bundleForC = (bundle) => ({
     return { ticketId: id, title: ticket?.title || '', status: ticket?.status || '', result, studentConfirmed: ticket?.status === 'completed', reopened: Boolean(entry?.history?.some(event => event.action === 'disputed')) }
   }),
 })
+// The same request ID may only replay the same operation by the same user.
+const cOperation = (req, res) => {
+  const id = req.body?.requestId
+  if (typeof id !== 'string' || !id.trim() || id.length > 100) { res.status(400).json({ message: '请提供有效的请求编号。' }); return null }
+  const fingerprint = crypto.createHash('sha256').update(JSON.stringify({ path:req.originalUrl, body:req.body })).digest('hex')
+  const previous = (db.cOperations || []).find(op => op.userId === req.user.id && op.id === id)
+  if (previous) {
+    if (previous.fingerprint !== fingerprint) res.status(409).json({ message: '请求编号已用于其他操作。' })
+    else res.status(previous.status).json(previous.response)
+    return null
+  }
+  return (status, response) => {
+    db.cOperations ||= []
+    db.cOperations.push({ userId:req.user.id, id, fingerprint, status, response })
+    save()
+    return res.status(status).json(response)
+  }
+}
 
 // Drafts only: saving a bundle does not dispatch or modify the individual tickets.
 app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1296,6 +1316,8 @@ app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res)
       const ticket = db.tickets.find(item => item.id === (typeof id === 'string' ? id.trim() : id))
       return !ticket || !allowed.has(ticket.studentId)
     })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
+    const finish = req.body?.requestId !== undefined ? cOperation(req, res) : null
+    if (req.body?.requestId !== undefined && !finish) return
     if (req.body?.title !== undefined && (typeof req.body.title !== 'string' || !req.body.title.trim() || req.body.title.trim().length > 100)) return res.status(400).json({ message: '请输入不超过100字的问题包标题。' })
     if (req.body?.departmentId !== undefined && req.body.departmentId !== 'logistics') return res.status(400).json({ message: '当前仅支持后勤问题包。' })
     if (req.body?.reviewed !== undefined && req.body.reviewed !== true) return res.status(400).json({ message: '请先确认已经人工核对。' })
@@ -1305,7 +1327,8 @@ app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res)
     bundle.departmentId = 'logistics'
     db.issueBundles = [...bundles, bundle]
     save()
-    return res.status(201).json({ bundle, item: bundleForC(bundle) })
+    const response = { bundle, item: bundleForC(bundle) }
+    return finish ? finish(201, response) : res.status(201).json(response)
   } catch (error) {
     return res.status(400).json({ message: error.message })
   }
@@ -1320,6 +1343,42 @@ app.get('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, r
   const bundle = (db.issueBundles || []).find(item => item.id === req.params.id && bundleVisibleTo(item, req.user))
   if (!bundle) return res.status(404).json({ message: '问题包不存在。' })
   res.json({ item: bundleForC(bundle) })
+})
+
+app.post('/api/issue-bundles/:id/:action(send|urge|follow-ups)', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundles = db.issueBundles || []
+  const index = bundles.findIndex(bundle => bundle.id === req.params.id && bundleVisibleTo(bundle, req.user))
+  if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  const bundle = bundles[index]
+  const finish = cOperation(req, res)
+  if (!finish) return
+  if (!Number.isSafeInteger(req.body?.version) || req.body.version !== (bundle.version || 1)) return res.status(409).json({ message: '数据已更新，请核对最新记录后重试。' })
+  const action = req.params.action
+  const text = action === 'follow-ups' ? req.body?.text : req.body?.reason
+  if (typeof text !== 'string' || !text.trim() || text.trim().length > 1000) return res.status(400).json({ message: '请填写不超过1000字的说明。' })
+  if (action === 'send') {
+    if (req.body?.reviewed !== true) return res.status(400).json({ message: '请先确认人工核对。' })
+    const recipient = db.users.find(user => user.id === req.user.logisticsRecipientId)
+    if (!recipient || recipient.role !== 'logistics' || recipient.disabled) return res.status(409).json({ message: '尚未配置可用的后勤接收人。' })
+    try {
+      const next = dispatchBundle({ bundle, counselor:req.user, recipient, tickets:db.tickets })
+      next.version = (bundle.version || 1) + 1
+      next.reason = text.trim()
+      for (const id of next.ticketIds) {
+        const ticket = db.tickets.find(item => item.id === id)
+        ticket.status = 'assigned'; ticket.departmentIds = ['logistics']; ticket.updatedAt = next.dispatchedAt
+        ticket.timeline.push(makeTimelineEvent('assigned', '辅导员已转交', '问题已转交后勤，等待接收。', req.user.name))
+      }
+      db.issueBundles[index] = next
+      return finish(200, { item: bundleForC(next) })
+    } catch (error) { return res.status(409).json({ message:error.message }) }
+  }
+  if (action === 'urge' && bundle.status !== 'dispatched') return res.status(409).json({ message: '只有已转交的问题包可以催办。' })
+  bundle.actions ||= []
+  bundle.actions.push({ id:crypto.randomUUID(), action, text:text.trim(), actorId:req.user.id, at:nowIso() })
+  bundle.version = (bundle.version || 1) + 1
+  bundle.updatedAt = nowIso()
+  return finish(200, { item: bundleForC(bundle) })
 })
 
 app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1400,7 +1459,19 @@ app.post('/api/logistics/work-orders/:bundleId/:ticketId', requireAuth, requireR
   } catch (error) { return res.status(400).json({ message: error.message }) }
 })
 
+const cStudentTicketChange = (req, res, action) => {
+  const index = db.tickets.findIndex(item => item.id === req.params.id && item.studentId === req.user.id)
+  if (index < 0) return res.status(404).json({ message: '工单不存在。' })
+  const ticket = db.tickets[index]
+  const bundleIndex = (db.issueBundles || []).findIndex(item => item.status === 'dispatched' && item.items?.some(entry => entry.ticketId === ticket.id && entry.status === 'resolved'))
+  const plan = planStudentTicketChange({ ticket, bundle:bundleIndex >= 0 ? db.issueBundles[bundleIndex] : null, actorId:req.user.id, text:req.body?.text, expectedUpdatedAt:req.body?.expectedUpdatedAt, requestId:req.body?.requestId, action })
+  if (!plan.ok) return res.status(plan.status).json({ message:plan.message })
+  if (!plan.replay) { db.tickets[index] = plan.ticket; if (plan.bundle) db.issueBundles[bundleIndex] = plan.bundle; save() }
+  return res.json({ ticket:ticketForUser(plan.ticket, req.user) })
+}
+app.post('/api/tickets/:id/supplements', requireAuth, requireRole('student'), (req, res) => cStudentTicketChange(req, res, 'supplement'))
 app.post('/api/tickets/:id/reopen', requireAuth, requireRole('student'), (req, res) => {
+  if (req.body?.text !== undefined) return cStudentTicketChange(req, res, 'reopen')
   const ticket = db.tickets.find(item => item.id === req.params.id && item.studentId === req.user.id)
   if (!ticket) return res.status(404).json({ message: '工单不存在。' })
   if (ticket.status !== 'awaiting_confirm') return res.status(409).json({ message: '当前状态不能反馈未解决。' })
@@ -1429,6 +1500,7 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   bundle.version = (bundle.version || 1) + 1; bundle.updatedAt = at; save()
   return res.json({ item })
 })
+
 mountB(app, {db, save, requireAuth})
 
 app.use('/api', (req, res) => {
