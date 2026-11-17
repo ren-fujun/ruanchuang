@@ -1,0 +1,9 @@
+[
+  {"id":"B-LEAVE-UG","actor":"20230118","educationLevel":"undergraduate","approver":"chenyuan","expected":"只能由所属辅导员批准或驳回"},
+  {"id":"B-LEAVE-PG","actor":"graduate","educationLevel":"postgraduate","approver":"mentor","expected":"班导师审批；普通学业导师和辅导员不可越权"},
+  {"id":"B-LEAVE-UNCONFIGURED","actor":"unconfigured","expected":"无审批候选人，明确提示配置关系，不默认本科生"},
+  {"id":"B-ACADEMIC-UNASSIGNED","case":"case-demo","expected":"待协商；确认安排后关联双方均可记录行动，私密正文仅作者可读"},
+  {"id":"BD-REPAIR-SATISFIED","description":"虚构宿舍水龙头漏水，后勤修复后学生确认满意","owner":"D","expected":"学生直达后勤；一次处置后确认结束；B仅提供AI流程指引"},
+  {"id":"BD-REPAIR-DISPUTE","description":"虚构宿舍灯具维修后仍闪烁，学生提交一次不满意说明","owner":"D/C","expected":"后勤收到异议、辅导员可见双方记录，协调留终止结论，不自动循环返工；待统一集成验收"},
+  {"id":"BD-REPAIR-TIMEOUT","description":"虚构维修事项超过试用配置等待时间仍无回应","owner":"D/C","expected":"辅导员可询问；不自动认定责任或满意；待统一集成验收"}
+]

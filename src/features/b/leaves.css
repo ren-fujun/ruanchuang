@@ -1,0 +1,11 @@
+.b-leaves,.b-collaboration{color:#302746;max-width:960px;margin:auto;overflow-wrap:anywhere}
+.b-leaves form,.b-collaboration form{display:grid;gap:14px;margin:18px 0}
+.b-leaves label,.b-collaboration label{display:grid;gap:7px}
+.b-leaves input,.b-leaves select,.b-leaves textarea,.b-collaboration input,.b-collaboration select,.b-collaboration textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ded8f2;border-radius:12px;padding:12px;background:#fff;color:#302746;font:inherit}
+.b-leaves textarea,.b-collaboration textarea{min-height:90px}
+.b-leaves button,.b-collaboration button{padding:11px 16px;border:1px solid #dcd5f2;border-radius:12px;background:#eeeafe;color:#5142aa;cursor:pointer;font:inherit}
+.b-leaves button:disabled,.b-collaboration button:disabled{opacity:.5;cursor:default}
+.b-leaves :focus-visible,.b-collaboration :focus-visible{outline:2px solid #7461ce;outline-offset:2px}
+.b-leave-card{padding:20px;margin:18px 0;background:white;border:1px solid #e6e0f5;border-radius:18px}
+.b-actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+.b-leaves [role=alert],.b-collaboration [role=alert]{color:#9c3548}

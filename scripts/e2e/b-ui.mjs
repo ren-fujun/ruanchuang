@@ -11,6 +11,9 @@ try {
   await page.getByLabel('密码', { exact: true }).fill('123456')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.locator('.case-row').first().click()
+  await page.getByLabel('协商安排', { exact: true }).fill('本次由导师联系，辅导员协助。')
+  await page.getByRole('button', { name: '提交协商安排', exact: true }).click()
+  await page.getByRole('button', { name: '接受安排', exact: true }).click()
   await page
     .getByLabel('必要工作记录')
     .fill('已联系学生，约定本周讨论学习计划。')

@@ -46,6 +46,7 @@ await new Promise((resolve, reject) => {
 })
 let checks = 0
 const call = async (url, token, body, method, status = 200) => {
+  if (body && url.endsWith('/events')) body = { requestId: crypto.randomUUID(), ...body }
   const r = await fetch(base + url, {
     method: method || (body ? 'POST' : 'GET'),
     headers: {
@@ -100,6 +101,12 @@ try {
     null,
     409,
   )
+  c = (await call('/b/cases/' + c.id + '/collaboration', mentor, {
+    action: 'propose', assigneeId: 'mentor-demo', plan: '测试协商安排', version: c.version, requestId: crypto.randomUUID(),
+  })).item
+  c = (await call('/b/cases/' + c.id + '/collaboration', mentor, {
+    action: 'accept', version: c.version, requestId: crypto.randomUUID(),
+  })).item
   for (const type of ['contact', 'interview', 'remind', 'referral']) {
     c = (
       await call('/b/cases/' + c.id + '/events', mentor, {

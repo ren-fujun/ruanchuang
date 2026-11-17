@@ -27,9 +27,9 @@ const port = await freePort()
 const base = `http://127.0.0.1:${port}`
 const servers = [], results = [], timings = [], tickets = []
 const gaps = [
-  '教务处独立页面仍为骨架，成绩导入及正式结果回写尚未接入该页面；本测试通过真实教务身份 API 验证导师流转。',
-  '后勤端仍为骨架，没有后勤身份接单和完工接口；工单接单/办结目前由辅导员代录，不能认定后勤独立闭环。',
-  '学生、辅导员入口仍复用原应用；五个网址可访问不等于五个角色业务全部贯通。',
+  '本脚本仅验证当前检出的分支；A/D已有后勤实现、C已有独立双端，尚须集成后另跑学生直达后勤与异议终止链，不能用本脚本的辅导员代录代替。',
+  '教务名单页面导入与更正未被本脚本覆盖；本脚本仅通过真实教务身份 API 验证导师协商和结果流转。',
+  '两条请假与班导师权限使用 npm run test:b-trial 独立验收；五端完整试用仍需在统一集成版本验证全部链路。',
 ]
 const child = spawn(process.execPath, ['server/index.js'], { windowsHide: true,
   env: { ...process.env, PORT: String(port), B_DEMO: 'true', ZHIHUI_DATA_FILE: file, DEEPSEEK_API_KEY: '' },
@@ -42,6 +42,7 @@ const record = async (name, fn) => {
   catch (e) { results.push({ name, status: 'FAIL', error: e.message }); throw e }
 }
 async function call(url, token, body, method, expected = 200, origin = base) {
+  if (body && url.endsWith('/events')) body = { requestId: crypto.randomUUID(), ...body }
   const start = performance.now()
   const r = await fetch(origin + '/api' + url, { method: method || (body ? 'POST' : 'GET'),
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
@@ -75,7 +76,7 @@ try {
       page.on('pageerror', e => errors.push(e.message))
       await page.goto(origin, { waitUntil: 'networkidle' })
       await page.locator('#root').locator(':scope > *').first().waitFor()
-      if (['academic', 'logistics'].includes(role)) await page.getByText('开发骨架预览', { exact: false }).waitFor()
+      if (['academic', 'logistics'].includes(role) && await page.getByText('开发骨架预览', { exact: false }).count()) gaps.push(`${role}：本次浏览器观察到开发骨架提示。`)
       await page.screenshot({ path: path.join(out, `${role}.png`), fullPage: true })
       assert.deepEqual(errors, [])
       const who = role === 'student' ? 'test01' : role === 'mentor' ? 'mentor' : role === 'academic' ? 'academic' : 'chenyuan'
@@ -107,6 +108,8 @@ try {
   })
   await record('教务建任务 → 导师联系/面谈 → 辅导员脱敏查看 → 教务未通过续跟/通过结束', async () => {
     let c = (await call('/b/cases', academic, { studentId: 'synthetic-1', mentorId: 'mentor-demo', counselorId: 'cou-chen', course: '虚构联调高等数学' }, null, 201)).item
+    c = (await call(`/b/cases/${c.id}/collaboration`, mentor, { action: 'propose', assigneeId: 'mentor-demo', plan: '五端联调安排', version: c.version, requestId: crypto.randomUUID() })).item
+    c = (await call(`/b/cases/${c.id}/collaboration`, mentor, { action: 'accept', version: c.version, requestId: crypto.randomUUID() })).item
     for (const type of ['contact', 'interview', 'remind', 'referral']) c = (await call(`/b/cases/${c.id}/events`, mentor,
       { type, text: '私密测试记录-仅导师可读', version: c.version })).item
     for (const token of [academic, counselor]) assert(!JSON.stringify(await call('/b/cases', token)).includes('私密测试记录'))

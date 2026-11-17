@@ -1,4 +1,5 @@
 import { StudentAssistant } from './features/b/Assistant'
+import { LeavePage } from './features/b/LeavePage'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from './context/AuthContext'
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/student/tickets" element={<StudentTickets />} />
         <Route path="/student/tickets/:id" element={<StudentTicketDetail />} />
         <Route path="/student/assistant" element={<StudentAssistant />} />
+        <Route path="/student/leaves" element={<LeavePage />} />
         <Route path="/student/new" element={<NewTicket />} />
         <Route path="/student/messages" element={<MessagesPage />} />
         <Route path="/student/profile" element={<ProfilePage />} />
@@ -82,6 +84,7 @@ export default function App() {
         }
       >
         <Route path="/counselor/home" element={<CounselorHome />} />
+        <Route path="/counselor/leaves" element={<LeavePage />} />
         <Route path="/counselor/tickets" element={<CounselorTickets />} />
         <Route path="/counselor/tickets/:id" element={<CounselorTicketDetail />} />
         <Route path="/counselor/dorm-check" element={<DormCheck />} />
