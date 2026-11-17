@@ -15,7 +15,7 @@ bundleSecond.description = '用于验证同包工单可独立确认及重办'
 data.tickets.push(bundleSecond)
 data.users.find(user => user.role === 'counselor').studentIds = [...new Set(data.tickets.map(ticket => ticket.studentId))]
 data.users.find(user => user.role === 'counselor').logisticsRecipientId = 'test-logistics'
-data.users.push({id:'test-logistics',role:'logistics',name:'后勤测试',account:'log-test',password:'test'}, {id:'test-other',role:'logistics',name:'其他后勤',account:'other-test',password:'test'}, {id:'test-unscoped',role:'counselor',name:'未分配辅导员',account:'no-scope',password:'test'})
+data.users.push({id:'test-logistics',role:'logistics',name:'后勤测试',account:'log-test',password:'test'}, {id:'test-other',role:'logistics',name:'其他后勤',account:'other-test',password:'test'}, {id:'test-unscoped',role:'counselor',name:'未分配辅导员',account:'no-scope',password:'test'}, {id:'test-limited',role:'counselor',name:'另一位辅导员',account:'limited',password:'test',studentIds:['stu-xu']})
 data.users.push({id:'test-academic',role:'academic',name:'教务测试',account:'academic-test',password:'test',college:'信息工程学院',academicStudentIds:['stu-lin']}, {id:'test-mentor',role:'mentor',name:'导师测试',account:'mentor-test',password:'test',college:'信息工程学院'})
 await writeFile(path.join(dir, 'data.json'), JSON.stringify(data))
 const port = 20000 + Math.floor(Math.random()*20000)
@@ -33,6 +33,7 @@ try {
   const counselor=(await request('/api/auth/demo',null,{role:'counselor'})).body.token
   const student=(await request('/api/auth/demo',null,{role:'student'})).body.token
   const unscoped=(await request('/api/auth/login',null,{account:'no-scope',password:'test'})).body.token
+  const limited=(await request('/api/auth/login',null,{account:'limited',password:'test'})).body.token
   assert.equal((await request('/api/academic/cases/mine',student)).status,501)
   assert.equal((await request('/api/academic/cases/mine',counselor)).status,403)
   const tickets=(await request('/api/tickets',counselor)).body.tickets
@@ -40,6 +41,12 @@ try {
   assert.equal(page.tickets.length,1); assert.equal(page.hasMore,true)
   assert.equal((await request('/api/tickets?page=0&pageSize=1',counselor)).status,400)
   const id=tickets.find(t=>t.status==='pending_review' && t.studentId==='stu-lin')?.id; assert.ok(id)
+  assert.equal((await request('/api/tickets',unscoped)).body.tickets.length,0)
+  assert.equal((await request(`/api/tickets/${id}`,unscoped)).status,403)
+  assert.equal((await request(`/api/tickets/${id}/note`,unscoped,{text:'无权备注'})).status,403)
+  assert.equal((await request(`/api/tickets/${id}`,limited)).status,403)
+  assert.ok((await request('/api/tickets',limited)).body.tickets.every(ticket=>ticket.studentId==='stu-xu'))
+  assert.equal((await request('/api/counselor/dashboard',limited)).body.stats.total,(await request('/api/tickets',limited)).body.counts.all)
   const own = (await request(`/api/tickets/${id}`,student)).body.ticket
   const supplement = { text:'补充说明楼层及地点', expectedUpdatedAt:own.updatedAt, requestId:'supplement-one' }
   assert.equal((await request(`/api/tickets/${id}/supplements`,student,supplement)).status,200)

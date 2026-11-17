@@ -30,13 +30,15 @@ const ensureLoaded = () => {
 export const db = ensureLoaded()
 
 let saveTimer = null
+const writeSnapshot = () => {
+  const temp = `${dataFile}.tmp`
+  fs.writeFileSync(temp, JSON.stringify(db, null, 2), 'utf8')
+  fs.renameSync(temp, dataFile)
+}
 export const save = () => {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
-    const payload = JSON.stringify(db, null, 2)
-    const temp = `${dataFile}.tmp`
-    fs.writeFileSync(temp, payload, 'utf8')
-    fs.renameSync(temp, dataFile)
+    writeSnapshot()
   }, 20)
 }
 
@@ -45,7 +47,7 @@ export const saveNow = () => {
     clearTimeout(saveTimer)
     saveTimer = null
   }
-  fs.writeFileSync(dataFile, JSON.stringify(db, null, 2), 'utf8')
+  writeSnapshot()
 }
 
 export { dataFile }

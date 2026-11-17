@@ -180,7 +180,7 @@ const requireRole = (role) => (req, res, next) => {
 const riskInput = (user, body = {}) => {
   const text = String(body.text || '').trim()
   const staff = user.role === 'counselor'
-  const studentId = staff ? body.studentId : user.id
+  const studentId = staff ? (Array.isArray(user.studentIds) && user.studentIds.includes(body.studentId) ? body.studentId : null) : user.id
   const history = staff && Array.isArray(body.history)
     ? body.history
     : studentId ? studentHistory(studentId) : []
@@ -206,9 +206,17 @@ const getTicketOr404 = (id, res) => {
 }
 
 const canAccessTicket = (user, ticket) => {
-  if (user.role === 'counselor') return true
-  return ticket.studentId === user.id
+  if (user.role === 'counselor') return Array.isArray(user.studentIds) && user.studentIds.includes(ticket.studentId)
+  return user.role === 'student' && ticket.studentId === user.id
 }
+
+// Apply the same scope to old detail and mutation routes before their handlers run.
+app.use('/api/tickets/:id', requireAuth, (req, res, next) => {
+  const ticket = db.tickets.find(item => item.id === req.params.id)
+  if (!ticket) return res.status(404).json({ message:'工单不存在。' })
+  if (!canAccessTicket(req.user, ticket)) return res.status(403).json({ message:'无权访问该工单。' })
+  next()
+})
 
 const nextTicketId = () => {
   const date = new Date()
@@ -429,7 +437,7 @@ app.post('/api/ai/agents/:name', requireAuth, asyncRoute(async (req, res) => {
   const body = req.body || {}
   const payload = name === 'risk' ? riskInput(req.user, body) : { ...body }
   if (name === 'attribution' && !Array.isArray(payload.tickets)) {
-    payload.tickets = db.tickets
+    payload.tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   }
   const result = await invokeAgent(name, payload)
   if (!result.ok && result.warnings?.length) return res.status(400).json(result)
@@ -480,8 +488,9 @@ app.post('/api/ai/risk-scan', requireAuth, (req, res) => {
 })
 
 app.post('/api/ai/attribution', requireAuth, requireRole('counselor'), async (req, res) => {
-  const result = await attributionAgent({ tickets: db.tickets, limit: Number(req.body?.limit) || 5 })
-  res.json({ ...result.output, bottlenecks: rankBottlenecks(db.tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
+  const result = await attributionAgent({ tickets, limit: Number(req.body?.limit) || 5 })
+  res.json({ ...result.output, bottlenecks: rankBottlenecks(tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
 })
 
 // 容灾演练开关：模拟大模型超时 / 离线 / 脏 JSON / 5xx，验证自动回退到规则链路
@@ -557,9 +566,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
 app.get('/api/tickets', requireAuth, (req, res) => {
   const status = String(req.query.status || 'all')
   const q = String(req.query.q || '').trim().toLowerCase()
-  let list = db.tickets.filter((ticket) =>
-    req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
-  )
+  const scopedTickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
+  let list = [...scopedTickets]
   if (status !== 'all') {
     const statuses = status.split(',')
     list = list.filter((ticket) => statuses.includes(ticket.status))
@@ -602,29 +610,11 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     tickets: list.map((ticket) => ticketForUser(ticket, req.user)),
     hasMore,
     counts: {
-      all: db.tickets.filter((ticket) =>
-        req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
-      ).length,
-      pending_review: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'pending_review' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      active: db.tickets.filter(
-        (ticket) =>
-          ticket.status !== 'completed' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      awaiting_confirm: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'awaiting_confirm' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      completed: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'completed' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
+      all: scopedTickets.length,
+      pending_review: scopedTickets.filter(ticket => ticket.status === 'pending_review').length,
+      active: scopedTickets.filter(ticket => ticket.status !== 'completed').length,
+      awaiting_confirm: scopedTickets.filter(ticket => ticket.status === 'awaiting_confirm').length,
+      completed: scopedTickets.filter(ticket => ticket.status === 'completed').length,
     },
   })
 })
@@ -853,7 +843,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
-  const tickets = db.tickets
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const completed = tickets.filter((ticket) => ticket.status === 'completed')
   const pending = active.filter((ticket) => ticket.status === 'pending_review')
@@ -1150,7 +1140,7 @@ function getTicketOrNotFound(id, res) {
 }
 
 app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, res) => {
-  const tickets = db.tickets
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const completed = tickets.filter((ticket) => ticket.status === 'completed')
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
