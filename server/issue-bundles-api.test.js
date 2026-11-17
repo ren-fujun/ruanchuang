@@ -120,6 +120,11 @@ try {
   const academic=(await request('/api/auth/login',null,{account:'academic-test',password:'test'})).body.token
   const mentor=(await request('/api/auth/login',null,{account:'mentor-test',password:'test'})).body.token
   const rows=[{studentId:'stu-lin',mentorId:'test-mentor',counselorId:'cou-chen',course:'测试数学'}]
+  const csv='studentId,course,mentorId,counselorId\nstu-lin,测试数学,test-mentor,cou-chen'
+  assert.equal((await request('/api/academic/batches/preview',student,{csv})).status,403)
+  const preview=await request('/api/academic/batches/preview',academic,{csv}); assert.equal(preview.status,200); assert.equal(preview.body.items[0].course,'测试数学')
+  assert.equal((await request('/api/academic/batches',academic)).body.items.length,0)
+  assert.equal((await request('/api/academic/batches/preview',academic,{csv:csv+'\nother,课程,test-mentor,cou-chen'})).status,400)
   assert.equal((await request('/api/academic/batches',student,{rows})).status,403)
   assert.equal((await request('/api/academic/batches',academic,{rows:[...rows,...rows]})).status,400)
   assert.equal((await request('/api/academic/batches',academic,{rows:[{...rows[0],studentId:'stu-xu'}]})).status,400)

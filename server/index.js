@@ -13,6 +13,8 @@ import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { planStudentTicketChange } from './c-student.js'
 import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
 import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
+import { mountTrialFeedback } from './trial-feedback.js'
+import { parseAcademicCsv } from './academic-csv.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -170,8 +172,8 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
-  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/[^/]+\/dispatch)?$/.test(req.path)
-  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/dispatch)?$/.test(req.path)
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
   next()
@@ -1530,6 +1532,22 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   return res.json({ item })
 })
 
+const academicRelationsValid = (user, rows) => rows.every(row => {
+  const student = db.users.find(item => item.id === row.studentId)
+  const mentor = db.users.find(item => item.id === row.mentorId)
+  const counselor = db.users.find(item => item.id === row.counselorId)
+  return Boolean(user.college && student && mentor && counselor && student.college === user.college && mentor.college === user.college && student.counselor === counselor.name)
+})
+app.post('/api/academic/batches/preview', requireAuth, requireRole('academic'), (req, res) => {
+  try {
+    const rows = parseAcademicCsv(req.body?.csv)
+    const result = createAcademicVersion({user:req.user, rows, users:db.users})
+    if (!result.valid) return res.status(400).json({message:'名单校验失败。', errors:result.errors})
+    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({message:'学生、导师学院或辅导员关系不匹配。'})
+    return res.json({items:result.batch.items})
+  } catch (error) { return res.status(400).json({message:error.message}) }
+})
+
 app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
   const batches = db.academicBatches || []
   const previous = req.body?.previousId ? batches.find(batch => batch.id === req.body.previousId) : null
@@ -1538,13 +1556,7 @@ app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, re
   try {
     const result = createAcademicVersion({ user:req.user, rows:req.body?.rows, users:db.users, previous, expectedVersion:req.body?.expectedVersion ?? 0 })
     if (!result.valid) return res.status(400).json({ message:'名单校验失败。', errors:result.errors })
-    const mismatch = result.batch.items.some(row => {
-      const student = db.users.find(user => user.id === row.studentId)
-      const mentor = db.users.find(user => user.id === row.mentorId)
-      const counselor = db.users.find(user => user.id === row.counselorId)
-      return !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || student.counselor !== counselor.name
-    })
-    if (mismatch) return res.status(400).json({ message:'学生、导师学院或辅导员关系不匹配。' })
+    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({ message:'学生、导师学院或辅导员关系不匹配。' })
     db.academicBatches = [...batches, result.batch]; save()
     return res.status(201).json({ item:result.batch })
   } catch (error) { return res.status(400).json({ message:error.message }) }
@@ -1585,6 +1597,7 @@ app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, r
 })
 
 mountB(app, {db, save, requireAuth})
+mountTrialFeedback(app, {db, save, requireAuth, trialMode})
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: '接口不存在。' })
