@@ -14,6 +14,7 @@ import '../shared/portal.css'
 import './mentor.css'
 import { AcademicCollaboration } from '../../src/features/b/Collaboration'
 import { LeavePanel } from '../../src/features/b/Leaves'
+import { TrialPasswordGate } from '../../src/components/TrialPasswordGate'
 type RecordItem = {
   type: string
   text?: string
@@ -130,13 +131,14 @@ function App() {
       void run(async () => {
         const data = await call('/me')
         setUser(data.user)
-        await refresh()
+        if (!data.user.mustChangePassword) await refresh()
       })
   }, [])
   const current = items.find((c) => c.id === selected)
   const loadKb = async () => {
     setKnowledge((await call('/b/knowledge')).items)
   }
+  if (user?.mustChangePassword) return <TrialPasswordGate tokenKey="b_portal_token" />
   return (
     <div className="portal mentor-purple">
       <aside>
@@ -302,7 +304,7 @@ function App() {
                   localStorage.setItem('b_portal_token', data.token)
                   setUser(data.user)
                   setPassword('')
-                  await refresh()
+                  if (!data.user.mustChangePassword) await refresh()
                 })
               }}
             >

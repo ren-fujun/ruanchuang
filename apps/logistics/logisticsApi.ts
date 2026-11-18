@@ -10,6 +10,7 @@ export type RepairStatus =
   | 'coordinated_closed'
 
 export interface LogisticsUser {
+  mustChangePassword?: boolean
   id: string
   role: 'logistics'
   name: string

@@ -1,6 +1,7 @@
 export type Role = 'student' | 'counselor'
 
 export interface User {
+  mustChangePassword?: boolean
   id: string
   role: Role
   name: string

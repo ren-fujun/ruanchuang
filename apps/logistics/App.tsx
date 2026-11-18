@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { TrialPasswordGate } from '../../src/components/TrialPasswordGate'
 import {
   logisticsApi,
   type LogisticsUser,
@@ -69,7 +70,7 @@ export function LogisticsApp() {
   }, [])
 
   useEffect(() => {
-    if (user) void loadRepairs()
+    if (user && !user.mustChangePassword) void loadRepairs()
   }, [user, loadRepairs])
 
   useEffect(() => {
@@ -142,6 +143,8 @@ export function LogisticsApp() {
       />
     )
   }
+
+  if (user.mustChangePassword) return <TrialPasswordGate tokenKey="zhihui_token" />
 
   return (
     <div className="workbench">

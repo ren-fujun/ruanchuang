@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { TrialPasswordGate } from "../../components/TrialPasswordGate";
 import type { PortalRole } from "./config";
 
 export function PortalShell({ role }: { role: PortalRole }) {
@@ -20,6 +21,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+  if (user?.mustChangePassword) return <TrialPasswordGate tokenKey="zhihui_token" />;
   const student = role === "student",
     root = "/" + role;
   const items = student
