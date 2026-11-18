@@ -40,6 +40,17 @@ try {
   assert.equal((await call('/api/trial/feedback',null,staff)).status,403)
   const admin=(await call('/api/auth/login',{account:'trial-admin',password:'admin-pass-123'})).body.token
   const list=await call('/api/trial/feedback',null,admin);assert.equal(list.body.items.length,1);assert.equal(list.body.items[0].actorId,'trial-user')
+  const expiresAt=new Date(Date.now()+86400000).toISOString()
+  const accounts=[{id:'test-c1',account:'test-c1',name:'虚构辅导员',role:'counselor',password:'temporary-pass-123',expiresAt,studentIds:['test-s1']},{id:'test-s1',account:'test-s1',name:'虚构学生',role:'student',password:'temporary-pass-456',expiresAt,educationLevel:'undergraduate',counselorIds:['test-c1']}]
+  assert.equal((await call('/api/trial/admin/accounts',{accounts},staff)).status,403)
+  assert.equal((await call('/api/trial/admin/accounts',{accounts:[{...accounts[1],id:'test-invalid',trialAdmin:true}]},admin)).status,400)
+  const created=await call('/api/trial/admin/accounts',{accounts},admin);assert.equal(created.status,201);assert.equal(JSON.stringify(created.body).includes('temporary-pass'),false)
+  assert.equal((await call('/api/trial/admin/accounts',{accounts},admin)).status,400)
+  const newStudent=await call('/api/auth/login',{account:'test-s1',password:'temporary-pass-456'});assert.equal(newStudent.status,200);assert.equal((await call('/api/tickets',null,newStudent.body.token)).status,403)
+  assert.equal((await call('/api/trial/admin/accounts/test-s1/reset-password',{password:'replacement-pass-789'},admin)).status,200)
+  assert.equal((await call('/api/me',null,newStudent.body.token)).status,401)
+  assert.equal((await call('/api/trial/admin/accounts/test-s1/status',{disabled:true},admin)).status,200)
+  assert.equal((await call('/api/auth/login',{account:'test-s1',password:'replacement-pass-789'})).status,401)
   assert.equal((await call('/api/auth/login',{account:'trial-user',password:'testing-pass-123'})).status,401)
   assert.equal((await call('/api/auth/login',{account:'trial-user',password:'replacement-pass-123'})).status,200)
   for (let i=0;i<10;i++) assert.equal((await call('/api/auth/login',{account:'trial-user',password:'incorrect'})).status,401)
