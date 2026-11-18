@@ -7,7 +7,7 @@ export function leaveApprovers(db, student) {
   const graduate = student.educationLevel === 'postgraduate'
   if (!undergraduate && !graduate) return []
   const ids = undergraduate ? student.counselorIds : student.classAdvisorIds
-  return db.users.filter(u => !u.disabled && Array.isArray(ids) && ids.includes(u.id) &&
+  return db.users.filter(u => !u.disabled && (!u.expiresAt || (Number.isFinite(Date.parse(u.expiresAt)) && Date.parse(u.expiresAt) > Date.now())) && Array.isArray(ids) && ids.includes(u.id) &&
     (undergraduate ? u.role === 'counselor' : u.role === 'mentor' && u.classAdvisor === true))
 }
 
