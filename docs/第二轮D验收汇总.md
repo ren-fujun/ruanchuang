@@ -50,7 +50,7 @@ test:b-trial：82 项通过
 logistics-workflow E2E：7 项通过
 备份/恢复：临时数据实测通过
 健康检查：隔离 API 实测通过
-发布候选：91 个文件，SHA-256 清单生成成功
+发布候选：96 个文件，SHA-256 清单生成成功
 ```
 
 ## 发布候选
@@ -58,11 +58,11 @@ logistics-workflow E2E：7 项通过
 本地生成：
 
 ```text
-release/rc-20261118-c/
-release/zhihui-rc-20261118-c.zip
+release/rc-20261118-final/
+release/zhihui-rc-20261118-final.zip
 ```
 
-清单提交为 `7fc6633`。`release/` 已加入 `.gitignore`，避免把构建产物重复提交。
+清单会记录打包时的实际提交号。`release/` 已加入 `.gitignore`，避免把构建产物重复提交。
 
 ## 仍未完成
 
