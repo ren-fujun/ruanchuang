@@ -44,8 +44,8 @@ export const DUTIES = [
     id: 'duty-dorm-repair',
     name: '宿舍设施维修',
     categories: ['宿舍生活'],
-    ownerDept: 'dorm',
-    supportDepts: ['logistics'],
+    ownerDept: 'logistics',
+    supportDepts: ['dorm'],
     keywords: ['宿舍', '寝室', '报修', '维修', '水龙头', '漏水', '渗水', '门锁', '空调', '床板', '下水道', '卫生间', '阳台', '灯具', '热水器'],
     slaMinutes: 120,
     bottlenecks: ['bt-material'],
@@ -484,8 +484,9 @@ const triggeredCountersign = (duty, haystack) =>
  */
 const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, supportDepts, slaMinutes }) => {
   const primary = involvedDuties[0]
+  const repair = ['duty-dorm-repair', 'duty-dorm-power', 'duty-campus-repair', 'duty-campus-elevator'].includes(primary.id)
   const path = [
-    { order: 1, stage: '受理', actor: '辅导员', action: '接单核对诉求要素与地点，确认是否需要现场核查', slaMinutes: 30 },
+    { order: 1, stage: '受理', actor: repair ? '待确认' : '辅导员', action: repair ? '新版直达流程尚在开发，请以页面实际受理状态为准' : '接单核对诉求要素与地点，确认是否需要现场核查', slaMinutes: 30 },
     {
       order: 2,
       stage: '派单',
@@ -528,7 +529,7 @@ const buildDispatchPath = (involvedDuties, countersignRules, { ownerDepts, suppo
     order: path.length + 1,
     stage: '反馈归档',
     actor: '辅导员',
-    action: '通知学生确认办结，办结数据沉淀进事件图谱',
+    action: repair ? '反馈与协调以页面实际提供的功能为准，新版终止流程尚在开发' : '通知学生确认办结，办结数据沉淀进事件图谱',
     slaMinutes: 1440,
   })
   return path
@@ -573,7 +574,7 @@ export const queryGraph = (text, options = {}) => {
   const secondaryThreshold = hasConnector ? threshold : Math.max(threshold, top.score * 0.55)
   const secondaryDuties = ranked.slice(1, limit).filter((entry) =>
     entry.score >= secondaryThreshold &&
-    entry.duty.ownerDept !== top.duty.ownerDept &&
+    (entry.duty.ownerDept !== top.duty.ownerDept || triggeredCountersign(entry.duty, haystack).length > 0) &&
     entry.matched.some((keyword) => !CONTEXT_KEYWORDS.has(keyword) && !top.matched.includes(keyword)),
   )
   const involvedDuties = [top.duty, ...secondaryDuties.map((entry) => entry.duty)]

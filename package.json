@@ -15,6 +15,9 @@
     "preview": "vite preview --host 127.0.0.1 --port 5180",
     "start": "node server/index.js",
     "seed": "node server/reset.js",
+    "e2e": "node scripts/e2e/fullchain.mjs",
+    "e2e:critical": "node scripts/e2e/critical-checks.mjs",
+    "e2e:all": "npm run e2e && npm run e2e:critical",
     "typecheck": "tsc --noEmit",
     "demo": "npm run build && node scripts/demo.mjs",
     "test:e2e:api": "node scripts/e2e/api.mjs",
@@ -29,7 +32,12 @@
     "build:logistics": "vite build --config apps/logistics/vite.config.mjs",
     "dev:mentor": "vite --config apps/mentor/vite.config.mjs",
     "build:mentor": "vite build --config apps/mentor/vite.config.mjs",
-    "build:portals": "npm run build:student && npm run build:counselor && npm run build:academic && npm run build:logistics && npm run build:mentor"
+    "build:portals": "npm run build:student && npm run build:counselor && npm run build:academic && npm run build:logistics && npm run build:mentor",
+    "demo:b": "node scripts/demo-b.mjs",
+    "test:b": "node scripts/e2e/b-workflows.mjs",
+    "test:five-portals": "node scripts/e2e/five-portals.mjs",
+    "test:b-trial": "node scripts/e2e/b-trial.mjs",
+    "demo:b-trial": "node scripts/demo-b-trial.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",

@@ -1,0 +1,747 @@
+.c-shell {
+  --paper: #f3f0e7;
+  --paper-2: #fbfaf5;
+  --card: #fffdf8;
+  --ink: #102c22;
+  --ink-soft: #526057;
+  --forest: #163d2d;
+  --forest-deep: #0b281c;
+  --forest-soft: #e2e9dd;
+  --lime: #d8f75d;
+  --line: #dfded4;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100dvh;
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+.c-shell a {
+  text-decoration: none;
+  color: inherit;
+}
+.c-shell button {
+  cursor: pointer;
+}
+.c-shell svg {
+  flex-shrink: 0;
+}
+.c-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 12px;
+  color: #fffdf0;
+  background: linear-gradient(120deg, #103728, #071f17);
+}
+.c-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 29px;
+  font-weight: 700;
+}
+.c-brand svg {
+  width: 48px;
+  height: 48px;
+}
+.c-brand small {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 5px;
+  font-weight: 400;
+}
+.c-sidebar nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 36px;
+}
+.c-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 13px 22px;
+  border-radius: 13px;
+  font-size: 21px;
+  font-weight: 550;
+}
+.c-sidebar nav a.active {
+  background: #37694e;
+}
+.c-student .c-sidebar nav a.active {
+  background: #e6f0bc;
+  color: #173723;
+}
+.c-mascot {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  object-position: center;
+  margin-top: auto;
+  border-radius: 24px;
+}
+.c-student .c-mascot {
+  margin: 30px 0 0;
+}
+.c-student .c-sidebar nav {
+  margin-top: 26px;
+}
+.c-content {
+  min-width: 0;
+}
+.c-top {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 80px;
+  border-bottom: 1px solid #d5d5ca;
+  padding: 15px 28px;
+}
+.c-top > strong {
+  font-size: 28px;
+  color: #0c1710;
+}
+.c-top > span {
+  border-left: 1px solid #aeb4aa;
+  padding-left: 22px;
+  font-size: 18px;
+  color: #596052;
+}
+.c-top > a:first-of-type {
+  margin-left: auto;
+}
+.c-top svg {
+  width: 26px;
+  height: 26px;
+}
+.c-outlet {
+  max-width: 1600px;
+  margin: auto;
+}
+.c-home {
+  padding: 24px;
+}
+.c-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-radius: 18px;
+  background: linear-gradient(120deg, #174333, #0b2b20);
+  color: #fffef3;
+  padding: 28px 0;
+  margin-bottom: 24px;
+}
+.c-metrics a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 23px;
+  line-height: 1.25;
+}
+.c-metrics a + a {
+  border-left: 1px solid #879985;
+}
+.c-metrics b {
+  font-size: 52px;
+  line-height: 1.1;
+}
+.c-home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(285px, 0.94fr);
+  gap: 20px;
+  align-items: start;
+}
+.c-home-main,
+.c-home-side {
+  display: grid;
+  gap: 16px;
+}
+.c-panel,
+.c-compose {
+  background: #fffdf8;
+  border: 1px solid #e1dfd5;
+  border-radius: 20px;
+  padding: 20px;
+}
+.c-panel h2 {
+  margin: 0 0 18px;
+  font-size: 25px;
+  line-height: 1.3;
+}
+.c-panel h3 {
+  margin: 0 0 8px;
+}
+.c-panel p {
+  line-height: 1.7;
+}
+.c-panel small {
+  color: #60675b;
+}
+.c-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 17px 0;
+  border-top: 1px solid #e6e3d9;
+  text-align: left;
+}
+.c-row strong {
+  font-size: 19px;
+  display: block;
+  line-height: 1.5;
+}
+.c-row small {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+}
+.c-grow {
+  flex: 1;
+  min-width: 0;
+}
+.c-row > svg,
+.c-icon {
+  color: #173e2a;
+}
+.c-icon {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #efeee3;
+  border-radius: 12px;
+}
+.c-icon svg {
+  width: 30px;
+  height: 30px;
+}
+.c-primary,
+.c-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 19px;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.c-shell .c-primary,
+.c-login .c-primary {
+  background: #d7f65c;
+  color: #0c2114;
+  border: 1px solid #d7f65c;
+}
+.c-outline {
+  border: 1px solid #aeb59e;
+  background: transparent;
+  color: #213624;
+}
+.c-shell button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.c-risk {
+  background: #e76b3a;
+  color: white;
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.c-compose > div:first-child {
+  display: flow-root;
+}
+.c-compose h1 {
+  font-size: 34px;
+  margin: 0 0 20px;
+}
+.c-compose textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px solid #c4c7c1;
+  border-radius: 14px;
+  resize: vertical;
+  font-size: 18px;
+  background: #fffefb;
+}
+.c-compose .c-primary {
+  float: right;
+  margin-top: 16px;
+}
+.c-compose > img {
+  display: none;
+}
+.c-quick {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.c-quick button,
+.c-quick a {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #d4d5cc;
+  border-radius: 12px;
+  padding: 10px;
+  font: inherit;
+  background: none;
+}
+.c-quick svg {
+  width: 22px;
+}
+.c-page {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+.c-page > h1 {
+  font-size: 29px;
+  margin: 0 0 4px;
+}
+.c-form {
+  display: grid;
+  gap: 16px;
+  max-width: 880px;
+}
+.c-form label {
+  display: grid;
+  gap: 8px;
+}
+.c-form textarea {
+  min-height: 100px;
+}
+.c-form input,
+.c-form select,
+.c-form textarea,
+.c-input {
+  font: inherit;
+  background: #fff;
+  border: 1px solid #cbd2c5;
+  border-radius: 9px;
+  padding: 11px;
+  width: 100%;
+  min-width: 0;
+  color: #183222;
+}
+.c-form fieldset {
+  border: 1px solid #dedfd3;
+  border-radius: 12px;
+  padding: 14px;
+}
+.c-form .c-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.c-choice input {
+  width: 18px;
+  flex: none;
+}
+.c-choice span {
+  flex: 1;
+}
+.c-choice small {
+  display: block;
+}
+.c-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.c-actions button,
+.c-state button {
+  background: #edf1e4;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.c-review {
+  background: #f2f3e9;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+}
+.c-review p {
+  overflow-wrap: anywhere;
+}
+.c-state {
+  color: #66705f;
+  font-size: 14px;
+  padding: 15px;
+  background: #f4f4ed;
+  border-radius: 10px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.c-error {
+  padding: 12px;
+  background: #fff0e8;
+  color: #9b431f;
+  border-radius: 8px;
+}
+.c-success {
+  color: #236343;
+}
+.c-mobile-heading,
+.c-mobile-tools,
+.c-dock {
+  display: none;
+}
+.c-login {
+  max-width: 480px;
+  margin: 7vh auto;
+  padding: 32px;
+  background: #fcfaf2;
+  border-radius: 24px;
+  color: #153624;
+}
+.c-login form,
+.c-login label {
+  display: grid;
+  gap: 14px;
+}
+.c-login input {
+  padding: 12px;
+  border: 1px solid #b9c5b3;
+  border-radius: 8px;
+}
+.c-login button {
+  padding: 13px;
+  border-radius: 9px;
+}
+.c-login h1 {
+  margin: 12px 0;
+}
+.c-shell .page {
+  max-width: none;
+  min-height: 0;
+  padding: 24px 24px 120px;
+}
+.c-shell .page-header {
+  margin-bottom: 20px;
+}
+.c-shell .detail-action-bar {
+  position: fixed;
+  left: 250px;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  transform: none;
+}
+.c-shell .ticket-detail-page .detail-action-bar {
+  left: 250px;
+}
+.c-shell .primary-button {
+  background: #184530;
+  color: white;
+}
+.c-shell .student-ticket-list,
+.c-shell .counselor-ticket-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1050px) and (min-width: 800px) {
+  .c-shell {
+    grid-template-columns: 205px minmax(0, 1fr);
+  }
+  .c-sidebar nav a {
+    font-size: 17px;
+    padding: 12px;
+  }
+  .c-brand {
+    font-size: 22px;
+  }
+  .c-home-grid {
+    grid-template-columns: 1fr;
+  }
+  .c-top > span {
+    display: none;
+  }
+  .c-shell .detail-action-bar {
+    left: 205px;
+  }
+}
+@media (max-width: 799px) {
+  .c-shell {
+    display: block;
+  }
+  .c-sidebar,
+  .c-top {
+    display: none;
+  }
+  .c-home {
+    padding: 0 10px 95px;
+    background: #f0ede3;
+  }
+  .c-mobile-heading {
+    display: block;
+    margin: 0 -10px;
+    padding: 20px;
+    color: #fffdf0;
+    background: #103c2a;
+  }
+  .c-mobile-heading > span {
+    display: flex;
+    align-items: center;
+    font-size: 23px;
+    font-weight: 700;
+    gap: 9px;
+  }
+  .c-mobile-heading small {
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .c-mobile-heading h1 {
+    font-size: 32px;
+    margin: 22px 0 6px;
+  }
+  .c-mobile-heading p {
+    font-size: 15px;
+    margin: 0;
+  }
+  .c-metrics {
+    padding: 18px 0;
+    margin: 0 -10px 18px;
+    border-radius: 0 0 24px 24px;
+  }
+  .c-metrics a {
+    font-size: 16px;
+  }
+  .c-metrics b {
+    font-size: 30px;
+  }
+  .c-home-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .c-home-main,
+  .c-home-side {
+    width: 100%;
+    gap: 15px;
+  }
+  .c-panel {
+    padding: 16px;
+    border-radius: 20px;
+  }
+  .c-panel h2 {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+  .c-row {
+    gap: 10px;
+    padding: 14px 0;
+  }
+  .c-row strong {
+    font-size: 16px;
+  }
+  .c-row small {
+    font-size: 12px;
+  }
+  .c-row .c-primary,
+  .c-row .c-outline {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .c-icon {
+    padding: 9px;
+  }
+  .c-icon svg {
+    width: 23px;
+    height: 23px;
+  }
+  .c-mobile-tools {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 16px;
+  }
+  .c-mobile-tools a {
+    display: grid;
+    justify-items: center;
+    gap: 9px;
+    background: #fffcf5;
+    border: 1px solid #e8e4d7;
+    border-radius: 15px;
+    padding: 15px 2px;
+    font-size: 14px;
+  }
+  .c-mobile-tools svg {
+    width: 25px;
+  }
+  .c-student .c-metrics {
+    display: none;
+  }
+  .c-student .c-compose {
+    background: #174632;
+    color: #fffef0;
+    margin: 0 -10px;
+    border: 0;
+    border-radius: 0 0 22px 22px;
+    padding: 20px;
+    position: relative;
+  }
+  .c-compose h1 {
+    font-size: 29px;
+    margin-bottom: 15px;
+  }
+  .c-compose > div:first-child {
+    position: relative;
+    z-index: 1;
+    width: 78%;
+  }
+  .c-compose textarea {
+    font-size: 14px;
+    min-height: 83px;
+  }
+  .c-compose .c-primary {
+    float: none;
+    font-size: 16px;
+    padding: 12px 25px;
+    margin-top: 12px;
+  }
+  .c-compose > img {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 20px;
+    width: 28%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 30px;
+    opacity: 0.9;
+  }
+  .c-quick {
+    position: relative;
+    z-index: 1;
+    background: #fffaf2;
+    color: #173624;
+    border-radius: 16px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .c-quick > strong {
+    grid-column: 1/-1;
+  }
+  .c-quick a,
+  .c-quick button {
+    display: grid;
+    justify-items: center;
+    font-size: 12px;
+    padding: 9px 3px;
+  }
+  .c-quick svg {
+    width: 27px;
+    height: 27px;
+  }
+  .c-page {
+    padding: 20px 12px 110px;
+  }
+  .c-page > h1 {
+    font-size: 25px;
+  }
+  .c-dock {
+    position: fixed;
+    z-index: 15;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fffdf7ef;
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid #deded1;
+    padding: 8px 6px max(8px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 15px #14322108;
+  }
+  .c-dock a {
+    display: grid;
+    justify-items: center;
+    gap: 5px;
+    font-size: 13px;
+    min-width: 58px;
+  }
+  .c-dock a.active {
+    font-weight: 700;
+    color: #2f6d4e;
+  }
+  .c-dock svg {
+    width: 25px;
+    height: 25px;
+  }
+  .c-shell:has(.ticket-detail-page) .c-dock {
+    display: none;
+  }
+  .c-shell .detail-action-bar,
+  .c-shell .ticket-detail-page .detail-action-bar {
+    left: 0;
+    bottom: 66px;
+  }
+  .c-shell .page {
+    padding: 18px 16px 145px;
+  }
+  .c-shell .student-ticket-list,
+  .c-shell .counselor-ticket-list {
+    grid-template-columns: 1fr;
+  }
+  .c-login {
+    margin: 25px 15px;
+  }
+  .c-form fieldset {
+    padding: 10px;
+  }
+  .c-choice {
+    font-size: 14px;
+  }
+  .c-form .c-choice a {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 799px) {
+  .c-counselor .c-mobile-heading {
+    position: relative;
+    min-height: 166px;
+    padding-right: 110px;
+    overflow: hidden;
+  }
+  .c-counselor .c-mobile-heading > span {
+    white-space: nowrap;
+    font-size: 19px;
+    position: relative;
+    z-index: 1;
+  }
+  .c-counselor .c-mobile-heading h1 {
+    font-size: 30px;
+    position: relative;
+    z-index: 1;
+  }
+  .c-counselor .c-mobile-heading p {
+    font-size: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .c-mobile-heading > img {
+    position: absolute;
+    width: 105px;
+    height: 150px;
+    object-fit: cover;
+    right: 0;
+    bottom: 0;
+    border-radius: 18px 0 0 0;
+  }
+  .c-counselor .c-home-side > .c-panel {
+    min-height: 160px;
+  }
+}

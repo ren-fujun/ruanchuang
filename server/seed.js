@@ -253,6 +253,7 @@ export const userProfiles = [
     studentCount: 286,
     onDuty: '本周值班 · 周一 / 周四',
     studentIds: ['stu-lin', 'stu-xu', 'stu-zhou', 'stu-wang', 'stu-zhao', 'stu-chen', 'stu-su', 'stu-zheng', 'stu-gu'],
+    logisticsRecipientId: 'logistics-demo',
   },
   {
     id: 'logistics-demo',

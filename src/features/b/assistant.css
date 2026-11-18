@@ -1,0 +1,31 @@
+.b-assistant {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.b-assistant h1 {
+  font-size: 25px;
+  margin: 8px 0 14px;
+}
+.b-assistant > p {
+  margin: 14px 0;
+  color: #615d76;
+}
+.b-assistant textarea {
+  border: 1px solid #d9d3e7;
+  border-radius: 12px;
+  padding: 14px;
+  font: inherit;
+  resize: vertical;
+}
+.b-assistant form {
+  margin-bottom: 14px;
+}
+.b-assistant .primary-button {
+  margin-top: 10px;
+}
+.b-assistant .card p {
+  margin-top: 10px;
+}
+.b-assistant .text-button {
+  margin-left: 10px;
+}

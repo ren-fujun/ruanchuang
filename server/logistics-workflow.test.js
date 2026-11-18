@@ -18,3 +18,11 @@ test('only assigned logistics staff can record individual results',()=>{
  const done=applyLogisticsAction({bundle:accepted,recipient,ticketId:'1',action:'resolve',result:'已维修'})
  assert.equal(done.items[0].status,'resolved'); assert.equal(done.items[1].status,'sent'); assert.equal(b.items[0].status,'sent')
 })
+test('return requires a reason and does not modify other items',()=>{
+ const b=dispatchBundle({bundle:draft,counselor,recipient,tickets})
+ assert.throws(()=>applyLogisticsAction({bundle:b,recipient,ticketId:'1',action:'return',result:' '}),/说明/)
+ const returned=applyLogisticsAction({bundle:b,recipient,ticketId:'1',action:'return',result:'地点不明确'})
+ assert.equal(returned.items[0].status,'returned')
+ assert.equal(returned.items[1].status,'sent')
+ assert.equal(returned.items[0].history.at(-1).result,'地点不明确')
+})

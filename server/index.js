@@ -1,3 +1,4 @@
+import { mountB } from './b/routes.js'
 import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -10,6 +11,11 @@ import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { mountRepairRoutes } from './repair-routes.js'
+import { planStudentTicketChange } from './c-student.js'
+import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
+import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
+import { mountTrialFeedback } from './trial-feedback.js'
+import { parseAcademicCsv } from './academic-csv.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -34,6 +40,8 @@ try {
   // .env is optional; environment variables still work.
 }
 const PORT = Number(process.env.PORT || 8787)
+const trialMode = process.env.TRIAL_MODE === 'true'
+const loginLimiter = createLoginLimiter()
 const app = express()
 
 app.use(express.json({ limit: '6mb' }))
@@ -102,7 +110,7 @@ const ticketForUser = (ticket, user) => {
 
 const publicUser = (user) => {
   if (!user) return null
-  const { password, ...safe } = user
+  const { password, passwordHash, ...safe } = user
   return safe
 }
 
@@ -154,7 +162,10 @@ const getAuth = (req) => {
   const token = header.slice(7)
   const session = db.sessions.find((item) => item.token === token)
   if (!session) return null
-  return db.users.find((user) => user.id === session.userId) || null
+  if (trialMode && (session.trial !== true || !Number.isFinite(Date.parse(session.expiresAt)) || Date.parse(session.expiresAt) <= Date.now())) return null
+  const user = db.users.find((item) => item.id === session.userId)
+  if (!user || user.disabled || (user.expiresAt && (!Number.isFinite(Date.parse(user.expiresAt)) || Date.parse(user.expiresAt) <= Date.now()))) return null
+  return user
 }
 
 const requireAuth = (req, res, next) => {
@@ -162,6 +173,9 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
+  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/dispatch)?$/.test(req.path)
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
   next()
 }
@@ -176,7 +190,7 @@ const requireRole = (role) => (req, res, next) => {
 const riskInput = (user, body = {}) => {
   const text = String(body.text || '').trim()
   const staff = user.role === 'counselor'
-  const studentId = staff ? body.studentId : user.id
+  const studentId = staff ? (Array.isArray(user.studentIds) && user.studentIds.includes(body.studentId) ? body.studentId : null) : user.id
   const history = staff && Array.isArray(body.history)
     ? body.history
     : studentId ? studentHistory(studentId) : []
@@ -202,9 +216,17 @@ const getTicketOr404 = (id, res) => {
 }
 
 const canAccessTicket = (user, ticket) => {
-  if (user.role === 'counselor') return true
-  return ticket.studentId === user.id
+  if (user.role === 'counselor') return Array.isArray(user.studentIds) && user.studentIds.includes(ticket.studentId)
+  return user.role === 'student' && ticket.studentId === user.id
 }
+
+// Apply the same scope to old detail and mutation routes before their handlers run.
+app.use('/api/tickets/:id', requireAuth, (req, res, next) => {
+  const ticket = db.tickets.find(item => item.id === req.params.id)
+  if (!ticket) return res.status(404).json({ message:'工单不存在。' })
+  if (!canAccessTicket(req.user, ticket)) return res.status(403).json({ message:'无权访问该工单。' })
+  next()
+})
 
 const nextTicketId = () => {
   const date = new Date()
@@ -308,23 +330,25 @@ app.get('/api/health', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const { account = '', password = '', role } = req.body || {}
   const normalized = String(account).trim()
-  const user = db.users.find(
-    (item) =>
-      item.account === normalized &&
-      item.password === String(password) &&
-      (!role || item.role === role),
-  )
+  const limitKey = req.ip || 'unknown'
+  if (trialMode && !loginLimiter.allowed(limitKey)) return res.status(429).json({ message:'登录尝试过多，请稍后再试。' })
+  const candidate = db.users.find(item => item.account === normalized && (!role || item.role === role))
+  const validAccount = candidate && !candidate.disabled && (!candidate.expiresAt || (Number.isFinite(Date.parse(candidate.expiresAt)) && Date.parse(candidate.expiresAt) > Date.now()))
+  const user = validAccount && (trialMode ? verifyPassword(String(password), candidate.passwordHash) : candidate.password === String(password)) ? candidate : null
   if (!user) {
-    return res.status(401).json({ message: '账号或密码不正确，请使用下方演示账号。' })
+    if (trialMode) loginLimiter.fail(limitKey)
+    return res.status(401).json({ message: trialMode ? '账号或密码不正确。' : '账号或密码不正确，请使用下方演示账号。' })
   }
+  if (trialMode) loginLimiter.clear(limitKey)
   const token = crypto.randomUUID()
   db.sessions = db.sessions.filter((session) => session.userId !== user.id).slice(-40)
-  db.sessions.push({ token, userId: user.id, at: nowIso() })
+  db.sessions.push({ token, userId: user.id, at: nowIso(), ...(trialMode ? { trial:true, expiresAt:new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() } : {}) })
   save()
   res.json({ token, user: publicUser(user) })
 })
 
 app.post('/api/auth/demo', (req, res) => {
+  if (trialMode) return res.status(403).json({ message:'试用模式不支持演示直登。' })
   const role = req.body?.role === 'counselor' ? 'counselor' : 'student'
   const user = db.users.find((item) => item.role === role)
   if (!user) return res.status(404).json({ message: '演示账号暂未配置。' })
@@ -341,6 +365,23 @@ app.post('/api/auth/logout', requireAuth, (req, res) => {
   db.sessions = db.sessions.filter((session) => session.token !== token)
   save()
   res.json({ ok: true })
+})
+
+app.post('/api/auth/change-password', requireAuth, (req, res) => {
+  if (!trialMode) return res.status(404).json({ message:'该服务未启用。' })
+  const key = req.ip || 'unknown'
+  if (!loginLimiter.allowed(key)) return res.status(429).json({ message:'尝试次数过多，请稍后再试。' })
+  const { currentPassword, newPassword } = req.body || {}
+  if (!verifyPassword(currentPassword, req.user.passwordHash)) { loginLimiter.fail(key); return res.status(401).json({message:'当前密码不正确。'}) }
+  if (currentPassword === newPassword) return res.status(400).json({ message:'新密码不能与当前密码相同。' })
+  let nextHash
+  try { nextHash = hashPassword(newPassword) } catch (error) { return res.status(400).json({message:error.message}) }
+  const currentToken = (req.headers.authorization || '').slice(7)
+  req.user.passwordHash = nextHash
+  req.user.mustChangePassword = false
+  db.sessions = db.sessions.filter(session => session.userId !== req.user.id || session.token === currentToken)
+  loginLimiter.clear(key); save()
+  return res.json({ok:true})
 })
 
 app.get('/api/me', requireAuth, (req, res) => {
@@ -425,7 +466,7 @@ app.post('/api/ai/agents/:name', requireAuth, asyncRoute(async (req, res) => {
   const body = req.body || {}
   const payload = name === 'risk' ? riskInput(req.user, body) : { ...body }
   if (name === 'attribution' && !Array.isArray(payload.tickets)) {
-    payload.tickets = db.tickets
+    payload.tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   }
   const result = await invokeAgent(name, payload)
   if (!result.ok && result.warnings?.length) return res.status(400).json(result)
@@ -476,8 +517,9 @@ app.post('/api/ai/risk-scan', requireAuth, (req, res) => {
 })
 
 app.post('/api/ai/attribution', requireAuth, requireRole('counselor'), async (req, res) => {
-  const result = await attributionAgent({ tickets: db.tickets, limit: Number(req.body?.limit) || 5 })
-  res.json({ ...result.output, bottlenecks: rankBottlenecks(db.tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
+  const result = await attributionAgent({ tickets, limit: Number(req.body?.limit) || 5 })
+  res.json({ ...result.output, bottlenecks: rankBottlenecks(tickets, { limit: Number(req.body?.limit) || 5 }), trace: result })
 })
 
 // 容灾演练开关：模拟大模型超时 / 离线 / 脏 JSON / 5xx，验证自动回退到规则链路
@@ -553,9 +595,8 @@ app.get('/api/student/home', requireAuth, requireRole('student'), (req, res) => 
 app.get('/api/tickets', requireAuth, (req, res) => {
   const status = String(req.query.status || 'all')
   const q = String(req.query.q || '').trim().toLowerCase()
-  let list = db.tickets.filter((ticket) =>
-    req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
-  )
+  const scopedTickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
+  let list = [...scopedTickets]
   if (status !== 'all') {
     const statuses = status.split(',')
     list = list.filter((ticket) => statuses.includes(ticket.status))
@@ -586,32 +627,23 @@ app.get('/api/tickets', requireAuth, (req, res) => {
     if (priority[a.risk] !== priority[b.risk]) return priority[a.risk] - priority[b.risk]
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
+  let hasMore = false
+  if (req.query.page !== undefined || req.query.pageSize !== undefined) {
+    const page = Number(req.query.page ?? 1), pageSize = Number(req.query.pageSize ?? 20)
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) return res.status(400).json({ message: '分页参数无效。' })
+    const start = (page - 1) * pageSize
+    hasMore = start + pageSize < list.length
+    list = list.slice(start, start + pageSize)
+  }
   res.json({
     tickets: list.map((ticket) => ticketForUser(ticket, req.user)),
+    hasMore,
     counts: {
-      all: db.tickets.filter((ticket) =>
-        req.user.role === 'counselor' ? true : ticket.studentId === req.user.id,
-      ).length,
-      pending_review: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'pending_review' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      active: db.tickets.filter(
-        (ticket) =>
-          ticket.status !== 'completed' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      awaiting_confirm: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'awaiting_confirm' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
-      completed: db.tickets.filter(
-        (ticket) =>
-          ticket.status === 'completed' &&
-          (req.user.role === 'counselor' || ticket.studentId === req.user.id),
-      ).length,
+      all: scopedTickets.length,
+      pending_review: scopedTickets.filter(ticket => ticket.status === 'pending_review').length,
+      active: scopedTickets.filter(ticket => ticket.status !== 'completed').length,
+      awaiting_confirm: scopedTickets.filter(ticket => ticket.status === 'awaiting_confirm').length,
+      completed: scopedTickets.filter(ticket => ticket.status === 'completed').length,
     },
   })
 })
@@ -764,6 +796,9 @@ app.post('/api/tickets/:id/confirm', requireAuth, requireRole('student'), (req, 
     ticket.rating = { score, comment, tags, at: nowIso() }
   }
   ticket.status = 'completed'
+  for (const bundle of db.issueBundles || []) {
+    if (bundle.status === 'dispatched' && bundle.ticketIds.includes(ticket.id)) bundle.version = (bundle.version || 1) + 1
+  }
   ticket.updatedAt = nowIso()
   ticket.timeline.push(
     makeTimelineEvent(
@@ -837,7 +872,7 @@ app.post('/api/tickets/:id/urge-student', requireAuth, requireRole('student'), (
 })
 
 app.get('/api/counselor/dashboard', requireAuth, requireRole('counselor'), (req, res) => {
-  const tickets = db.tickets
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const completed = tickets.filter((ticket) => ticket.status === 'completed')
   const pending = active.filter((ticket) => ticket.status === 'pending_review')
@@ -1134,7 +1169,7 @@ function getTicketOrNotFound(id, res) {
 }
 
 app.get('/api/counselor/insights', requireAuth, requireRole('counselor'), (req, res) => {
-  const tickets = db.tickets
+  const tickets = db.tickets.filter(ticket => canAccessTicket(req.user, ticket))
   const active = tickets.filter((ticket) => ticket.status !== 'completed')
   const completed = tickets.filter((ticket) => ticket.status === 'completed')
   const ratings = tickets.map((ticket) => ticket.rating?.score).filter(Boolean)
@@ -1260,6 +1295,48 @@ app.post('/api/notifications/:id/read', requireAuth, (req, res) => {
   res.json({ ok: true })
 })
 
+// C's page and existing clients use different response shapes; expose both.
+const bundleVisibleTo = (bundle, user) => {
+  const allowed = new Set(Array.isArray(user.studentIds) ? user.studentIds : [])
+  return bundle.createdBy === user.id && bundle.ticketIds.every(id => {
+    const ticket = db.tickets.find(item => item.id === id)
+    return ticket && allowed.has(ticket.studentId)
+  })
+}
+const bundleForC = (bundle) => ({
+  id: bundle.id,
+  title: bundle.title || '待转交问题包',
+  departmentId: bundle.departmentId || 'logistics',
+  reason: bundle.reason,
+  status: bundle.status === 'dispatched' ? 'sent' : bundle.status,
+  version: bundle.version || 1,
+  items: bundle.ticketIds.map(id => {
+    const ticket = db.tickets.find(item => item.id === id)
+    const entry = bundle.items?.find(item => item.ticketId === id)
+    const result = [...(entry?.history || [])].reverse().find(event => event.action === 'resolve')?.result
+    const returnReason = [...(entry?.history || [])].reverse().find(event => event.action === 'return')?.result
+    return { ticketId: id, title: ticket?.title || '', status: ticket?.status || '', result, workStatus:entry?.status, returnReason:entry?.status === 'returned' ? returnReason : undefined, studentConfirmed: ticket?.status === 'completed', reopened: Boolean(entry?.history?.some(event => event.action === 'disputed')) }
+  }),
+})
+// The same request ID may only replay the same operation by the same user.
+const cOperation = (req, res) => {
+  const id = req.body?.requestId
+  if (typeof id !== 'string' || !id.trim() || id.length > 100) { res.status(400).json({ message: '请提供有效的请求编号。' }); return null }
+  const fingerprint = crypto.createHash('sha256').update(JSON.stringify({ path:req.originalUrl, body:req.body })).digest('hex')
+  const previous = (db.cOperations || []).find(op => op.userId === req.user.id && op.id === id)
+  if (previous) {
+    if (previous.fingerprint !== fingerprint) res.status(409).json({ message: '请求编号已用于其他操作。' })
+    else res.status(previous.status).json(previous.response)
+    return null
+  }
+  return (status, response) => {
+    db.cOperations ||= []
+    db.cOperations.push({ userId:req.user.id, id, fingerprint, status, response })
+    save()
+    return res.status(status).json(response)
+  }
+}
+
 // Drafts only: saving a bundle does not dispatch or modify the individual tickets.
 app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
   const bundles = db.issueBundles || []
@@ -1270,18 +1347,69 @@ app.post('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res)
       const ticket = db.tickets.find(item => item.id === (typeof id === 'string' ? id.trim() : id))
       return !ticket || !allowed.has(ticket.studentId)
     })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
+    const finish = req.body?.requestId !== undefined ? cOperation(req, res) : null
+    if (req.body?.requestId !== undefined && !finish) return
+    if (req.body?.title !== undefined && (typeof req.body.title !== 'string' || !req.body.title.trim() || req.body.title.trim().length > 100)) return res.status(400).json({ message: '请输入不超过100字的问题包标题。' })
+    if (req.body?.departmentId !== undefined && req.body.departmentId !== 'logistics') return res.status(400).json({ message: '当前仅支持后勤问题包。' })
+    if (req.body?.reviewed !== undefined && req.body.reviewed !== true) return res.status(400).json({ message: '请先确认已经人工核对。' })
     const bundle = createIssueBundle({ ticketIds: req.body?.ticketIds, note: req.body?.note ?? '', tickets: db.tickets, bundles, actorId: req.user.id })
+    bundle.version = 1
+    bundle.title = req.body?.title?.trim() || '待转交问题包'
+    bundle.departmentId = 'logistics'
     db.issueBundles = [...bundles, bundle]
     save()
-    return res.status(201).json({ bundle })
+    const response = { bundle, item: bundleForC(bundle) }
+    return finish ? finish(201, response) : res.status(201).json(response)
   } catch (error) {
     return res.status(400).json({ message: error.message })
   }
 })
 
 app.get('/api/issue-bundles', requireAuth, requireRole('counselor'), (req, res) => {
-  const allowed = new Set(Array.isArray(req.user.studentIds) ? req.user.studentIds : [])
-  res.json({ bundles: (db.issueBundles || []).filter(bundle => bundle.createdBy === req.user.id && bundle.ticketIds.every(id => { const ticket = db.tickets.find(item => item.id === id); return ticket && allowed.has(ticket.studentId) })) })
+  const bundles = (db.issueBundles || []).filter(bundle => bundleVisibleTo(bundle, req.user))
+  res.json({ bundles, items: bundles.map(bundleForC) })
+})
+
+app.get('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundle = (db.issueBundles || []).find(item => item.id === req.params.id && bundleVisibleTo(item, req.user))
+  if (!bundle) return res.status(404).json({ message: '问题包不存在。' })
+  res.json({ item: bundleForC(bundle) })
+})
+
+app.post('/api/issue-bundles/:id/:action(send|urge|follow-ups)', requireAuth, requireRole('counselor'), (req, res) => {
+  const bundles = db.issueBundles || []
+  const index = bundles.findIndex(bundle => bundle.id === req.params.id && bundleVisibleTo(bundle, req.user))
+  if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  const bundle = bundles[index]
+  const finish = cOperation(req, res)
+  if (!finish) return
+  if (!Number.isSafeInteger(req.body?.version) || req.body.version !== (bundle.version || 1)) return res.status(409).json({ message: '数据已更新，请核对最新记录后重试。' })
+  const action = req.params.action
+  const text = action === 'follow-ups' ? req.body?.text : req.body?.reason
+  if (typeof text !== 'string' || !text.trim() || text.trim().length > 1000) return res.status(400).json({ message: '请填写不超过1000字的说明。' })
+  if (action === 'send') {
+    if (req.body?.reviewed !== true) return res.status(400).json({ message: '请先确认人工核对。' })
+    const recipient = db.users.find(user => user.id === req.user.logisticsRecipientId)
+    if (!recipient || recipient.role !== 'logistics' || recipient.disabled) return res.status(409).json({ message: '尚未配置可用的后勤接收人。' })
+    try {
+      const next = dispatchBundle({ bundle, counselor:req.user, recipient, tickets:db.tickets })
+      next.version = (bundle.version || 1) + 1
+      next.reason = text.trim()
+      for (const id of next.ticketIds) {
+        const ticket = db.tickets.find(item => item.id === id)
+        ticket.status = 'assigned'; ticket.departmentIds = ['logistics']; ticket.updatedAt = next.dispatchedAt
+        ticket.timeline.push(makeTimelineEvent('assigned', '辅导员已转交', '问题已转交后勤，等待接收。', req.user.name))
+      }
+      db.issueBundles[index] = next
+      return finish(200, { item: bundleForC(next) })
+    } catch (error) { return res.status(409).json({ message:error.message }) }
+  }
+  if (action === 'urge' && bundle.status !== 'dispatched') return res.status(409).json({ message: '只有已转交的问题包可以催办。' })
+  bundle.actions ||= []
+  bundle.actions.push({ id:crypto.randomUUID(), action, text:text.trim(), actorId:req.user.id, at:nowIso() })
+  bundle.version = (bundle.version || 1) + 1
+  bundle.updatedAt = nowIso()
+  return finish(200, { item: bundleForC(bundle) })
 })
 
 app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req, res) => {
@@ -1294,6 +1422,7 @@ app.patch('/api/issue-bundles/:id', requireAuth, requireRole('counselor'), (req,
     const candidate = req.body?.ticketIds ?? original.ticketIds
     if (!Array.isArray(candidate) || [...original.ticketIds, ...candidate].some(id => { const ticket = db.tickets.find(item => item.id === (typeof id === 'string' ? id.trim() : id)); return !ticket || !allowed.has(ticket.studentId) })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
     const updated = reviseIssueBundle({ bundle: original, ticketIds: req.body?.ticketIds ?? original.ticketIds, note: req.body?.note ?? original.note, tickets: db.tickets, bundles, actorId: req.user.id })
+    updated.version = (original.version || 1) + 1
     db.issueBundles[index] = updated
     save()
     return res.json({ bundle: updated })
@@ -1307,6 +1436,7 @@ app.post('/api/issue-bundles/:id/cancel', requireAuth, requireRole('counselor'),
   if (bundle.ticketIds.some(id => { const ticket = db.tickets.find(item => item.id === id); return !ticket || !allowed.has(ticket.studentId) })) return res.status(403).json({ message: '工单不存在或不在负责范围。' })
   if (bundle.status !== 'draft') return res.status(409).json({ message: '只有草稿可以取消。' })
   bundle.status = 'cancelled'
+  bundle.version = (bundle.version || 1) + 1
   bundle.updatedAt = nowIso()
   save()
   return res.json({ bundle })
@@ -1319,6 +1449,7 @@ app.post('/api/issue-bundles/:id/dispatch', requireAuth, requireRole('counselor'
   try {
     const recipient = db.users.find(user => user.id === req.body?.recipientId)
     const next = dispatchBundle({ bundle: bundles[index], counselor: req.user, recipient, tickets: db.tickets })
+    next.version = (bundles[index].version || 1) + 1
     const at = next.dispatchedAt
     for (const id of next.ticketIds) {
       const ticket = db.tickets.find(item => item.id === id)
@@ -1335,7 +1466,7 @@ app.get('/api/logistics/work-orders', requireAuth, requireRole('logistics'), (re
   // Only explicitly assigned issue details are returned; no internal notes or student profiles.
   const items = bundles.flatMap(bundle => bundle.items.map(item => {
     const ticket = db.tickets.find(record => record.id === item.ticketId)
-    return ticket ? { bundleId: bundle.id, ticketId: ticket.id, title: ticket.title, description: ticket.description, location: ticket.location, status: item.status, history: item.history } : null
+    return ticket ? { bundleId: bundle.id, ticketId: ticket.id, title: ticket.title, description: ticket.description, location: ticket.location, status: item.status === 'resolved' && ticket.status === 'completed' ? 'completed' : item.status, history: item.history } : null
   }).filter(Boolean))
   return res.json({ items })
 })
@@ -1344,21 +1475,35 @@ app.post('/api/logistics/work-orders/:bundleId/:ticketId', requireAuth, requireR
   const bundles = db.issueBundles || []
   const index = bundles.findIndex(bundle => bundle.id === req.params.bundleId && bundle.recipientId === req.user.id)
   if (index < 0) return res.status(404).json({ message: '问题包不存在。' })
+  if (!bundles[index].items?.some(item => item.ticketId === req.params.ticketId)) return res.status(404).json({ message: '工单不存在。' })
   const ticket = db.tickets.find(item => item.id === req.params.ticketId)
   if (!ticket) return res.status(404).json({ message: '工单不存在。' })
   try {
     const action = req.body?.action
-    if ((action === 'accept' && ticket.status !== 'assigned') || (action === 'resolve' && ticket.status !== 'processing')) return res.status(409).json({ message: '工单状态已变更。' })
+    if ((action === 'accept' && ticket.status !== 'assigned') || (action === 'resolve' && ticket.status !== 'processing') || (action === 'return' && !['assigned','processing'].includes(ticket.status))) return res.status(409).json({ message: '工单状态已变更。' })
     const next = applyLogisticsAction({ bundle: bundles[index], recipient: req.user, ticketId: ticket.id, action, result: req.body?.result })
-    ticket.status = action === 'accept' ? 'processing' : 'awaiting_confirm'
+    next.version = (bundles[index].version || 1) + 1
+    ticket.status = action === 'accept' ? 'processing' : action === 'return' ? 'pending_review' : 'awaiting_confirm'
     ticket.updatedAt = nowIso()
-    ticket.timeline.push(makeTimelineEvent(action === 'accept' ? 'accepted' : 'awaiting_confirm', action === 'accept' ? '后勤已接收' : '处置完成，等待学生确认', action === 'accept' ? '后勤已接收工单。' : req.body.result.trim(), req.user.name))
+    ticket.timeline.push(makeTimelineEvent(action === 'accept' ? 'accepted' : action === 'return' ? 'returned' : 'awaiting_confirm', action === 'accept' ? '后勤已接收' : action === 'return' ? '后勤已退回' : '处置完成，等待学生确认', action === 'accept' ? '后勤已接收工单。' : req.body.result.trim(), req.user.name))
     db.issueBundles[index] = next; save()
     return res.json({ item: next.items.find(item => item.ticketId === ticket.id) })
   } catch (error) { return res.status(400).json({ message: error.message }) }
 })
 
+const cStudentTicketChange = (req, res, action) => {
+  const index = db.tickets.findIndex(item => item.id === req.params.id && item.studentId === req.user.id)
+  if (index < 0) return res.status(404).json({ message: '工单不存在。' })
+  const ticket = db.tickets[index]
+  const bundleIndex = (db.issueBundles || []).findIndex(item => item.status === 'dispatched' && item.items?.some(entry => entry.ticketId === ticket.id && (action === 'supplement' || entry.status === 'resolved')))
+  const plan = planStudentTicketChange({ ticket, bundle:bundleIndex >= 0 ? db.issueBundles[bundleIndex] : null, actorId:req.user.id, text:req.body?.text, expectedUpdatedAt:req.body?.expectedUpdatedAt, requestId:req.body?.requestId, action })
+  if (!plan.ok) return res.status(plan.status).json({ message:plan.message })
+  if (!plan.replay) { db.tickets[index] = plan.ticket; if (plan.bundle) db.issueBundles[bundleIndex] = plan.bundle; save() }
+  return res.json({ ticket:ticketForUser(plan.ticket, req.user) })
+}
+app.post('/api/tickets/:id/supplements', requireAuth, requireRole('student'), (req, res) => cStudentTicketChange(req, res, 'supplement'))
 app.post('/api/tickets/:id/reopen', requireAuth, requireRole('student'), (req, res) => {
+  if (req.body?.text !== undefined) return cStudentTicketChange(req, res, 'reopen')
   const ticket = db.tickets.find(item => item.id === req.params.id && item.studentId === req.user.id)
   if (!ticket) return res.status(404).json({ message: '工单不存在。' })
   if (ticket.status !== 'awaiting_confirm') return res.status(409).json({ message: '当前状态不能反馈未解决。' })
@@ -1371,7 +1516,7 @@ app.post('/api/tickets/:id/reopen', requireAuth, requireRole('student'), (req, r
   item.status = 'disputed'; item.history.push({ id: crypto.randomUUID(), action:'disputed', actorId:req.user.id, at, reason })
   ticket.status = 'pending_review'; ticket.updatedAt = at
   ticket.timeline.push(makeTimelineEvent('reopened', '学生反馈尚未解决', reason, req.user.name))
-  bundle.updatedAt = at; save()
+  bundle.version = (bundle.version || 1) + 1; bundle.updatedAt = at; save()
   return res.json({ ticket: ticketForUser(ticket, req.user) })
 })
 
@@ -1380,14 +1525,80 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   const ticket = db.tickets.find(item => item.id === req.params.ticketId)
   if (!bundle || !ticket || !Array.isArray(req.user.studentIds) || !req.user.studentIds.includes(ticket.studentId)) return res.status(404).json({ message: '工单不存在或无权访问。' })
   const item = bundle.items.find(entry => entry.ticketId === ticket.id)
-  if (!item || item.status !== 'disputed' || ticket.status !== 'pending_review') return res.status(409).json({ message: '当前状态不能重新转交。' })
+  if (!item || !['disputed','returned'].includes(item.status) || ticket.status !== 'pending_review') return res.status(409).json({ message: '当前状态不能重新转交。' })
   const at = nowIso(); item.status = 'sent'; item.history.push({ id:crypto.randomUUID(), action:'redispatched', actorId:req.user.id, at })
   ticket.status = 'assigned'; ticket.updatedAt = at
   ticket.timeline.push(makeTimelineEvent('assigned', '辅导员重新转交', '辅导员已将反馈重新转交后勤。', req.user.name))
-  bundle.updatedAt = at; save()
+  bundle.version = (bundle.version || 1) + 1; bundle.updatedAt = at; save()
   return res.json({ item })
 })
 
+const academicRelationsValid = (user, rows) => rows.every(row => {
+  const student = db.users.find(item => item.id === row.studentId)
+  const mentor = db.users.find(item => item.id === row.mentorId)
+  const counselor = db.users.find(item => item.id === row.counselorId)
+  return Boolean(user.college && student && mentor && counselor && student.college === user.college && mentor.college === user.college && (Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name))
+})
+app.post('/api/academic/batches/preview', requireAuth, requireRole('academic'), (req, res) => {
+  try {
+    const rows = parseAcademicCsv(req.body?.csv)
+    const result = createAcademicVersion({user:req.user, rows, users:db.users})
+    if (!result.valid) return res.status(400).json({message:'名单校验失败。', errors:result.errors})
+    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({message:'学生、导师学院或辅导员关系不匹配。'})
+    return res.json({items:result.batch.items})
+  } catch (error) { return res.status(400).json({message:error.message}) }
+})
+
+app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
+  const batches = db.academicBatches || []
+  const previous = req.body?.previousId ? batches.find(batch => batch.id === req.body.previousId) : null
+  if (req.body?.previousId && (!previous || !canReadAcademicVersion(req.user, previous))) return res.status(404).json({ message:'名单不存在。' })
+  if (previous && (previous.dispatchedAt || batches.some(batch => batch.previousId === previous.id))) return res.status(409).json({ message:'该版本已分发或已有更新版本，请人工核对。' })
+  try {
+    const result = createAcademicVersion({ user:req.user, rows:req.body?.rows, users:db.users, previous, expectedVersion:req.body?.expectedVersion ?? 0 })
+    if (!result.valid) return res.status(400).json({ message:'名单校验失败。', errors:result.errors })
+    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({ message:'学生、导师学院或辅导员关系不匹配。' })
+    db.academicBatches = [...batches, result.batch]; save()
+    return res.status(201).json({ item:result.batch })
+  } catch (error) { return res.status(400).json({ message:error.message }) }
+})
+
+app.get('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
+  res.json({ items:(db.academicBatches || []).filter(batch => canReadAcademicVersion(req.user, batch)) })
+})
+
+app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academic'), (req, res) => {
+  const batch = (db.academicBatches || []).find(item => item.id === req.params.id && canReadAcademicVersion(req.user, item))
+  if (!batch) return res.status(404).json({ message:'名单不存在。' })
+  if (batch.dispatchedAt || (db.academicBatches || []).some(item => item.previousId === batch.id) || req.body?.version !== batch.version) return res.status(409).json({ message:'名单已分发、已更新或版本冲突。' })
+  const cases = db.b?.cases
+  if (!Array.isArray(cases)) return res.status(503).json({ message:'学业服务尚未准备好。' })
+  for (const row of batch.items) {
+    const student = db.users.find(user => user.id === row.studentId && user.role === 'student')
+    const mentor = db.users.find(user => user.id === row.mentorId && user.role === 'mentor')
+    const counselor = db.users.find(user => user.id === row.counselorId && user.role === 'counselor')
+    if (!student || !mentor || !counselor || !req.user.college || student.college !== req.user.college || mentor.college !== req.user.college || !(Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name)) return res.status(409).json({ message:'人员关系已变化，请重新核对名单。' })
+    if (cases.some(item => item.studentId === row.studentId && item.course === row.course && item.status !== 'completed')) return res.status(409).json({ message:'名单中存在尚未结束的同课程任务。' })
+  }
+  const at = nowIso()
+  const created = batch.items.map(row => ({ id:crypto.randomUUID(), studentId:row.studentId, studentName:db.users.find(user => user.id === row.studentId).name, college:req.user.college, mentorId:row.mentorId, counselorId:row.counselorId, course:row.course, status:'pending_contact', version:1, result:null, records:[], createdAt:at, academicBatchId:batch.id }))
+  db.b.cases.push(...created)
+  batch.dispatchedAt = at; batch.caseIds = created.map(item => item.id); save()
+  return res.json({ item:batch, createdCount:created.length })
+})
+
+app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, res) => {
+  if (db.settings?.studentAcademicViewEnabled !== true) return res.status(501).json({ message: '学生学业信息展示尚未开放。' })
+  const items = (db.b?.cases || []).filter(item => item.studentId === req.user.id).map(item => ({
+    id:item.id, studentName:req.user.name, course:item.course, status:item.status, version:item.version,
+    result:item.result ? { value:item.result.value, source:'', at:item.result.at } : null,
+    records:(item.records || []).filter(record => record.type === 'official_result').map(record => ({ type:record.type, at:record.at, actor:'' })),
+  }))
+  return res.json({ items })
+})
+
+mountB(app, {db, save, requireAuth})
+mountTrialFeedback(app, {db, save, requireAuth, trialMode})
 mountRepairRoutes(app, { db, save, requireAuth })
 
 app.use('/api', (req, res) => {
