@@ -145,4 +145,3 @@ try {
 } finally {
  child.kill(); await new Promise(r=>setTimeout(r,100)); await rm(dir,{recursive:true,force:true})
 }
-

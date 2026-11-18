@@ -40,4 +40,3 @@ test('reopens completed tickets and preserves prior rating', () => {
   assert.equal(result.ticket.previousRatings[0].score,5)
   assert.equal(old.rating.score,5)
 })
-
