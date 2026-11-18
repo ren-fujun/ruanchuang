@@ -64,4 +64,18 @@ try {
   for (let i=0;i<10;i++) assert.equal((await call('/api/auth/login',{account:'trial-user',password:'incorrect'})).status,401)
   assert.equal((await call('/api/auth/login',{account:'trial-user',password:'replacement-pass-123'})).status,429)
  })
+ await new Promise(r=>setTimeout(r,100))
+ child.kill();await new Promise(r=>child.once('exit',r))
+ const restarted=spawn(process.execPath,['server/index.js'],{env:{...process.env,TRIAL_MODE:'true',PORT:String(port),ZHIHUI_DATA_FILE:file},stdio:'ignore'})
+ try {
+  let ready=false;for(let n=0;n<100;n++){try{if((await fetch(base+'/api/health')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,100))}if(!ready)throw new Error('重启后服务启动失败')
+  await test('trial account status and feedback survive a normal restart',async()=>{
+   assert.equal((await call('/api/auth/login',{account:'test-s1',password:'replacement-pass-789'})).status,401)
+   const admin=(await call('/api/auth/login',{account:'trial-admin',password:'admin-pass-123'})).body.token
+   const list=await call('/api/trial/feedback',null,admin)
+   assert.equal(list.status,200);assert.equal(list.body.items.length,1)
+   const accounts=await call('/api/trial/admin/accounts?limit=100',null,admin)
+   assert.equal(accounts.body.items.find(user=>user.id==='test-s1').disabled,true)
+  })
+ }finally{restarted.kill();await new Promise(r=>setTimeout(r,100))}
 }finally{child.kill();await new Promise(r=>setTimeout(r,100));await rm(dir,{recursive:true,force:true})}
