@@ -8,6 +8,7 @@ export function useCData<T>(path: string | null) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
+  const loadedPath = useRef<string | null>(null);
   useEffect(() => {
     if (!path) {
       setLoading(false);
@@ -17,12 +18,18 @@ export function useCData<T>(path: string | null) {
     }
     let active = true;
     const controller = new AbortController();
-    setLoading(true);
-    setData(null);
+    const samePath = loadedPath.current === path;
+    if (!samePath) {
+      setLoading(true);
+      setData(null);
+    }
     setError("");
     cRequest<T>(path, { signal: controller.signal })
       .then((value) => {
-        if (active) setData(value);
+        if (active) {
+          loadedPath.current = path;
+          setData(value);
+        }
       })
       .catch((e) => {
         if (active) setError(e.message);

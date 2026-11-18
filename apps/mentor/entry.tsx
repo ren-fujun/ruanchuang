@@ -1,3 +1,4 @@
+import { TrialFeedback } from '../../src/features/c/TrialFeedback'
 import {
   BookOpen,
   GraduationCap,
@@ -139,6 +140,7 @@ function App() {
   }
   return (
     <div className="portal mentor-purple">
+      {user && <TrialFeedback tokenKey="b_portal_token" />}
       <aside>
         <div className="mentor-brand">
           <span>

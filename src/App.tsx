@@ -1,3 +1,4 @@
+import { RepairList, RepairCreate, RepairDetail } from "./features/c/Repairs";
 import { KnowledgeCorrections } from "./features/c/Knowledge";
 import { portalRole } from "./features/c/config";
 import { PortalLogin } from "./features/c/PortalLogin";
@@ -99,6 +100,15 @@ export default function App() {
             path="/student/tickets/:id"
             element={<StudentTicketDetail />}
           />
+          <Route
+            path="/student/repairs"
+            element={<RepairList role="student" />}
+          />
+          <Route path="/student/repairs/new" element={<RepairCreate />} />
+          <Route
+            path="/student/repairs/:id"
+            element={<RepairDetail role="student" />}
+          />
           <Route path="/student/assistant" element={<StudentAssistant />} />
           <Route path="/student/leaves" element={<LeavePage />} />
           <Route
@@ -140,8 +150,22 @@ export default function App() {
             path="/counselor/tickets/:id"
             element={<CounselorTicketDetail />}
           />
-          <Route path="/counselor/bundles" element={<Bundles />} />
-          <Route path="/counselor/bundles/:id" element={<BundleDetail />} />
+          <Route
+            path="/counselor/bundles"
+            element={<Navigate to="/counselor/repairs" replace />}
+          />
+          <Route
+            path="/counselor/repairs"
+            element={<RepairList role="counselor" />}
+          />
+          <Route
+            path="/counselor/repairs/:id"
+            element={<RepairDetail role="counselor" />}
+          />
+          <Route
+            path="/counselor/bundles/:id"
+            element={<Navigate to="/counselor/repairs" replace />}
+          />
           <Route
             path="/counselor/appointments"
             element={<Appointments role="counselor" />}

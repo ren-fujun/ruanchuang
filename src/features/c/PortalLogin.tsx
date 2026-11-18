@@ -5,20 +5,19 @@ import { useAuth } from "../../context/AuthContext";
 import type { PortalRole } from "./config";
 
 export function PortalLogin({ role }: { role: PortalRole }) {
-  const { user, signIn, demoSignIn, signOut } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const [account, setAccount] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   if (user?.role === role)
     return <Navigate to={"/" + role + "/home"} replace />;
-  async function enter(demo = false) {
+  async function enter() {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      if (demo) await demoSignIn(role);
-      else await signIn(account, password, role);
+      await signIn(account, password, role);
     } catch (e) {
       setError(e instanceof Error ? e.message : "登录失败");
     } finally {
@@ -64,13 +63,6 @@ export function PortalLogin({ role }: { role: PortalRole }) {
           {error && <p role="alert">{error}</p>}
           <button className="c-primary" disabled={busy}>
             {busy ? "登录中…" : "登录"}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void enter(true)}
-          >
-            体验{role === "student" ? "学生" : "辅导员"}演示账号
           </button>
         </form>
       )}

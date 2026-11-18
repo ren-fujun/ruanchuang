@@ -19,15 +19,15 @@ export function Academic({ role }: { role: PortalRole }) {
           <Link className="c-primary" to="/student/assistant">
             咨询有来源的学业问答
           </Link>
-          <Link className="c-outline" to="/student/appointments">
-            预约辅导员
+          <Link className="c-outline" to="/student/leaves">
+            申请请假
           </Link>
         </Panel>
       )}
       {role === "counselor" && (
         <div className="c-actions">
-          <Link className="c-outline" to="/counselor/appointments">
-            预约排班
+          <Link className="c-outline" to="/counselor/leaves">
+            请假审批
           </Link>
           <Link className="c-outline" to="/counselor/knowledge">
             知识纠错
@@ -55,8 +55,22 @@ export function Academic({ role }: { role: PortalRole }) {
                   {new Date(r.at).toLocaleString("zh-CN")}
                 </p>
               ))}
-              {role === "counselor" && user && <AcademicCollaboration item={c} userId={user.id} refresh={async () => { resource.reload(); }} call={(path, body, method = 'POST') => request(path, { method: body === undefined ? 'GET' : method, body: body === undefined ? undefined : JSON.stringify(body) })} />}
-              <Link to={"/" + role + "/appointments"}>安排联系与回访 →</Link>
+              {role === "counselor" && user && (
+                <AcademicCollaboration
+                  item={c}
+                  userId={user.id}
+                  refresh={async () => {
+                    resource.reload();
+                  }}
+                  call={(path, body, method = "POST") =>
+                    request(path, {
+                      method: body === undefined ? "GET" : method,
+                      body:
+                        body === undefined ? undefined : JSON.stringify(body),
+                    })
+                  }
+                />
+              )}
             </Panel>
           ))
         ) : (

@@ -22,11 +22,11 @@ import type { Appointment, Bundle } from "./api";
 import type { PortalRole } from "./config";
 
 const quickLinks = [
-  ["tickets", "工作台", ClipboardList],
+  ["home", "工作台", ClipboardList],
   ["academic", "学业跟进", BookOpen],
   ["leaves", "请假审批", ClipboardList],
   ["insights", "协同洞察", ChartNoAxesColumn],
-  ["bundles", "问题包", Layers],
+  ["repairs", "报修监督", Layers],
 ] as const;
 function TicketRows({
   tickets,
@@ -82,21 +82,35 @@ export function PortalHome({ role }: { role: PortalRole }) {
   const dashboard = useApi<StudentHomeData | CounselorDashboard>(
     student ? "/student/home" : "/counselor/dashboard",
   );
-  const appointments = useCData<{ items: Appointment[] }>("/appointments");
-  const bundles = useCData<{ items: Bundle[] }>(
-    student ? null : "/issue-bundles",
-  );
+
+  const repairs = useCData<{
+    items: {
+      id: string;
+      location: string;
+      repairType: string;
+      status: string;
+      statusLabel: string;
+      responseOverdue: boolean;
+      studentName: string;
+    }[];
+  }>(student ? null : "/repairs");
+  const leaves = useCData<{
+    items: { id: string; studentName: string; status: string }[];
+  }>(student ? null : "/b/leaves");
+  const academic = useCData<{
+    items: {
+      id: string;
+      studentName: string;
+      course: string;
+      status: string;
+      collaboration?: { status: string };
+    }[];
+  }>(student ? null : "/b/cases");
   const { user } = useAuth();
   const [text, setText] = useState("");
   const navigate = useNavigate();
   const data = dashboard.data;
   if (!data) return <LoadState resource={dashboard} />;
-  const todayAppointments =
-    appointments.data?.items.filter(
-      (a) =>
-        a.status !== "cancelled" &&
-        new Date(a.startsAt).toDateString() === new Date().toDateString(),
-    ) || [];
   const s = data as StudentHomeData,
     c = data as CounselorDashboard;
   const metrics = student
@@ -161,6 +175,51 @@ export function PortalHome({ role }: { role: PortalRole }) {
       )}
       <div className="c-home-grid">
         <div className="c-home-main">
+          {!student && (
+            <Panel title="优先处理">
+              <div className="c-priorities">
+                <Link to="/counselor/leaves">
+                  待批请假{" "}
+                  <strong>
+                    {leaves.data?.items.filter((x) => x.status === "pending")
+                      .length ?? "—"}
+                  </strong>
+                </Link>
+                <Link to="/counselor/repairs">
+                  报修异议{" "}
+                  <strong>
+                    {repairs.data?.items.filter((x) =>
+                      [
+                        "objection_pending_response",
+                        "pending_coordination",
+                      ].includes(x.status),
+                    ).length ?? "—"}
+                  </strong>
+                </Link>
+                <Link to="/counselor/repairs">
+                  异议超时{" "}
+                  <strong>
+                    {repairs.data?.items.filter((x) => x.responseOverdue)
+                      .length ?? "—"}
+                  </strong>
+                </Link>
+                <Link to="/counselor/academic">
+                  待协商学业{" "}
+                  <strong>
+                    {academic.data?.items.filter(
+                      (x) =>
+                        x.status !== "completed" &&
+                        (!x.collaboration ||
+                          x.collaboration.status === "unassigned"),
+                    ).length ?? "—"}
+                  </strong>
+                </Link>
+              </div>
+              {(leaves.error || repairs.error || academic.error) && (
+                <p role="alert">部分待办加载失败，请进入对应页面重试。</p>
+              )}
+            </Panel>
+          )}
           {student && (
             <section className="c-compose">
               <div>
@@ -186,7 +245,11 @@ export function PortalHome({ role }: { role: PortalRole }) {
                 ].map(([category, label, Icon]) => (
                   <button
                     key={String(category)}
-                    onClick={() => start(String(category))}
+                    onClick={() =>
+                      String(category) === "宿舍生活"
+                        ? navigate("/student/repairs/new")
+                        : start(String(category))
+                    }
                   >
                     <Icon />
                     {String(label)}
@@ -196,7 +259,10 @@ export function PortalHome({ role }: { role: PortalRole }) {
                   <BookOpen />
                   AI 问答
                 </Link>
-                <Link to="/student/leaves"><ClipboardList />我的请假</Link>
+                <Link to="/student/leaves">
+                  <ClipboardList />
+                  我的请假
+                </Link>
               </div>
             </section>
           )}
@@ -207,29 +273,10 @@ export function PortalHome({ role }: { role: PortalRole }) {
             />
           </Panel>
           {!student && (
-            <Panel title="问题包">
-              <LoadState resource={bundles}>
-                {bundles.data?.items?.slice(0, 2).map((b) => (
-                  <Link
-                    className="c-row"
-                    key={b.id}
-                    to={"/counselor/bundles/" + b.id}
-                  >
-                    <Layers />
-                    <span className="c-grow">
-                      <strong>{b.title}</strong>
-                      <small>
-                        {b.items.length} 项诉求 ·{" "}
-                        {b.items.filter((i) => i.result).length} 项回执
-                      </small>
-                    </span>
-                    查看回执 <ChevronRight />
-                  </Link>
-                ))}
-                {!bundles.data?.items?.length && <p>暂无问题包。</p>}
-              </LoadState>
-              <Link className="c-outline" to="/counselor/bundles">
-                核对并创建问题包
+            <Panel title="报修监督">
+              <p>查看所属学生报修进度、异议及协调记录。</p>
+              <Link className="c-outline" to="/counselor/repairs">
+                查看报修监督
               </Link>
             </Panel>
           )}
@@ -254,30 +301,10 @@ export function PortalHome({ role }: { role: PortalRole }) {
               {!s.notifications.length && <p>暂无消息。</p>}
             </Panel>
           )}
-          <Panel title="今日安排">
-            <LoadState resource={appointments}>
-              {todayAppointments.map((a) => (
-                <Link
-                  className="c-row"
-                  key={a.id}
-                  to={"/" + role + "/appointments"}
-                >
-                  <CalendarDays />
-                  <span>
-                    <strong>
-                      {new Date(a.startsAt).toLocaleTimeString("zh-CN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </strong>
-                    <small>{a.topic}</small>
-                  </span>
-                </Link>
-              ))}
-              {!todayAppointments.length && <p>暂无预约安排。</p>}
-            </LoadState>
-            <Link className="c-outline" to={"/" + role + "/appointments"}>
-              {student ? "申请预约" : "管理排班"}
+          <Panel title="请假申请与审批">
+            <p>查看请假申请和处理结果。</p>
+            <Link className="c-outline" to={"/" + role + "/leaves"}>
+              {student ? "申请请假" : "处理请假"}
             </Link>
           </Panel>
           {student && (

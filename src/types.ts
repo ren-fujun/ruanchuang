@@ -118,6 +118,7 @@ export interface Notification {
   at: string
   read: boolean
   ticketId: string | null
+  repairId?: string | null
   tone: string
 }
 
