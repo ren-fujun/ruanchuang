@@ -94,7 +94,7 @@ try {
   console.log('PASS 新流程AI提示与高风险优先')
   const precheck = await call('/ai/precheck', student, { text: '宿舍水龙头持续漏水需要报修', useLlm: false })
   ok(precheck.graph.primaryDept === 'logistics' && precheck.graph.dispatchPath[0].actor === '待确认')
-  ok(precheck.answer.includes('尚在开发') && !precheck.analysis.draft.includes('已联系'))
+  ok(precheck.answer.includes('后勤') && !precheck.analysis.draft.includes('已联系'))
   const uiCase = (await call('/b/cases', academic, { studentId: 'stu-lin', mentorId: 'mentor-demo', counselorId: 'cou-chen', course: '浏览器协商课程' }, 201)).item
   process.env.PORTAL_API_URL = base.slice(0, -4)
   const origins = {}

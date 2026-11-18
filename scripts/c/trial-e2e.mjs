@@ -68,7 +68,11 @@ try {
   }
   const student = pages.student.page,
     teacher = pages.counselor.page;
-  await student.goto(pages.student.origin + "/student/repairs/new");
+  await student.goto(pages.student.origin + "/student/assistant");
+  await student.getByLabel("咨询内容").fill("宿舍水龙头漏水需要报修");
+  await student.getByRole("button", { name: "发送", exact: true }).click();
+  await student.getByRole("button", { name: "前往报修填写页" }).click();
+  await student.waitForURL("**/student/repairs/new");
   await student.getByLabel("报修类型").selectOption("水电");
   await student.getByLabel("报修地点").fill("学生公寓 3 号楼 412");
   await student.getByLabel("故障描述").fill("洗手池持续漏水，请协助维修。");

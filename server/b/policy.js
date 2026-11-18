@@ -7,8 +7,8 @@ export function workflowGuidance(text, user) {
     next: { label: '前往我的请假', path: '/student/leaves' },
   }
   if (/报修|维修|漏水|水龙头|空调故障/.test(text) && !/校园网|网络|wifi|ｗｉｆｉ|认证|断网|掉线/i.test(text)) return {
-    answer: '新版报修直达后勤和异议协调流程尚在开发，当前请按页面实际提示提交，处理进度以页面回执为准。AI不能判定责任或自动结案。',
-    next: { label: '前往报修填写页', path: '/student/new?category=宿舍生活' },
+    answer: '可在报修页面提交问题，由后勤按责任范围处理；处理进度以页面回执为准。AI不能判定责任或自动结案。',
+    next: { label: '前往报修填写页', path: '/student/repairs/new' },
   }
   if (/学业预警|谁.*(面谈|联系)|导师.*职责|辅导员.*职责/.test(text)) return {
     answer: '关联导师和辅导员自行协商行动安排，由被指定人确认，不固定由哪一种身份承担联系或面谈；正式学业结果由教务核实。AI不能替双方决定职责。', next: null,

@@ -2,13 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './assistant.css'
 import { api, request } from '../../lib/api'
-
-const safeStudentPath = (value: unknown) =>
-  typeof value === 'string' &&
-  value.startsWith('/student/') &&
-  !value.includes('\\')
-    ? value
-    : '/student/home'
+import { safeStudentPath } from './safe-student-path.mjs'
 
 export function StudentAssistant() {
   const [text, setText] = useState(''),
