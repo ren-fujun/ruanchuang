@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './assistant.css'
 import { api, request } from '../../lib/api'
+
+const safeStudentPath = (value: unknown) =>
+  typeof value === 'string' &&
+  value.startsWith('/student/') &&
+  !value.includes('\\')
+    ? value
+    : '/student/home'
+
 export function StudentAssistant() {
   const [text, setText] = useState(''),
     [reply, setReply] = useState<any>(null),
@@ -74,7 +82,7 @@ export function StudentAssistant() {
         </button>
       </form>
       {reply?.action === 'guidance' && <p>业务流程提示 · {reply.policyVersion} · 不代表审批或办理结果</p>}
-      {reply?.next && <button className="primary-button" disabled={busy} onClick={() => navigate(reply.next.path)}>{reply.next.label}</button>}
+      {reply?.next && <button className="primary-button" disabled={busy} onClick={() => navigate(safeStudentPath(reply.next.path))}>{reply.next.label}</button>}
       {reply && reply.action !== 'guidance' && (
         <button
           className="secondary-button"
