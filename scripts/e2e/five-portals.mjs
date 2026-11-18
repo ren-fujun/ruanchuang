@@ -27,7 +27,7 @@ const port = await freePort()
 const base = `http://127.0.0.1:${port}`
 const servers = [], results = [], timings = [], tickets = []
 const gaps = [
-  '本脚本仅验证当前检出的分支；A/D已有后勤实现、C已有独立双端，尚须集成后另跑学生直达后勤与异议终止链，不能用本脚本的辅导员代录代替。',
+  'D 已通过 scripts/e2e/logistics-workflow.mjs 独立验证学生直达后勤、一次异议和协调终态；本五端脚本仍只覆盖原工单代录，C 学生/辅导员页面尚未真实接入新版报修与异议链。',
   '教务名单页面导入与更正未被本脚本覆盖；本脚本仅通过真实教务身份 API 验证导师协商和结果流转。',
   '两条请假与班导师权限使用 npm run test:b-trial 独立验收；五端完整试用仍需在统一集成版本验证全部链路。',
 ]
@@ -145,10 +145,14 @@ try {
         await page.getByText('状态：已完成', { exact: false }).waitFor()
       } else {
         if (role === 'student') {
-          await page.getByLabel('学号', { exact: true }).fill('test01')
+          await page.getByLabel('账号', { exact: true }).fill('test01')
           await page.getByLabel('密码', { exact: true }).fill('123456')
-          await page.getByRole('button', { name: '进入学生端', exact: true }).click()
-        } else await page.getByRole('button', { name: /辅导员视角/ }).click()
+          await page.getByRole('button', { name: '登录', exact: true }).click()
+        } else {
+          await page.getByLabel('账号', { exact: true }).fill('chenyuan')
+          await page.getByLabel('密码', { exact: true }).fill('123456')
+          await page.getByRole('button', { name: '登录', exact: true }).click()
+        }
         await page.waitForURL(`**/${role}/home`)
         await page.goto(`${origins[role]}/${role}/tickets/${tickets[0]}`, { waitUntil: 'networkidle' })
         await page.getByText('虚构测试：已核实处理', { exact: false }).first().waitFor()

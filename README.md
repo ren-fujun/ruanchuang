@@ -4,9 +4,11 @@
 
 分支 `feat/b-mentor-ai`：导师登录与学业跟进、受限协同、知识审核版本、学生追问与工单转人工。运行 `npm run demo:b`，完整接口、账号与验收见 [B 五端交付](docs/B五端交付.md)。
 
-## 五端开发方案（2026-11-14）
+## 第二轮五端试用冲刺（2026-11-18）
 
-最新骨架分支：`feat/five-portals-plan`。详见 [五端开发方案与四人分工](docs/五端开发方案与四人分工.md)。五端独立启动命令为 `dev:student`、`dev:counselor`、`dev:academic`、`dev:logistics`、`dev:mentor`，分别使用 5191–5195 端口。`npm run build:portals` 生成五份独立产物。新增三端为明确标识的开发骨架，尚未实现认证和业务接口。
+D 后勤端已在 `feat/d-logistics-workbench` 接通学生直达报修、责任范围抢单、一次结果、一次异议、后勤书面回应和辅导员协调终态；详见 [D 直达报修与异议验收](docs/D直达报修与异议验收.md) 和 [首次试用部署与回退清单](docs/首次试用部署与回退清单.md)。
+
+五端独立启动命令为 `dev:student`、`dev:counselor`、`dev:academic`、`dev:logistics`、`dev:mentor`，分别使用 5191–5195 端口；当前 PowerShell 使用 `npm.cmd run <命令>`。`npm.cmd run build:portals` 生成五份独立产物。公网 HTTPS、正式账号、请假/学业协商整合和五端统一挂载仍未完成，不能把当前分支称为试用已上线。
 
 
 ## 明日演示入口（2026-11-12 更新）

@@ -12,3 +12,4 @@ scripts/ai/out/
 .DS_Store
 
 dist-portals/
+release/

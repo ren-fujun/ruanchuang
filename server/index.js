@@ -10,6 +10,7 @@ import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault }
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
+import { mountRepairRoutes } from './repair-routes.js'
 import { planStudentTicketChange } from './c-student.js'
 import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
 import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
@@ -1598,6 +1599,7 @@ app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, r
 
 mountB(app, {db, save, requireAuth})
 mountTrialFeedback(app, {db, save, requireAuth, trialMode})
+mountRepairRoutes(app, { db, save, requireAuth })
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: '接口不存在。' })
