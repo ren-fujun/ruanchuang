@@ -26,13 +26,60 @@ export function prepareTrialAccounts(existing, input) {
   for(const raw of checked) for(const [field,needed] of [['studentIds','student'],['academicStudentIds','student'],['counselorIds','counselor'],['classAdvisorIds','mentor']]) {
     for(const id of raw[field]||[]) { const person=all.find(item=>item.id===id); if(!person || person.disabled || (person.expiresAt && (!Number.isFinite(Date.parse(person.expiresAt)) || Date.parse(person.expiresAt)<=Date.now())) || person.role!==needed || (field==='classAdvisorIds' && person.classAdvisor!==true)) throw new Error('人员关系指向不存在或无权的账号。') }
   }
+  for (const user of checked) {
+    if (user.role === 'student') for (const id of user.counselorIds || []) {
+      if (!all.find(item => item.id === id)?.studentIds?.includes(user.id)) throw new Error('学生与辅导员的关系必须双向一致；已有账号请在创建后配置关系。')
+    }
+    if (user.role === 'counselor') for (const id of user.studentIds || []) {
+      if (!all.find(item => item.id === id)?.counselorIds?.includes(user.id)) throw new Error('学生与辅导员的关系必须双向一致；已有账号请在创建后配置关系。')
+    }
+  }
   return checked.map(({password,...raw})=>({...raw,name:raw.name.trim(),passwordHash:hashPassword(password),mustChangePassword:true,disabled:false,createdAt:new Date().toISOString()}))
+}
+export function configureStudentRelations(users, studentId, input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(k => !['educationLevel','counselorIds','classAdvisorIds'].includes(k))) throw new Error('关系配置字段无效。')
+  if (!['undergraduate','postgraduate'].includes(input.educationLevel)) throw new Error('学历类型无效。')
+  const active = user => user && !user.disabled && (!user.expiresAt || (Number.isFinite(Date.parse(user.expiresAt)) && Date.parse(user.expiresAt) > Date.now()))
+  const student = users.find(user => user.id === studentId && user.role === 'student')
+  if (!active(student)) throw new Error('学生不存在或账号已停用、过期。')
+  for (const [field, role] of [['counselorIds','counselor'], ['classAdvisorIds','mentor']]) {
+    const ids = input[field]
+    if (!Array.isArray(ids) || ids.length > 100 || ids.some(id => !validId(id)) || new Set(ids).size !== ids.length) throw new Error('人员关系格式无效。')
+    for (const id of ids) {
+      const person = users.find(user => user.id === id && user.role === role)
+      if (!active(person) || (field === 'classAdvisorIds' && person.classAdvisor !== true)) throw new Error('人员关系指向不存在或无权的账号。')
+    }
+  }
+  // Validate the entire request before modifying either side of the relationship.
+  for (const counselor of users.filter(user => user.role === 'counselor')) {
+    const ids = Array.isArray(counselor.studentIds) ? counselor.studentIds : []
+    if (ids.includes(studentId) || input.counselorIds.includes(counselor.id)) {
+      counselor.studentIds = ids.filter(id => id !== studentId)
+      if (input.counselorIds.includes(counselor.id)) counselor.studentIds.push(studentId)
+    }
+  }
+  student.educationLevel = input.educationLevel
+  student.counselorIds = [...input.counselorIds]
+  student.classAdvisorIds = [...input.classAdvisorIds]
 }
 export function mountTrialAdmin(app,{db,save,requireAuth,trialMode}) {
   const guard=[requireAuth,(req,res,next)=>{if(!trialMode)return res.status(404).json({message:'服务未启用。'});if(req.user.trialAdmin!==true)return res.status(403).json({message:'无权管理试用账号。'});next()}]
   const audit=(actor,action,targets)=>{db.trialAudit ||= [];db.trialAudit.push({id:crypto.randomUUID(),actor,action,targets,at:new Date().toISOString()})}
+  app.get('/api/trial/admin/accounts',...guard,(req,res)=>{
+    const offset = Number(req.query.offset ?? 0), limit = Number(req.query.limit ?? 50)
+    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) return res.status(400).json({message:'分页参数无效。'})
+    const items = db.users.slice(offset,offset+limit).map(user => {
+      const {id,account,name,role,expiresAt,disabled,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus} = user
+      return {id,account,name,role,expiresAt,disabled:disabled===true,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus}
+    })
+    return res.json({items,total:db.users.length,offset,limit})
+  })
   app.post('/api/trial/admin/accounts',...guard,(req,res)=>{
     try{const created=prepareTrialAccounts(db.users,req.body?.accounts);db.users.push(...created);audit(req.user.id,'accounts_created',created.map(user=>user.id));save();return res.status(201).json({items:created.map(({id,account,role,expiresAt})=>({id,account,role,expiresAt}))})}catch(error){return res.status(400).json({message:error.message})}
+  })
+  app.post('/api/trial/admin/accounts/:id/relations',...guard,(req,res)=>{
+    try { configureStudentRelations(db.users,req.params.id,req.body); audit(req.user.id,'student_relations_changed',[req.params.id,...req.body.counselorIds,...req.body.classAdvisorIds]); save(); return res.json({ok:true}) }
+    catch(error) { return res.status(400).json({message:error.message}) }
   })
   app.post('/api/trial/admin/accounts/:id/reset-password',...guard,(req,res)=>{
     const target=db.users.find(user=>user.id===req.params.id)

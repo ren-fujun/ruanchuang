@@ -175,7 +175,7 @@ const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
   const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/dispatch)?$/.test(req.path)
-  const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+\/(?:status|reset-password))?$/.test(req.path)
+  const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+\/(?:status|reset-password|relations))?$/.test(req.path)
   if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !trialAdminPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
