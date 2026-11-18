@@ -26,5 +26,32 @@ export function fivePortalFixture() {
     account: s.account, studentNo: s.account, phone: '测试无联系方式', room: '虚构测试楼101' })
   const counselor = db.users.find(user => user.id === 'cou-chen')
   counselor.studentIds = [...new Set([...(counselor.studentIds || []), ...scenarios.map(s => s.id)])]
+  db.users.push(
+    {
+      id: 'mentor-demo',
+      role: 'mentor',
+      account: 'mentor',
+      password: '123456',
+      name: '示例导师',
+      college: template.college,
+    },
+    {
+      id: 'academic-demo',
+      role: 'academic',
+      account: 'academic',
+      password: '123456',
+      name: '示例教务',
+      college: template.college,
+      academicStudentIds: scenarios.map((item) => item.id),
+    },
+    {
+      id: 'review-demo',
+      role: 'counselor',
+      account: 'reviewer',
+      password: '123456',
+      name: '知识审核员',
+      knowledgeReviewer: true,
+    },
+  )
   return db
 }

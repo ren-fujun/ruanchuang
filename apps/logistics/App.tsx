@@ -1,3 +1,4 @@
+import { TrialFeedback } from '../../src/features/c/TrialFeedback'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { TrialPasswordGate } from '../../src/components/TrialPasswordGate'
 import {
@@ -148,6 +149,7 @@ export function LogisticsApp() {
 
   return (
     <div className="workbench">
+      <TrialFeedback />
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark">智</span>

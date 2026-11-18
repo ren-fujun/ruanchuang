@@ -1,3 +1,4 @@
+import { TrialFeedback } from '../../src/features/c/TrialFeedback'
 import {
   BookOpen,
   GraduationCap,
@@ -141,6 +142,7 @@ function App() {
   if (user?.mustChangePassword) return <TrialPasswordGate tokenKey="b_portal_token" />
   return (
     <div className="portal mentor-purple">
+      {user && <TrialFeedback tokenKey="b_portal_token" />}
       <aside>
         <div className="mentor-brand">
           <span>

@@ -1,0 +1,5 @@
+.trial-feedback{position:relative;z-index:12;margin:12px;padding:10px 16px;background:#eff4e8;border:1px solid #d6e2d0;border-radius:10px;color:#244737;font:14px system-ui;grid-column:1/-1}
+.trial-feedback>p{display:inline;margin:0 16px 0 0}.trial-feedback button{padding:7px 12px;border:1px solid #9eae9e;border-radius:7px;background:#fff;color:#17422e}
+.trial-feedback form{display:grid;gap:10px;max-width:520px;margin-top:14px}.trial-feedback label{display:grid;gap:5px}.trial-feedback input,.trial-feedback textarea,.trial-feedback select{padding:8px;border:1px solid #aebfae;border-radius:6px;background:#fff}.trial-feedback textarea{min-height:80px}
+@media(max-width:799px){.trial-feedback{margin-bottom:84px}.c-shell .detail-action-bar,.c-shell .ticket-detail-page .detail-action-bar{bottom:0}}
+@media(max-width:799px){.trial-feedback{scroll-margin-bottom:110px}.c-shell .c-content{padding-bottom:80px}}

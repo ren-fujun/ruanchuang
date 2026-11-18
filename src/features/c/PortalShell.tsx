@@ -1,3 +1,4 @@
+import { TrialFeedback } from "./TrialFeedback";
 import { useEffect } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
@@ -31,17 +32,16 @@ export function PortalShell({ role }: { role: PortalRole }) {
         ["messages", "消息", Bell],
         ["academic", "学业支持", GraduationCap],
         ["leaves", "我的请假", ClipboardList],
-        ["appointments", "预约", CalendarDays],
+        ["repairs", "报修", CalendarDays],
         ["profile", "我的", UserRound],
       ] as const)
     : ([
         ["home", "工作台", House],
         ["tickets", "工单", ClipboardList],
-        ["bundles", "问题包", Layers],
+        ["repairs", "报修监督", Layers],
         ["academic", "学业跟进", BookOpen],
         ["leaves", "请假审批", ClipboardList],
         ["insights", "协同洞察", ChartNoAxesColumn],
-        ["appointments", "预约排班", CalendarDays],
         ["knowledge", "知识纠错", BookOpen],
         ["dorm-check", "宿舍查寝", House],
         ["profile", "我的", UserRound],
@@ -49,7 +49,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
   const dock = items.filter(([path]) =>
     student
       ? ["home", "tickets", "messages", "profile"].includes(path)
-      : ["home", "tickets", "bundles", "profile"].includes(path),
+      : ["home", "tickets", "repairs", "profile"].includes(path),
   );
   return (
     <div className={"c-shell c-" + role}>
@@ -91,6 +91,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
         <div className="c-outlet">
           <Outlet />
         </div>
+        <TrialFeedback />
       </div>
       <nav className="c-dock" aria-label="底部导航">
         {dock.map(([path, label, Icon]) => (

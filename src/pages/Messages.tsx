@@ -102,6 +102,10 @@ export function MessagesPage() {
         // Navigation should not be blocked by a read receipt.
       }
     }
+    if (note.repairId) {
+      navigate('/' + user!.role + '/repairs/' + note.repairId)
+      return
+    }
     if (note.ticketId?.startsWith('ZX')) {
       navigate(
         user?.role === 'student'
