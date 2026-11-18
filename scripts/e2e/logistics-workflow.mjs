@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { createServer as createNetServer } from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
@@ -14,6 +14,10 @@ import { seedData } from '../../server/seed.js'
 const root = fileURLToPath(new URL('../../', import.meta.url))
 process.chdir(root)
 const requestId = () => crypto.randomUUID()
+const evidenceDir = path.resolve(
+  process.env.E2E_EVIDENCE_DIR || '.tmp/logistics-evidence',
+)
+await mkdir(evidenceDir, { recursive: true })
 
 const dir = await mkdtemp(path.join(os.tmpdir(), 'repair-e2e-'))
 const dataFile = path.join(dir, 'store.json')
@@ -187,11 +191,19 @@ try {
   await page.getByRole('button', { name: '进入后勤维修台' }).click()
   const repairCard = page.locator('.repair-card').filter({ hasText: repair.id })
   await repairCard.locator('.status-pill').filter({ hasText: '待后勤分配' }).waitFor()
+  await page.screenshot({
+    path: path.join(evidenceDir, 'd-direct-repair-queue.png'),
+    fullPage: true,
+  })
   await repairCard.getByRole('button', { name: '领取此报修' }).click()
   await repairCard.locator('.status-pill').filter({ hasText: '处理中' }).waitFor()
   await repairCard.getByLabel('本次处置结果').fill('已关闭总阀并更换洗手池软管，试水后无渗漏。')
   await repairCard.getByRole('button', { name: '提交本次结果' }).click()
   await repairCard.locator('.status-pill').filter({ hasText: '待学生反馈' }).waitFor()
+  await page.screenshot({
+    path: path.join(evidenceDir, 'd-direct-repair-waiting-feedback.png'),
+    fullPage: true,
+  })
 
   const logisticsAfterUiLogin = await page.evaluate(() =>
     localStorage.getItem('zhihui_token'),
@@ -231,6 +243,11 @@ try {
   )
 
   await page.getByRole('button', { name: /刷新报修/ }).click()
+  await repairCard.getByLabel('异议书面说明').waitFor()
+  await page.screenshot({
+    path: path.join(evidenceDir, 'd-direct-repair-objection.png'),
+    fullPage: true,
+  })
   await repairCard.getByLabel('异议书面说明').fill('已复查上一层排水管，渗水来自相邻房间存量积水，当前漏水点已修复。')
   await repairCard.getByRole('button', { name: '提交异议说明' }).click()
   await repairCard.locator('.status-pill').filter({ hasText: '待辅导员协调' }).waitFor()
