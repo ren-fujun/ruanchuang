@@ -1,5 +1,14 @@
 import { getToken, request, setToken } from '../../src/lib/api'
 
+export type RepairStatus =
+  | 'pending_assignment'
+  | 'processing'
+  | 'awaiting_feedback'
+  | 'objection_pending_response'
+  | 'pending_coordination'
+  | 'satisfied'
+  | 'coordinated_closed'
+
 export interface LogisticsUser {
   id: string
   role: 'logistics'
@@ -7,25 +16,56 @@ export interface LogisticsUser {
   account?: string
   department?: string
   title?: string
+  repairScopes?: string[]
 }
 
-export interface LogisticsHistoryItem {
+export interface RepairHistoryItem {
   id: string
   action: string
   actorId: string
+  actorName: string
   at: string
-  result?: string
-  reason?: string
+  detail?: string
+  responseDueAt?: string
 }
 
-export interface LogisticsWorkItem {
-  bundleId: string
-  ticketId: string
-  title: string
-  description: string
+export interface Repair {
+  id: string
+  status: RepairStatus
+  statusLabel: string
+  version: number
+  studentId: string
+  studentName: string
+  counselorId: string | null
+  campus: string
+  repairType: string
   location: string
-  status: 'sent' | 'accepted' | 'resolved' | 'disputed'
-  history: LogisticsHistoryItem[]
+  description: string
+  claimantId: string | null
+  claimantName: string | null
+  claimedAt: string | null
+  result: { text: string; at: string } | null
+  feedback: {
+    decision: 'satisfied' | 'objection'
+    reason: string
+    at: string
+  } | null
+  response: { text: string; at: string } | null
+  coordination: {
+    conclusion: string
+    followUp: string
+    owner: string
+    dueAt: string
+    at: string
+    responseOverdue: boolean
+  } | null
+  responseDueAt: string | null
+  responseOverdue: boolean
+  terminal: boolean
+  createdAt: string
+  updatedAt: string
+  terminalAt: string | null
+  history: RepairHistoryItem[]
 }
 
 interface LoginResponse {
@@ -61,21 +101,44 @@ export const logisticsApi = {
       setToken('')
     }
   },
-  async workOrders() {
-    return request<{ items: LogisticsWorkItem[] }>('/logistics/work-orders')
+  repairs() {
+    return request<{ items: Repair[] }>('/repairs')
   },
-  async act(
-    bundleId: string,
-    ticketId: string,
-    body:
-      | { action: 'accept' }
-      | { action: 'resolve'; result: string },
-  ) {
-    return request<{ item: LogisticsWorkItem }>(
-      `/logistics/work-orders/${encodeURIComponent(bundleId)}/${encodeURIComponent(ticketId)}`,
+  claim(repair: Repair) {
+    return request<{ repair: Repair }>(
+      `/repairs/${encodeURIComponent(repair.id)}/claim`,
       {
         method: 'POST',
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          version: repair.version,
+          requestId: crypto.randomUUID(),
+        }),
+      },
+    )
+  },
+  submitResult(repair: Repair, result: string) {
+    return request<{ repair: Repair }>(
+      `/repairs/${encodeURIComponent(repair.id)}/result`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          version: repair.version,
+          result,
+          requestId: crypto.randomUUID(),
+        }),
+      },
+    )
+  },
+  respond(repair: Repair, response: string) {
+    return request<{ repair: Repair }>(
+      `/repairs/${encodeURIComponent(repair.id)}/respond`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          version: repair.version,
+          response,
+          requestId: crypto.randomUUID(),
+        }),
       },
     )
   },
