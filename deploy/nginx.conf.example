@@ -1,0 +1,63 @@
+# 将 *.example.invalid 替换为实际域名，并配置真实证书路径。
+# 五个前端使用独立子域，避免各端静态资源绝对路径和 SPA 路由相互覆盖。
+
+upstream zhihui_api {
+    server 127.0.0.1:8787;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+    server_name student.example.invalid counselor.example.invalid academic.example.invalid logistics.example.invalid mentor.example.invalid;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name student.example.invalid;
+    ssl_certificate /etc/zhihui/fullchain.pem;
+    ssl_certificate_key /etc/zhihui/privkey.pem;
+    root /srv/zhihui/current/portals/student;
+    location /api/ { proxy_pass http://zhihui_api; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name counselor.example.invalid;
+    ssl_certificate /etc/zhihui/fullchain.pem;
+    ssl_certificate_key /etc/zhihui/privkey.pem;
+    root /srv/zhihui/current/portals/counselor;
+    location /api/ { proxy_pass http://zhihui_api; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name academic.example.invalid;
+    ssl_certificate /etc/zhihui/fullchain.pem;
+    ssl_certificate_key /etc/zhihui/privkey.pem;
+    root /srv/zhihui/current/portals/academic;
+    location /api/ { proxy_pass http://zhihui_api; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name logistics.example.invalid;
+    ssl_certificate /etc/zhihui/fullchain.pem;
+    ssl_certificate_key /etc/zhihui/privkey.pem;
+    root /srv/zhihui/current/portals/logistics;
+    location /api/ { proxy_pass http://zhihui_api; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name mentor.example.invalid;
+    ssl_certificate /etc/zhihui/fullchain.pem;
+    ssl_certificate_key /etc/zhihui/privkey.pem;
+    root /srv/zhihui/current/portals/mentor;
+    location /api/ { proxy_pass http://zhihui_api; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+    location / { try_files $uri $uri/ /index.html; }
+}
