@@ -60,6 +60,10 @@ try {
   ok((await call('/b/leaves', graduate)).items[0].status === 'rejected')
   console.log('PASS 双路径请假、越权、重复、时间、学历伪造')
   let c = (await call('/b/cases', mentor)).items[0]
+  const otherAcademic=await login('academic-other')
+  ok((await call('/b/cases',otherAcademic)).items.length===0,'同学院但不在授权学生范围不能查看')
+  await call(`/b/cases/${c.id}/result`,otherAcademic,{version:c.version,result:'passed',source:'越权'},403,'PATCH')
+  await call('/b/cases',otherAcademic,{studentId:'stu-lin',mentorId:'mentor-demo',counselorId:'cou-chen',course:'越权课程'},400)
   const event = () => ({ type: 'interview', text: '私密测试正文', summary: '已沟通下一步安排', visibility: 'private', version: c.version, requestId: rid() })
   await call(`/b/cases/${c.id}/events`, mentor, event(), 409)
   await call(`/b/cases/${c.id}/collaboration`, other, { action: 'propose', version: c.version, requestId: rid() }, 403)

@@ -7,7 +7,8 @@ export function bTrialFixture() {
     { ...student, id: 'stu-unconfigured', account: 'unconfigured', name: '未配置学生', educationLevel: null },
     { id: 'mentor-demo', account: 'mentor', password: '123456', name: '班导师示例', role: 'mentor', college: student.college, classAdvisor: true },
     { id: 'mentor-other', account: 'mentor-other', password: '123456', name: '其他学业导师', role: 'mentor', college: student.college },
-    { id: 'academic-demo', account: 'academic', password: '123456', name: '教务示例', role: 'academic', college: student.college },
+    { id: 'academic-demo', account: 'academic', password: '123456', name: '教务示例', role: 'academic', college: student.college, academicStudentIds: [student.id] },
+    { id: 'academic-other', account: 'academic-other', password: '123456', name: '另一教务示例', role: 'academic', college: student.college, academicStudentIds: ['stu-grad'] },
     { id: 'review-demo', account: 'reviewer', password: '123456', name: '知识审核员', role: 'counselor', knowledgeReviewer: true },
   )
   db.b = { cases: [{ id: 'case-demo', studentId: student.id, studentName: student.name, college: student.college,

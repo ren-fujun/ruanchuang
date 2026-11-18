@@ -30,6 +30,7 @@ export function mountB(app, { db, save, requireAuth }) {
         password: '123456',
         name: '示例教务',
         college: '信息工程学院',
+        academicStudentIds: ['stu-lin'],
       },
       {
         id: 'review-demo',
@@ -77,9 +78,9 @@ export function mountB(app, { db, save, requireAuth }) {
     u.role === 'mentor'
       ? c.mentorId === u.id
       : u.role === 'counselor'
-        ? c.counselorId === u.id
+        ? c.counselorId === u.id && Array.isArray(u.studentIds) && u.studentIds.includes(c.studentId)
         : u.role === 'academic'
-          ? c.college === u.college
+          ? Boolean(u.college && c.college === u.college && Array.isArray(u.academicStudentIds) && u.academicStudentIds.includes(c.studentId))
           : false
   const projected = caseView
   mountLeaves(r, { db, save, state, audit })
@@ -105,8 +106,10 @@ export function mountB(app, { db, save, requireAuth }) {
     )
     if (
       !student ||
+      !Array.isArray(req.user.academicStudentIds) || !req.user.academicStudentIds.includes(studentId) ||
       !mentor ||
       !counselor ||
+      !Array.isArray(counselor.studentIds) || !counselor.studentIds.includes(studentId) ||
       !(Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name) ||
       typeof course !== 'string' ||
       !course.trim() ||
