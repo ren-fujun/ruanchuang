@@ -237,6 +237,7 @@ export const userProfiles = [
     avatarTone: 'peach',
     counselor: '陈予安',
     room: '学生公寓 3 号楼 412',
+    campus: '主校区',
   },
   {
     id: 'cou-chen',
@@ -261,6 +262,7 @@ export const userProfiles = [
     password: '123456',
     title: '后勤保障处 · 维修调度',
     department: '后勤保障处',
+    repairScopes: ['主校区'],
   },
 ]
 

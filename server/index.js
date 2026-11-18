@@ -9,6 +9,7 @@ import { llmEnabled, getLlmStatus, resetLlm, simulateLlmFault, currentLlmFault }
 import { createDormRecord, dormConstants, getDormOverview } from './dorm.js'
 import { createIssueBundle, reviseIssueBundle } from './issue-bundles.js'
 import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
+import { mountRepairRoutes } from './repair-routes.js'
 import { STATUS_LABELS, URGENCY_LABELS, RISK_LABELS, detectRisk, generateCounselorBrief } from './ai.js'
 import {
   AGENT_VERSION,
@@ -1386,6 +1387,8 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   bundle.updatedAt = at; save()
   return res.json({ item })
 })
+
+mountRepairRoutes(app, { db, save, requireAuth })
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: '接口不存在。' })
