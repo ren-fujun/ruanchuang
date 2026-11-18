@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, stat } from 'node:fs/promises'
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const source = path.resolve(
@@ -18,6 +18,7 @@ if (!Array.isArray(parsed.users) || !Array.isArray(parsed.tickets)) {
 await mkdir(backupDir, { recursive: true })
 const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
 const target = path.join(backupDir, `store-${stamp}.json`)
-await copyFile(source, target)
+// Write exactly the snapshot we validated, and never replace a previous backup.
+await writeFile(target, raw, { encoding: 'utf8', flag: 'wx', mode: 0o600 })
 console.log(`备份完成：${target}`)
 console.log(`用户 ${parsed.users.length}，工单 ${parsed.tickets.length}，报修 ${(parsed.repairs || []).length}`)
