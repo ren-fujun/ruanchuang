@@ -15,6 +15,7 @@ import './features/contract-demo/contract-demo.css'
 import './styles/counselor-workspace.css'
 import './styles/counselor-dashboard.css'
 import './styles/counselor-surfaces.css'
+import './styles/counselor-purple.css'
 
 async function bootstrap() {
   if (import.meta.env.VITE_USE_MOCK === 'true') {

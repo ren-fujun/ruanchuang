@@ -17,14 +17,14 @@ import type { InsightsData } from '../../types'
 import { PageHeader } from '../../components/layout/AppShell'
 import { DeptAvatar, EmptyState, ProgressRing, SkeletonPage } from '../../components/ui'
 
-const categoryColors = ['#687f70', '#8fa495', '#b3c3b5', '#d0dcd1', '#9cae9d', '#dfe7e0', '#7a8e80', '#c1cec4']
+const categoryColors = ['#8b76bd', '#ac9bd2', '#b9cae4', '#dfd6f0', '#a4b7db', '#eee8f7', '#9d8bbf', '#c9bee0']
 
 export function CounselorInsights() {
   const navigate = useNavigate()
   const { data, loading, error, reload } = useApi<InsightsData>('/counselor/insights')
 
   const donut = useMemo(() => {
-    if (!data?.categories.length) return '#e9eeea'
+    if (!data?.categories.length) return '#eee8f7'
     const total = data.categories.reduce((sum, item) => sum + item.value, 0) || 1
     let cursor = 0
     const stops = data.categories.map((item, index) => {
