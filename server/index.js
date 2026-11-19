@@ -14,6 +14,7 @@ import { mountRepairRoutes } from './repair-routes.js'
 import { planStudentTicketChange } from './c-student.js'
 import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
 import { academicRelationsValid } from './academic-relations.js'
+import { planAcademicCorrection } from './academic-correction.js'
 import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
 import { mountTrialFeedback } from './trial-feedback.js'
 import { mountTrialAdmin } from './trial-admin.js'
@@ -175,7 +176,7 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
-  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/dispatch)?$/.test(req.path)
+  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/(?:dispatch|correct))?$/.test(req.path)
   const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+\/(?:status|reset-password|relations))?$/.test(req.path)
   if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !trialAdminPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
@@ -1562,6 +1563,27 @@ app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, re
 
 app.get('/api/academic/batches', requireAuth, requireRole('academic'), (req, res) => {
   res.json({ items:(db.academicBatches || []).filter(batch => canReadAcademicVersion(req.user, batch)) })
+})
+
+app.post('/api/academic/batches/:id/correct', requireAuth, requireRole('academic'), (req,res) => {
+  const batches=db.academicBatches || [], previous=batches.find(batch=>batch.id===req.params.id && canReadAcademicVersion(req.user,batch))
+  if (!previous) return res.status(404).json({message:'名单不存在。'})
+  if (!previous.dispatchedAt || batches.some(batch=>batch.previousId===previous.id) || req.body?.version!==previous.version) return res.status(409).json({message:'名单状态或版本已变化，请刷新。'})
+  if (!Array.isArray(db.b?.cases)) return res.status(503).json({message:'学业服务尚未准备好。'})
+  try {
+    const result=createAcademicVersion({user:req.user,rows:req.body?.rows,users:db.users,previous,expectedVersion:req.body.version})
+    if (!result.valid) return res.status(400).json({message:'名单校验失败。',errors:result.errors})
+    if (!academicRelationsValid(req.user,result.batch.items,db.users)) return res.status(400).json({message:'人员状态或关系无效。'})
+    const changes=planAcademicCorrection(previous,result.batch,db.b.cases,req.body.reason)
+    const at=nowIso(), reason=req.body.reason.trim()
+    for(const {caseItem,item} of changes) {
+      caseItem.assignmentHistory ||= []
+      caseItem.assignmentHistory.push({batchId:previous.id,mentorId:caseItem.mentorId,counselorId:caseItem.counselorId,actor:req.user.id,reason,at})
+      caseItem.mentorId=item.mentorId;caseItem.counselorId=item.counselorId;caseItem.academicBatchId=result.batch.id;caseItem.version++
+    }
+    result.batch.items=changes.map(({item})=>item);result.batch.dispatchedAt=at;result.batch.caseIds=changes.map(({caseItem})=>caseItem.id);result.batch.correctionReason=reason
+    db.academicBatches.push(result.batch);save();return res.status(201).json({item:result.batch})
+  } catch(error) {return res.status(409).json({message:error.message})}
 })
 
 app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academic'), (req, res) => {

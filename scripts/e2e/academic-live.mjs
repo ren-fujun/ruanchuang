@@ -12,6 +12,7 @@ import {seedData} from '../../server/seed.js'
 const dir=await mkdtemp(path.join(os.tmpdir(),'academic-live-'))
 const data=seedData()
 data.users.push({id:'academic-test',role:'academic',name:'测试教务',account:'academic-test',password:'test-password',college:'信息工程学院',academicStudentIds:['stu-lin']},{id:'mentor-test',role:'mentor',name:'测试导师',account:'mentor-test',password:'test-password',college:'信息工程学院'})
+data.users.push({id:'mentor-other-test',role:'mentor',name:'另一虚构导师',account:'mentor-other-test',password:'test-password',college:'信息工程学院'})
 const file=path.join(dir,'data.json');await writeFile(file,JSON.stringify(data))
 async function port(){const server=createNetServer();server.listen(0,'127.0.0.1');await once(server,'listening');const value=server.address().port;await new Promise(r=>server.close(r));return value}
 const apiPort=await port(),api=`http://127.0.0.1:${apiPort}`
@@ -45,6 +46,12 @@ try{
  page.once('dialog',dialog=>dialog.accept())
  await page.getByRole('button',{name:'手动分发'}).click()
  await page.getByText('已分发',{exact:true}).waitFor()
+ await page.getByRole('button',{name:'更正名单'}).click()
+ await page.getByLabel('CSV 内容').fill('studentId,course,mentorId,counselorId\nstu-lin,更正后数学,mentor-other-test,cou-chen')
+ await page.getByLabel('更正原因',{exact:false}).fill('虚构导师关系更正')
+ await page.getByRole('button',{name:'服务器校验并预览'}).click()
+ await page.getByRole('button',{name:'确认保存名单'}).click()
+ await page.getByText('人员更正已应用。',{exact:false}).waitFor()
  const choice=page.getByLabel('学业事项').locator('option').filter({hasText:'更正后数学'})
  await choice.waitFor({state:'attached'})
  await page.getByLabel('学业事项').selectOption(await choice.getAttribute('value'))
@@ -52,8 +59,19 @@ try{
  await page.getByLabel('结果来源').fill('虚构教务成绩记录')
  await page.getByRole('button',{name:'回写正式结果'}).click()
  await page.getByText('正式结果已回写。').waitFor()
- const login=await fetch(api+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:'mentor-test',password:'test-password'})})
+ const academicToken=await page.evaluate(()=>localStorage.getItem('academic_token'))
+ const headers={'Content-Type':'application/json',Authorization:`Bearer ${academicToken}`}
+ const batches=await (await fetch(api+'/api/academic/batches',{headers})).json()
+ const newest=batches.items.find(item=>item.version===3)
+ const correction=await fetch(`${api}/api/academic/batches/${newest.id}/correct`,{method:'POST',headers,body:JSON.stringify({version:3,reason:'再次更正',rows:[{studentId:'stu-lin',course:'更正后数学',mentorId:'mentor-test',counselorId:'cou-chen'}]})})
+ assert.equal(correction.status,409)
+ const login=await fetch(api+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:'mentor-other-test',password:'test-password'})})
  const {token}=await login.json();const result=await fetch(api+'/api/b/cases',{headers:{Authorization:`Bearer ${token}`}})
- assert.ok((await result.json()).items.some(item=>item.course==='更正后数学' && item.result?.value==='passed' && item.result?.source==='虚构教务成绩记录'))
+ const updated=(await result.json()).items.filter(item=>item.course==='更正后数学')
+ assert.equal(updated.length,1);assert.equal(updated[0].result?.value,'passed');assert.equal(updated[0].result?.source,'虚构教务成绩记录');assert.equal(updated[0].assignmentHistory.length,1)
+ const oldLogin=await fetch(api+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:'mentor-test',password:'test-password'})})
+ const oldToken=(await oldLogin.json()).token
+ const oldCases=await fetch(api+'/api/b/cases',{headers:{Authorization:`Bearer ${oldToken}`}})
+ assert.ok(!(await oldCases.json()).items.some(item=>item.course==='更正后数学'))
  console.log('PASS 教务页面登录、预览、更正、分发、结果回写及导师读取')
 }finally{await browser?.close();await vite?.close();child.kill();await new Promise(r=>setTimeout(r,100));await rm(dir,{recursive:true,force:true})}
