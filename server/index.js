@@ -176,8 +176,8 @@ const requireAuth = (req, res, next) => {
   if (!user) {
     return res.status(401).json({ message: '登录状态已失效，请重新进入。' })
   }
-  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/(?:dispatch|correct))?$/.test(req.path)
-  const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+\/(?:status|reset-password|relations))?$/.test(req.path)
+  const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/(?:dispatch|correct|cancel))?$/.test(req.path)
+  const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+(?:\/(?:status|reset-password|relations|academic-scope))?)?$/.test(req.path)
   if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !trialAdminPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
@@ -1551,11 +1551,16 @@ app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, re
   const batches = db.academicBatches || []
   const previous = req.body?.previousId ? batches.find(batch => batch.id === req.body.previousId) : null
   if (req.body?.previousId && (!previous || !canReadAcademicVersion(req.user, previous))) return res.status(404).json({ message:'名单不存在。' })
-  if (previous && (previous.dispatchedAt || batches.some(batch => batch.previousId === previous.id))) return res.status(409).json({ message:'该版本已分发或已有更新版本，请人工核对。' })
+  if (previous && (previous.cancelledAt || previous.dispatchedAt || batches.some(batch => batch.previousId === previous.id))) return res.status(409).json({ message:'该版本已撤销、已分发或已有更新版本，请人工核对。' })
   try {
     const result = createAcademicVersion({ user:req.user, rows:req.body?.rows, users:db.users, previous, expectedVersion:req.body?.expectedVersion ?? 0 })
     if (!result.valid) return res.status(400).json({ message:'名单校验失败。', errors:result.errors })
     if (!academicRelationsValid(req.user, result.batch.items, db.users)) return res.status(400).json({ message:'人员已停用、过期或学生、导师学院及辅导员关系不匹配。' })
+    if(previous) {
+      if(req.body?.reason !== undefined && (typeof req.body.reason!=='string' || !req.body.reason.trim() || req.body.reason.length>1000)) return res.status(400).json({message:'请填写更正原因。'})
+      if(req.body?.reason) result.batch.correctionReason=req.body.reason.trim()
+      result.batch.correctedBy=req.user.id
+    }
     db.academicBatches = [...batches, result.batch]; save()
     return res.status(201).json({ item:result.batch })
   } catch (error) { return res.status(400).json({ message:error.message }) }
@@ -1565,10 +1570,28 @@ app.get('/api/academic/batches', requireAuth, requireRole('academic'), (req, res
   res.json({ items:(db.academicBatches || []).filter(batch => canReadAcademicVersion(req.user, batch)) })
 })
 
+app.post('/api/academic/batches/:id/cancel', requireAuth, requireRole('academic'), (req,res) => {
+  const batches=db.academicBatches || [], previous=batches.find(batch=>batch.id===req.params.id && canReadAcademicVersion(req.user,batch))
+  if (!previous) return res.status(404).json({message:'名单不存在。'})
+  if (previous.cancelledAt || batches.some(batch=>batch.previousId===previous.id) || req.body?.version!==previous.version || !Number.isSafeInteger(previous.version) || previous.version>=Number.MAX_SAFE_INTEGER) return res.status(409).json({message:'名单状态或版本已变化，请刷新。'})
+  const reason=req.body?.reason
+  if(typeof reason!=='string' || !reason.trim() || reason.length>1000) return res.status(400).json({message:'请填写撤销原因。'})
+  try {
+    let removed=[]
+    if(previous.dispatchedAt) {
+      if(!Array.isArray(db.b?.cases)) return res.status(503).json({message:'学业服务尚未准备好。'})
+      removed=planAcademicCorrection(previous,{items:[]},db.b.cases,reason).removed
+    }
+    const at=nowIso(), cancelled={id:crypto.randomUUID(),seriesId:previous.seriesId,previousId:previous.id,ownerId:previous.ownerId,version:previous.version+1,createdAt:at,items:previous.items.map(row=>({...row})),cancelledAt:at,cancelledBy:req.user.id,cancellationReason:reason.trim(),...(previous.dispatchedAt?{dispatchedAt:previous.dispatchedAt,caseIds:[...previous.caseIds]}:{})}
+    for(const c of removed){c.status='completed';c.correctionCancelled={actor:req.user.id,reason:reason.trim(),at,batchId:cancelled.id};c.version++}
+    db.academicBatches.push(cancelled);save();return res.status(201).json({item:cancelled,cancelledCount:removed.length})
+  }catch(error){return res.status(409).json({message:error.message})}
+})
+
 app.post('/api/academic/batches/:id/correct', requireAuth, requireRole('academic'), (req,res) => {
   const batches=db.academicBatches || [], previous=batches.find(batch=>batch.id===req.params.id && canReadAcademicVersion(req.user,batch))
   if (!previous) return res.status(404).json({message:'名单不存在。'})
-  if (!previous.dispatchedAt || batches.some(batch=>batch.previousId===previous.id) || req.body?.version!==previous.version) return res.status(409).json({message:'名单状态或版本已变化，请刷新。'})
+  if (previous.cancelledAt || !previous.dispatchedAt || batches.some(batch=>batch.previousId===previous.id) || req.body?.version!==previous.version) return res.status(409).json({message:'名单状态或版本已变化，请刷新。'})
   if (!Array.isArray(db.b?.cases)) return res.status(503).json({message:'学业服务尚未准备好。'})
   try {
     const result=createAcademicVersion({user:req.user,rows:req.body?.rows,users:db.users,previous,expectedVersion:req.body.version})
@@ -1588,7 +1611,7 @@ app.post('/api/academic/batches/:id/correct', requireAuth, requireRole('academic
     const added=changes.added.map(row=>({id:crypto.randomUUID(),studentId:row.studentId,studentName:db.users.find(user=>user.id===row.studentId).name,college:req.user.college,mentorId:row.mentorId,counselorId:row.counselorId,course:row.course,status:'pending_contact',version:1,result:null,records:[],createdAt:at,academicBatchId:result.batch.id}))
     db.b.cases.push(...added)
     const active=[...changes.retained.map(entry=>entry.caseItem),...added]
-    result.batch.dispatchedAt=at;result.batch.caseIds=result.batch.items.map(row=>active.find(c=>c.studentId===row.studentId&&c.course===row.course).id);result.batch.correctionReason=reason
+    result.batch.dispatchedAt=at;result.batch.caseIds=result.batch.items.map(row=>active.find(c=>c.studentId===row.studentId&&c.course===row.course).id);result.batch.correctionReason=reason;result.batch.correctedBy=req.user.id
     db.academicBatches.push(result.batch);save();return res.status(201).json({item:result.batch})
   } catch(error) {return res.status(409).json({message:error.message})}
 })
@@ -1596,7 +1619,7 @@ app.post('/api/academic/batches/:id/correct', requireAuth, requireRole('academic
 app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academic'), (req, res) => {
   const batch = (db.academicBatches || []).find(item => item.id === req.params.id && canReadAcademicVersion(req.user, item))
   if (!batch) return res.status(404).json({ message:'名单不存在。' })
-  if (batch.dispatchedAt || (db.academicBatches || []).some(item => item.previousId === batch.id) || req.body?.version !== batch.version) return res.status(409).json({ message:'名单已分发、已更新或版本冲突。' })
+  if (batch.cancelledAt || batch.dispatchedAt || (db.academicBatches || []).some(item => item.previousId === batch.id) || req.body?.version !== batch.version) return res.status(409).json({ message:'名单已撤销、已分发、已更新或版本冲突。' })
   const cases = db.b?.cases
   if (!Array.isArray(cases)) return res.status(503).json({ message:'学业服务尚未准备好。' })
   if (!academicRelationsValid(req.user, batch.items, db.users)) return res.status(409).json({ message:'人员状态或关系已变化，请重新核对名单。' })
@@ -1616,7 +1639,7 @@ app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academi
 
 app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, res) => {
   if (db.settings?.studentAcademicViewEnabled !== true) return res.status(501).json({ message: '学生学业信息展示尚未开放。' })
-  const items = (db.b?.cases || []).filter(item => item.studentId === req.user.id).map(item => ({
+  const items = (db.b?.cases || []).filter(item => item.studentId === req.user.id && !item.correctionCancelled).map(item => ({
     id:item.id, studentName:req.user.name, course:item.course, status:item.status, version:item.version,
     result:item.result ? { value:item.result.value, source:'', at:item.result.at } : null,
     records:(item.records || []).filter(record => record.type === 'official_result').map(record => ({ type:record.type, at:record.at, actor:'' })),

@@ -38,6 +38,7 @@ try{
  await page.getByText('待分发',{exact:true}).waitFor()
  await page.getByRole('button',{name:'更正名单'}).click()
  await page.getByText('正在更正版本 1', {exact:false}).first().waitFor()
+ await page.getByLabel('更正原因',{exact:false}).fill('修正课程')
  await page.getByLabel('CSV 内容').fill('studentId,course,mentorId,counselorId\nstu-lin,更正后数学,mentor-test,cou-chen')
  await page.getByRole('button',{name:'服务器校验并预览'}).click()
  await page.getByRole('button',{name:'确认保存名单'}).click()
@@ -86,5 +87,22 @@ try{
  const blocked=await fetch(`${api}/api/b/cases/${addedCase}/result`,{method:'PATCH',headers,body:JSON.stringify({version:cancelled.version,result:'passed',source:'test'})});assert.equal(blocked.status,409)
  const stale=await fetch(`${api}/api/academic/batches/${added.id}/correct`,{method:'POST',headers,body:JSON.stringify({version:added.version,reason:'重复',rows})});assert.equal(stale.status,409)
  assert.equal(revised.caseIds.length,2)
+ const blockedCancel=await fetch(`${api}/api/academic/batches/${revised.id}/cancel`,{method:'POST',headers,body:JSON.stringify({version:revised.version,reason:'尝试撤销含已完成记录的批次'})});assert.equal(blockedCancel.status,409)
+ const stillActive=(await (await fetch(api+'/api/b/cases',{headers})).json()).items.find(c=>c.course==='修正课程');assert.equal(stillActive.status,'pending_contact')
+ const draft=await fetch(api+'/api/academic/batches',{method:'POST',headers,body:JSON.stringify({rows:[{...rows[1],course:'独立测试课程'}]})});assert.equal(draft.status,201);const draftBatch=(await draft.json()).item
+ const dis=await fetch(`${api}/api/academic/batches/${draftBatch.id}/dispatch`,{method:'POST',headers,body:JSON.stringify({version:draftBatch.version})});assert.equal(dis.status,200)
+ await page.reload();await page.getByRole('heading',{name:'教务处 · 名单批次'}).waitFor()
+ const target=page.locator('article').filter({hasText:'独立测试课程'});await target.locator('summary').click()
+ // The row appears in the version detail; cancel by its enclosing article.
+ const onDialog=d=>void d.accept(d.type()==='prompt'?'整批名单录入错误':undefined);page.on('dialog',onDialog)
+ await target.getByRole('button',{name:'撤销整个批次'}).click();await page.getByText('批次已撤销，历史记录已保留。').waitFor()
+ page.off('dialog',onDialog)
+ const after=(await (await fetch(api+'/api/academic/batches',{headers})).json()).items
+ const cancelledBatch=after.find(b=>b.previousId===draftBatch.id);assert.equal(cancelledBatch.cancellationReason,'整批名单录入错误')
+ const retry=await fetch(`${api}/api/academic/batches/${cancelledBatch.id}/dispatch`,{method:'POST',headers,body:JSON.stringify({version:cancelledBatch.version})});assert.equal(retry.status,409)
+ const cancelledArticle=page.locator('article').filter({hasText:cancelledBatch.id});await cancelledArticle.locator('summary').click();await cancelledArticle.getByText(/整批名单录入错误/).waitFor()
+ const draft2=await fetch(api+'/api/academic/batches',{method:'POST',headers,body:JSON.stringify({rows:[{...rows[1],course:'草稿撤销测试'}]})});const draft2Batch=(await draft2.json()).item
+ const staleCancel=await fetch(`${api}/api/academic/batches/${draft2Batch.id}/cancel`,{method:'POST',headers,body:JSON.stringify({version:999,reason:'过期版本'})});assert.equal(staleCancel.status,409)
+ const cancelDraft=await fetch(`${api}/api/academic/batches/${draft2Batch.id}/cancel`,{method:'POST',headers,body:JSON.stringify({version:draft2Batch.version,reason:'不再分发'})});assert.equal(cancelDraft.status,201)
  console.log('PASS 教务页面登录、预览、更正、分发、结果回写及导师读取')
 }finally{await browser?.close();await vite?.close();child.kill();await new Promise(r=>setTimeout(r,100));await rm(dir,{recursive:true,force:true})}

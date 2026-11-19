@@ -68,23 +68,43 @@ export function mountTrialAdmin(app,{db,save,requireAuth,trialMode}) {
   app.get('/api/trial/admin/accounts',...guard,(req,res)=>{
     const offset = Number(req.query.offset ?? 0), limit = Number(req.query.limit ?? 50)
     if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) return res.status(400).json({message:'分页参数无效。'})
-    const items = db.users.slice(offset,offset+limit).map(user => {
+    const q=typeof req.query.q==='string'?req.query.q.trim().toLowerCase():'', role=req.query.role
+    if(q.length>100 || (role!==undefined && (typeof role!=='string' || !roles.has(role)))) return res.status(400).json({message:'搜索条件无效。'})
+    const matching=db.users.filter(user=>(!role || user.role===role) && (!q || [user.id,user.account,user.name].some(value=>String(value||'').toLowerCase().includes(q))))
+    const items = matching.slice(offset,offset+limit).map(user => {
       const {id,account,name,role,expiresAt,disabled,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus} = user
       return {id,account,name,role,expiresAt,disabled:disabled===true,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus}
     })
-    return res.json({items,total:db.users.length,offset,limit})
+    return res.json({items,total:matching.length,offset,limit})
+  })
+  app.get('/api/trial/admin/accounts/:id',...guard,(req,res)=>{
+    const user=db.users.find(item=>item.id===req.params.id)
+    if(!user)return res.status(404).json({message:'账号不存在。'})
+    const {id,account,name,role,expiresAt,disabled,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus}=user
+    return res.json({item:{id,account,name,role,expiresAt,disabled:disabled===true,educationLevel,classAdvisor,studentIds,academicStudentIds,counselorIds,classAdvisorIds,repairScopes,college,campus}})
+  })
+  app.post('/api/trial/admin/accounts/lookup',...guard,(req,res)=>{
+    const ids=req.body?.ids
+    if(!Array.isArray(ids)||ids.length>1000||ids.some(id=>!validId(id))||new Set(ids).size!==ids.length)return res.status(400).json({message:'人员编号无效。'})
+    const byId=new Map(db.users.map(user=>[user.id,user]))
+    return res.json({items:ids.map(id=>byId.get(id)).filter(Boolean).map(({id,name,role,disabled,expiresAt,classAdvisor,college})=>({id,name,role,disabled:disabled===true,expiresAt,classAdvisor,college}))})
   })
   app.post('/api/trial/admin/accounts',...guard,(req,res)=>{
     try{const created=prepareTrialAccounts(db.users,req.body?.accounts);db.users.push(...created);audit(req.user.id,'accounts_created',created.map(user=>user.id));save();return res.status(201).json({items:created.map(({id,account,role,expiresAt})=>({id,account,role,expiresAt}))})}catch(error){return res.status(400).json({message:error.message})}
   })
   app.post('/api/trial/admin/accounts/:id/relations',...guard,(req,res)=>{
-    try { configureStudentRelations(db.users,req.params.id,req.body); audit(req.user.id,'student_relations_changed',[req.params.id,...req.body.counselorIds,...req.body.classAdvisorIds]); save(); return res.json({ok:true}) }
+    const {expected,...input}=req.body||{}
+    const target=db.users.find(user=>user.id===req.params.id && user.role==='student')
+    const same=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&[...a].sort().every((id,i)=>id===[...b].sort()[i])
+    if(expected!==undefined && (!expected || !target || expected.educationLevel!==(target.educationLevel||'undergraduate') || !same(expected.counselorIds,target.counselorIds||[]) || !same(expected.classAdvisorIds,target.classAdvisorIds||[]))) return res.status(409).json({message:'学生关系已变化，请重新选择学生后再编辑。'})
+    try { configureStudentRelations(db.users,req.params.id,input); audit(req.user.id,'student_relations_changed',[req.params.id,...input.counselorIds,...input.classAdvisorIds]); save(); return res.json({ok:true}) }
     catch(error) { return res.status(400).json({message:error.message}) }
   })
   app.post('/api/trial/admin/accounts/:id/academic-scope',...guard,(req,res)=>{
     const target=db.users.find(user=>user.id===req.params.id && user.role==='academic')
     const ids=req.body?.studentIds
     if(!target || target.trialAdmin===true || !Array.isArray(ids) || ids.length>1000 || ids.some(id=>!validId(id)) || new Set(ids).size!==ids.length) return res.status(400).json({message:'教务账号或学生范围无效。'})
+    if(req.body?.expectedStudentIds!==undefined) {const expected=req.body.expectedStudentIds, actual=target.academicStudentIds||[];if(!Array.isArray(expected)||expected.length!==actual.length||[...expected].sort().some((id,i)=>id!==[...actual].sort()[i]))return res.status(409).json({message:'教务范围已变化，请重新选择教务账号后再编辑。'})}
     if(ids.some(id=>{const student=db.users.find(user=>user.id===id && user.role==='student');return !student || student.disabled || (student.expiresAt && (!Number.isFinite(Date.parse(student.expiresAt)) || Date.parse(student.expiresAt)<=Date.now())) || !target.college || student.college!==target.college})) return res.status(400).json({message:'学生不存在、已停用、已过期或不属于教务所在学院。'})
     target.academicStudentIds=[...ids];audit(req.user.id,'academic_scope_changed',[target.id,...ids]);save();return res.json({ok:true})
   })
