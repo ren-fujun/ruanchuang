@@ -49,6 +49,7 @@ export function StudentAssistant() {
           <br />
           {reply.source.source}
           <br />
+          {reply.source.excerpt && <><strong>审核条目中录入的文件原文：</strong>{reply.source.excerpt}<br /></>}
           有效至 {reply.source.validUntil}
         </p>
       )}

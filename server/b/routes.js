@@ -250,6 +250,7 @@ export function mountB(app, { db, save, requireAuth }) {
       answer,
       keywords,
       source,
+      sourceExcerpt,
       department,
       validUntil,
       parentId,
@@ -258,6 +259,7 @@ export function mountB(app, { db, save, requireAuth }) {
       ![title, answer, source, department].every(
         (v) => typeof v === 'string' && v.trim() && v.length <= 4000,
       ) ||
+      (sourceExcerpt !== undefined && (typeof sourceExcerpt !== 'string' || sourceExcerpt.length > 4000)) ||
       !Array.isArray(keywords) ||
       !keywords.length ||
       keywords.length > 20 ||
@@ -288,6 +290,7 @@ export function mountB(app, { db, save, requireAuth }) {
       answer,
       keywords,
       source,
+      sourceExcerpt: (sourceExcerpt || '').trim(),
       department,
       validUntil,
       status: 'draft',
@@ -392,6 +395,7 @@ export function mountB(app, { db, save, requireAuth }) {
           title: k.title,
           version: k.version,
           source: k.source,
+          excerpt: k.sourceExcerpt || '',
           department: k.department,
           validUntil: k.validUntil,
         },

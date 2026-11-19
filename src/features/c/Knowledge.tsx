@@ -9,6 +9,7 @@ interface Knowledge {
   answer: string;
   keywords: string[];
   source: string;
+  sourceExcerpt?: string;
   department: string;
   validUntil: string;
   authorId: string;
@@ -21,6 +22,7 @@ const empty = {
   answer: "",
   keywords: "",
   source: "",
+  sourceExcerpt: "",
   department: "",
   validUntil: "",
   parentId: "",
@@ -97,6 +99,9 @@ export function KnowledgeCorrections() {
               )}
             </label>
           ))}
+          <label>文件原文摘录（选填，须由审核人核对）
+            <textarea maxLength={4000} value={draft.sourceExcerpt} onChange={(e) => setDraft({ ...draft, sourceExcerpt: e.target.value })} />
+          </label>
           <p>
             关键词每个 2–30 字，最多 20
             个。有效期应晚于现在，修订版本需独立审核后生效。
@@ -137,6 +142,7 @@ export function KnowledgeCorrections() {
               </p>
               <p>{k.answer}</p>
               <p>依据　{k.source}</p>
+              {k.sourceExcerpt && <p>录入的文件原文　{k.sourceExcerpt}</p>}
               <p>有效至 {new Date(k.validUntil).toLocaleString("zh-CN")}</p>
               {k.review && <p>审核意见　{k.review.note}</p>}
               <div className="c-actions">
@@ -148,6 +154,7 @@ export function KnowledgeCorrections() {
                         answer: k.answer,
                         keywords: k.keywords.join("，"),
                         source: k.source,
+                        sourceExcerpt: k.sourceExcerpt || "",
                         department: k.department,
                         validUntil: "",
                         parentId: k.id,

@@ -182,6 +182,7 @@ try {
         answer: '请在学院公布的预约入口选择空闲时段，并等待管理员确认。',
         keywords: ['实验室', '预约'],
         source: '学院审核资料：测试样本',
+        sourceExcerpt: '虚构原文：预约申请须等待管理员确认。',
         department: '教务',
         validUntil: '2099-01-01',
       },
@@ -207,7 +208,8 @@ try {
   reply = await call('/b/assistant', student, { text: '实验室怎么预约' })
   assert.equal(reply.action, 'answer')
   assert.equal(reply.source.version, 1)
-  checks += 2
+  assert.equal(reply.source.excerpt, '虚构原文：预约申请须等待管理员确认。')
+  checks += 3
   const next = (
     await call(
       '/b/knowledge',
