@@ -13,6 +13,7 @@ import { dispatchBundle, applyLogisticsAction } from './logistics-workflow.js'
 import { mountRepairRoutes } from './repair-routes.js'
 import { planStudentTicketChange } from './c-student.js'
 import { createAcademicVersion, canReadAcademicVersion } from './academic-versions.js'
+import { academicRelationsValid } from './academic-relations.js'
 import { hashPassword, verifyPassword, createLoginLimiter } from './trial-auth.js'
 import { mountTrialFeedback } from './trial-feedback.js'
 import { mountTrialAdmin } from './trial-admin.js'
@@ -1535,18 +1536,12 @@ app.post('/api/issue-bundles/:bundleId/:ticketId/redispatch', requireAuth, requi
   return res.json({ item })
 })
 
-const academicRelationsValid = (user, rows) => rows.every(row => {
-  const student = db.users.find(item => item.id === row.studentId)
-  const mentor = db.users.find(item => item.id === row.mentorId)
-  const counselor = db.users.find(item => item.id === row.counselorId)
-  return Boolean(user.college && student && mentor && counselor && student.college === user.college && mentor.college === user.college && Array.isArray(counselor.studentIds) && counselor.studentIds.includes(student.id) && (Array.isArray(student.counselorIds) ? student.counselorIds.includes(counselor.id) : student.counselor === counselor.name))
-})
 app.post('/api/academic/batches/preview', requireAuth, requireRole('academic'), (req, res) => {
   try {
     const rows = parseAcademicCsv(req.body?.csv)
     const result = createAcademicVersion({user:req.user, rows, users:db.users})
     if (!result.valid) return res.status(400).json({message:'名单校验失败。', errors:result.errors})
-    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({message:'学生、导师学院或辅导员关系不匹配。'})
+    if (!academicRelationsValid(req.user, result.batch.items, db.users)) return res.status(400).json({message:'人员已停用、过期或学生、导师学院及辅导员关系不匹配。'})
     return res.json({items:result.batch.items})
   } catch (error) { return res.status(400).json({message:error.message}) }
 })
@@ -1559,7 +1554,7 @@ app.post('/api/academic/batches', requireAuth, requireRole('academic'), (req, re
   try {
     const result = createAcademicVersion({ user:req.user, rows:req.body?.rows, users:db.users, previous, expectedVersion:req.body?.expectedVersion ?? 0 })
     if (!result.valid) return res.status(400).json({ message:'名单校验失败。', errors:result.errors })
-    if (!academicRelationsValid(req.user, result.batch.items)) return res.status(400).json({ message:'学生、导师学院或辅导员关系不匹配。' })
+    if (!academicRelationsValid(req.user, result.batch.items, db.users)) return res.status(400).json({ message:'人员已停用、过期或学生、导师学院及辅导员关系不匹配。' })
     db.academicBatches = [...batches, result.batch]; save()
     return res.status(201).json({ item:result.batch })
   } catch (error) { return res.status(400).json({ message:error.message }) }
@@ -1575,6 +1570,7 @@ app.post('/api/academic/batches/:id/dispatch', requireAuth, requireRole('academi
   if (batch.dispatchedAt || (db.academicBatches || []).some(item => item.previousId === batch.id) || req.body?.version !== batch.version) return res.status(409).json({ message:'名单已分发、已更新或版本冲突。' })
   const cases = db.b?.cases
   if (!Array.isArray(cases)) return res.status(503).json({ message:'学业服务尚未准备好。' })
+  if (!academicRelationsValid(req.user, batch.items, db.users)) return res.status(409).json({ message:'人员状态或关系已变化，请重新核对名单。' })
   for (const row of batch.items) {
     const student = db.users.find(user => user.id === row.studentId && user.role === 'student')
     const mentor = db.users.find(user => user.id === row.mentorId && user.role === 'mentor')
