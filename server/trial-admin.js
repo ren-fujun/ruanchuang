@@ -81,6 +81,13 @@ export function mountTrialAdmin(app,{db,save,requireAuth,trialMode}) {
     try { configureStudentRelations(db.users,req.params.id,req.body); audit(req.user.id,'student_relations_changed',[req.params.id,...req.body.counselorIds,...req.body.classAdvisorIds]); save(); return res.json({ok:true}) }
     catch(error) { return res.status(400).json({message:error.message}) }
   })
+  app.post('/api/trial/admin/accounts/:id/academic-scope',...guard,(req,res)=>{
+    const target=db.users.find(user=>user.id===req.params.id && user.role==='academic')
+    const ids=req.body?.studentIds
+    if(!target || target.trialAdmin===true || !Array.isArray(ids) || ids.length>1000 || ids.some(id=>!validId(id)) || new Set(ids).size!==ids.length) return res.status(400).json({message:'教务账号或学生范围无效。'})
+    if(ids.some(id=>{const student=db.users.find(user=>user.id===id && user.role==='student');return !student || student.disabled || (student.expiresAt && (!Number.isFinite(Date.parse(student.expiresAt)) || Date.parse(student.expiresAt)<=Date.now())) || !target.college || student.college!==target.college})) return res.status(400).json({message:'学生不存在、已停用、已过期或不属于教务所在学院。'})
+    target.academicStudentIds=[...ids];audit(req.user.id,'academic_scope_changed',[target.id,...ids]);save();return res.json({ok:true})
+  })
   app.post('/api/trial/admin/accounts/:id/reset-password',...guard,(req,res)=>{
     const target=db.users.find(user=>user.id===req.params.id)
     if(!target||target.trialAdmin===true)return res.status(404).json({message:'账号不存在或不可操作。'})

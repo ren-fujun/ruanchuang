@@ -1576,12 +1576,19 @@ app.post('/api/academic/batches/:id/correct', requireAuth, requireRole('academic
     if (!academicRelationsValid(req.user,result.batch.items,db.users)) return res.status(400).json({message:'人员状态或关系无效。'})
     const changes=planAcademicCorrection(previous,result.batch,db.b.cases,req.body.reason)
     const at=nowIso(), reason=req.body.reason.trim()
-    for(const {caseItem,item} of changes) {
-      caseItem.assignmentHistory ||= []
-      caseItem.assignmentHistory.push({batchId:previous.id,mentorId:caseItem.mentorId,counselorId:caseItem.counselorId,actor:req.user.id,reason,at})
-      caseItem.mentorId=item.mentorId;caseItem.counselorId=item.counselorId;caseItem.academicBatchId=result.batch.id;caseItem.version++
+    for(const {caseItem,item,changed} of changes.retained) {
+      if (changed) {
+        caseItem.assignmentHistory ||= []
+        caseItem.assignmentHistory.push({batchId:previous.id,mentorId:caseItem.mentorId,counselorId:caseItem.counselorId,actor:req.user.id,reason,at})
+        caseItem.mentorId=item.mentorId;caseItem.counselorId=item.counselorId;caseItem.version++
+      }
+      caseItem.academicBatchId=result.batch.id
     }
-    result.batch.items=changes.map(({item})=>item);result.batch.dispatchedAt=at;result.batch.caseIds=changes.map(({caseItem})=>caseItem.id);result.batch.correctionReason=reason
+    for(const c of changes.removed) { c.status='completed';c.correctionCancelled={actor:req.user.id,reason,at,batchId:result.batch.id};c.version++ }
+    const added=changes.added.map(row=>({id:crypto.randomUUID(),studentId:row.studentId,studentName:db.users.find(user=>user.id===row.studentId).name,college:req.user.college,mentorId:row.mentorId,counselorId:row.counselorId,course:row.course,status:'pending_contact',version:1,result:null,records:[],createdAt:at,academicBatchId:result.batch.id}))
+    db.b.cases.push(...added)
+    const active=[...changes.retained.map(entry=>entry.caseItem),...added]
+    result.batch.dispatchedAt=at;result.batch.caseIds=result.batch.items.map(row=>active.find(c=>c.studentId===row.studentId&&c.course===row.course).id);result.batch.correctionReason=reason
     db.academicBatches.push(result.batch);save();return res.status(201).json({item:result.batch})
   } catch(error) {return res.status(409).json({message:error.message})}
 })

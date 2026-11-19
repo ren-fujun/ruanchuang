@@ -149,7 +149,7 @@ export function mountB(app, { db, save, requireAuth }) {
   r.get('/cases', allowed(['mentor', 'counselor', 'academic']), (req, res) =>
     res.json({
       items: state.cases
-        .filter((c) => visible(c, req.user))
+        .filter((c) => visible(c, req.user) && (!c.correctionCancelled || req.user.role === 'academic'))
         .map((c) => projected(c, req.user)),
     }),
   )
@@ -213,6 +213,7 @@ export function mountB(app, { db, save, requireAuth }) {
       (c) => c.id === req.params.id && visible(c, req.user),
     )
     if (!c) return fail(res, '无权更新', 403)
+    if (c.correctionCancelled) return fail(res, '名单更正撤销的事项不能回写结果', 409)
     if (c.version !== req.body.version) return fail(res, '版本冲突', 409)
     if (
       !['passed', 'failed'].includes(req.body.result) ||

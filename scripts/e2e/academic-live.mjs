@@ -50,8 +50,9 @@ try{
  await page.getByLabel('CSV 内容').fill('studentId,course,mentorId,counselorId\nstu-lin,更正后数学,mentor-other-test,cou-chen')
  await page.getByLabel('更正原因',{exact:false}).fill('虚构导师关系更正')
  await page.getByRole('button',{name:'服务器校验并预览'}).click()
+ page.once('dialog',dialog=>dialog.accept())
  await page.getByRole('button',{name:'确认保存名单'}).click()
- await page.getByText('人员更正已应用。',{exact:false}).waitFor()
+ await page.getByText('名单更正已应用。',{exact:false}).waitFor()
  const choice=page.getByLabel('学业事项').locator('option').filter({hasText:'更正后数学'})
  await choice.waitFor({state:'attached'})
  await page.getByLabel('学业事项').selectOption(await choice.getAttribute('value'))
@@ -73,5 +74,17 @@ try{
  const oldToken=(await oldLogin.json()).token
  const oldCases=await fetch(api+'/api/b/cases',{headers:{Authorization:`Bearer ${oldToken}`}})
  assert.ok(!(await oldCases.json()).items.some(item=>item.course==='更正后数学'))
+ // An unrelated finished case is retained; a new course can be added and then replaced.
+ const rows=[{studentId:'stu-lin',course:'更正后数学',mentorId:'mentor-other-test',counselorId:'cou-chen'},{studentId:'stu-lin',course:'新增课程',mentorId:'mentor-test',counselorId:'cou-chen'}]
+ const add=await fetch(`${api}/api/academic/batches/${newest.id}/correct`,{method:'POST',headers,body:JSON.stringify({version:3,reason:'补充遗漏课程',rows})})
+ assert.equal(add.status,201);const added=(await add.json()).item
+ const addedCase=added.caseIds[1]
+ const replacement=await fetch(`${api}/api/academic/batches/${added.id}/correct`,{method:'POST',headers,body:JSON.stringify({version:added.version,reason:'课程录入错误',rows:[rows[0],{...rows[1],course:'修正课程'}]})})
+ assert.equal(replacement.status,201);const revised=(await replacement.json()).item
+ const allCases=(await (await fetch(api+'/api/b/cases',{headers})).json()).items
+ const cancelled=allCases.find(item=>item.id===addedCase);assert.equal(cancelled.correctionCancelled.reason,'课程录入错误')
+ const blocked=await fetch(`${api}/api/b/cases/${addedCase}/result`,{method:'PATCH',headers,body:JSON.stringify({version:cancelled.version,result:'passed',source:'test'})});assert.equal(blocked.status,409)
+ const stale=await fetch(`${api}/api/academic/batches/${added.id}/correct`,{method:'POST',headers,body:JSON.stringify({version:added.version,reason:'重复',rows})});assert.equal(stale.status,409)
+ assert.equal(revised.caseIds.length,2)
  console.log('PASS 教务页面登录、预览、更正、分发、结果回写及导师读取')
 }finally{await browser?.close();await vite?.close();child.kill();await new Promise(r=>setTimeout(r,100));await rm(dir,{recursive:true,force:true})}
