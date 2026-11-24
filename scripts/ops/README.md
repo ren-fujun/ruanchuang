@@ -33,6 +33,14 @@ node scripts/ops/create-trial-demo.mjs .tmp/trial-demo/store.json
 node scripts/ops/verify-trial-demo.mjs .tmp/trial-demo/store.json
 ```
 
+进行真实浏览器演示彩排：
+
+```powershell
+node scripts/ops/rehearse-trial.mjs
+```
+
+脚本使用隔离 API 和学生、辅导员、后勤三个页面，验证学生提交报修、辅导员高风险看板、协同洞察及后勤收到事项，并将截图保存到 `.tmp/trial-rehearsal`。
+
 ## 备份
 
 ```powershell

@@ -15,9 +15,18 @@
 | C 五端试用反馈 | 通过 | `node scripts/c/feedback-e2e.mjs` |
 | D 直达报修 | 7 项通过 | `node scripts/e2e/logistics-workflow.mjs` |
 | 预约浏览器验证 | 通过 | `node scripts/c/verify.mjs` |
+| 10 条演示数据彩排 | 通过 | `node scripts/ops/rehearse-trial.mjs` |
 | 备份恢复与首个管理员初始化 | 通过 | `scripts/ops/*.test.mjs` |
 
 预约验证覆盖辅导员发布时段的时间校验、学生预约冲突保留表单、重试成功和取消预约；该验证使用浏览器契约样例，不等同于真实预约后端已经投入学校正式排班。
+
+演示数据彩排覆盖学生 H5 提交报修、辅导员查看高风险工单和协同洞察、后勤即时收到学生直达报修，以及学生手机端无横向溢出。截图：
+
+- `docs/e2e-evidence/demo-student-home.png`
+- `docs/e2e-evidence/demo-student-repair.png`
+- `docs/e2e-evidence/demo-counselor-risk.png`
+- `docs/e2e-evidence/demo-insights.png`
+- `docs/e2e-evidence/demo-logistics.png`
 
 ## 可运行源码包
 
