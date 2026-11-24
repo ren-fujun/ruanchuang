@@ -68,14 +68,7 @@ await cp('server', path.join(releaseRoot, 'server'), {
 })
 await cp('scripts/ops', path.join(releaseRoot, 'ops'), { recursive: true })
 await cp('deploy', path.join(releaseRoot, 'deploy'), { recursive: true })
-await mkdir(path.join(releaseRoot, 'docs'), { recursive: true })
-for (const file of [
-  'docs/D直达报修与异议验收.md',
-  'docs/首次试用部署与回退清单.md',
-  'docs/第二轮D验收汇总.md',
-]) {
-  await cp(file, path.join(releaseRoot, 'docs', path.basename(file)))
-}
+await cp('docs', path.join(releaseRoot, 'docs'), { recursive: true })
 for (const file of ['package.json', 'package-lock.json']) {
   await cp(file, path.join(releaseRoot, file))
 }
