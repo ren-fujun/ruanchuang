@@ -27,6 +27,12 @@ node scripts/ops/create-trial-demo.mjs .tmp/trial-demo/store.json
 
 脚本生成 10 条固定虚构工单，覆盖 6 个部门、5 种状态、2 条高风险和至少 1 条逾期事项。目标文件必须不存在，避免覆盖现有试用数据。
 
+生成后执行质量检查：
+
+```powershell
+node scripts/ops/verify-trial-demo.mjs .tmp/trial-demo/store.json
+```
+
 ## 备份
 
 ```powershell
