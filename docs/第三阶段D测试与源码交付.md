@@ -1,6 +1,6 @@
 # 第三阶段 D 测试与源码交付
 
-日期：2026-11-24。基线：`feat/a-five-portals-backend` 最新提交 `df91492`。本文用于报名材料、计划书和评审展示，不把本地验证写成公网试用已经完成。
+日期：2026-11-25。基线：`feat/a-five-portals-backend` 最新提交 `df91492`。本文用于报名材料、计划书和评审展示，不把本地验证写成公网试用已经完成。
 
 ## 工程证据
 
@@ -53,7 +53,7 @@
 从当前提交重新生成：
 
 ```powershell
-.\scripts\ops\package-release.ps1 -Tag d-final-20261124
+.\scripts\ops\package-release.ps1 -Tag d-final-20261125
 ```
 
 包内包含：
