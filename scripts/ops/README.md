@@ -41,6 +41,18 @@ node scripts/ops/rehearse-trial.mjs
 
 脚本使用隔离 API 和学生、辅导员、后勤三个页面，验证学生提交报修、辅导员高风险看板、协同洞察及后勤收到事项，并将截图保存到 `.tmp/trial-rehearsal`。
 
+## 一键启动本地试用演示
+
+```powershell
+.\scripts\ops\start-trial-demo.ps1
+```
+
+首次运行会生成 10 条演示数据，并在一个窗口启动 API、学生端、辅导员端和后勤端。需要重新生成演示数据时使用：
+
+```powershell
+.\scripts\ops\start-trial-demo.ps1 -Reset
+```
+
 ## 备份
 
 ```powershell

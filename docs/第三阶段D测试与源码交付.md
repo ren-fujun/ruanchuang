@@ -16,6 +16,7 @@
 | D 直达报修 | 7 项通过 | `node scripts/e2e/logistics-workflow.mjs` |
 | 预约浏览器验证 | 通过 | `node scripts/c/verify.mjs` |
 | 10 条演示数据彩排 | 通过 | `node scripts/ops/rehearse-trial.mjs` |
+| 一键本地试用启动 | 通过 | `.\scripts\ops\start-trial-demo.ps1` |
 | AI 认知链与护栏评测 | 26/26 通过 | `node scripts/ai/eval-b.mjs` |
 | 模拟故障降级与护栏演练 | 47/47 通过 | `node scripts/ai/drill-degrade.mjs --quiet` |
 | 校园反馈汇总入口 | 3/3 子套件通过 | `node scripts/e2e/campus-feedback.mjs` |
@@ -47,6 +48,8 @@
 - 校园反馈：C/D 跨端报修、C 五端反馈、五端总回归三个子套件全部通过。
 - AI：本地认知链 26/26、降级与护栏演练 47/47 全部通过。
 - 真实模型字段明确记录为 `false`，未把本地规则结果冒充真实模型效果。
+
+`start-trial-demo.ps1` 已验证能在同一窗口同时启动 API、学生端、辅导员端和后勤端，并在首次运行时自动生成、校验 10 条演示数据。
 
 ## 可运行源码包
 
