@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ClipboardList } from 'lucide-react'
 import { useApi } from '../../lib/useApi'
 import type { Ticket } from '../../types'
@@ -46,6 +46,7 @@ export function StudentTickets() {
   return (
     <div className="page tickets-page student-tickets-page">
       <PageHeader title="我的诉求" />
+      <p><Link to="/student/repairs">查看我的报修进度 →</Link></p>
 
       <div className="tickets-summary-line">
         <strong>{counts?.all ?? '—'}</strong>

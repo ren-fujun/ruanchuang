@@ -239,8 +239,7 @@ export function RepairDetail({ role }: { role: PortalRole }) {
     [note, setNote] = useState("");
   const [conclusion, setConclusion] = useState(""),
     [followUp, setFollowUp] = useState(""),
-    [owner, setOwner] = useState(""),
-    [dueAt, setDueAt] = useState("");
+    [owner, setOwner] = useState("");
   const key = useRef(crypto.randomUUID());
   const changed = () => {
     key.current = crypto.randomUUID();
@@ -267,6 +266,7 @@ export function RepairDetail({ role }: { role: PortalRole }) {
         {r && (
           <>
             <Panel title={r.repairType + " · " + r.location}>
+              <p>报修编号：{r.id}</p>
               <p>
                 {r.statusLabel}
                 {r.responseOverdue ? " · 异议回应已超时" : ""}
@@ -380,15 +380,21 @@ export function RepairDetail({ role }: { role: PortalRole }) {
                     className="c-form"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      act(
-                        "coordinate",
-                        {
-                          conclusion,
-                          followUp,
-                          owner,
-                          dueAt: new Date(dueAt).toISOString(),
-                        },
+                      const submittedDate = String(new FormData(e.currentTarget).get("coordinationDueAt") || "");
+                      void action.run(async () => {
+                        const timestamp = Date.parse(submittedDate);
+                        if (!Number.isFinite(timestamp) || timestamp <= Date.now()) {
+                          throw new Error("请选择有效且晚于现在的后续时间。");
+                        }
+                        return send("/repairs/" + id + "/coordinate", {
+                          conclusion, followUp, owner,
+                          dueAt: new Date(timestamp).toISOString(),
+                          version: r.version,
+                          requestId: key.current,
+                        });
+                      },
                         "协调结案已记录",
+                        changed,
                       );
                     }}
                   >
@@ -432,9 +438,8 @@ export function RepairDetail({ role }: { role: PortalRole }) {
                       <input
                         required
                         type="datetime-local"
-                        value={dueAt}
+                        name="coordinationDueAt"
                         onChange={(e) => {
-                          setDueAt(e.target.value);
                           changed();
                         }}
                       />

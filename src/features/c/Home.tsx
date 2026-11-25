@@ -267,6 +267,7 @@ export function PortalHome({ role }: { role: PortalRole }) {
             </section>
           )}
           <Panel title={student ? "正在跟进" : "重点待办"}>
+            {student && <p><Link to="/student/repairs">查看我的报修进度 →</Link></p>}
             <TicketRows
               role={role}
               tickets={student ? s.activeTickets : c.queue}

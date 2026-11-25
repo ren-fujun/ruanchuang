@@ -1,0 +1,223 @@
+{
+  "mode": "TRIAL_MODE=true",
+  "fixture": "synthetic bTrialFixture-derived local store",
+  "network": "127.0.0.1 only",
+  "externalModel": "disabled",
+  "checks": [
+    {
+      "label": "login 20230118",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login review-student-b",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login chenyuan",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login review-counselor-b",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login review-logistics",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login review-admin",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "login academic",
+      "method": "POST",
+      "url": "/api/auth/login",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "学生A创建报修",
+      "method": "POST",
+      "url": "/api/repairs",
+      "status": 201,
+      "expected": 201,
+      "pass": true
+    },
+    {
+      "label": "学生B读取学生A报修",
+      "method": "GET",
+      "url": "/api/repairs/WX20261125001",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "学生B写学生A报修反馈",
+      "method": "POST",
+      "url": "/api/repairs/WX20261125001/feedback",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "非关联辅导员读取报修",
+      "method": "GET",
+      "url": "/api/repairs/WX20261125001",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "后勤校区范围越界领取",
+      "method": "POST",
+      "url": "/api/repairs/WX20261125001/claim",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "旧工单拒绝其他学生读取",
+      "method": "GET",
+      "url": "/api/tickets/ZX20261107018",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "旧工单拒绝非关联辅导员读取",
+      "method": "GET",
+      "url": "/api/tickets/ZX20261107018",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "非管理员读取账号列表",
+      "method": "GET",
+      "url": "/api/trial/admin/accounts",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "非管理员查账号",
+      "method": "POST",
+      "url": "/api/trial/admin/accounts/lookup",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "学生A提交授权请假",
+      "method": "POST",
+      "url": "/api/b/leaves",
+      "status": 201,
+      "expected": 201,
+      "pass": true
+    },
+    {
+      "label": "请假重复键不同内容冲突",
+      "method": "POST",
+      "url": "/api/b/leaves",
+      "status": 409,
+      "expected": 409,
+      "pass": true
+    },
+    {
+      "label": "非关联辅导员审批请假",
+      "method": "POST",
+      "url": "/api/b/leaves/ba80b763-f2ac-43b2-a0b4-72f9524db20e/decision",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "教务读取授权范围内学业名单",
+      "method": "GET",
+      "url": "/api/b/cases",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "教务响应不包含未授权学生B",
+      "kind": "response_assertion",
+      "pass": true
+    },
+    {
+      "label": "教务跨范围创建学业事项",
+      "method": "POST",
+      "url": "/api/b/cases",
+      "status": 400,
+      "expected": 400,
+      "pass": true
+    },
+    {
+      "label": "辅导员读取关联事项",
+      "method": "GET",
+      "url": "/api/b/cases",
+      "status": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "label": "辅导员响应包含学生B且不包含学生A",
+      "kind": "response_assertion",
+      "pass": true
+    },
+    {
+      "label": "非关联辅导员写他人事项",
+      "method": "POST",
+      "url": "/api/b/cases/case-b/events",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "label": "学业事项终态拒绝追加动作",
+      "method": "POST",
+      "url": "/api/b/cases/case-terminal/events",
+      "status": 409,
+      "expected": 409,
+      "pass": true
+    },
+    {
+      "label": "拒绝确实来自终态校验",
+      "kind": "response_assertion",
+      "pass": true
+    },
+    {
+      "label": "请假选择非关联辅导员",
+      "method": "POST",
+      "url": "/api/b/leaves",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    }
+  ]
+}

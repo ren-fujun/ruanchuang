@@ -82,6 +82,10 @@ try {
   );
   const id = student.url().split("/").pop();
   await student.getByText("待后勤分配", { exact: false }).first().waitFor();
+  await student.getByRole("link", { name: "进度", exact: true }).click();
+  await student.getByRole("link", { name: "查看我的报修进度 →" }).click();
+  await student.locator(`a[href="/student/repairs/${id}"]`).click();
+  await student.getByText(`报修编号：${id}`, { exact: false }).waitFor();
   const login = await fetch(base + "/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -138,9 +142,13 @@ try {
   await teacher.getByLabel("事实与协调结论").fill("已核对现场情况及双方反馈。");
   await teacher.getByLabel("后续动作").fill("安排后续联合排查。");
   await teacher.getByLabel("负责人").fill("陈老师");
+  await teacher.getByLabel("后续时间").fill("2020-01-05T14:00");
+  await teacher.getByRole("button", { name: "确认协调结案" }).click();
+  await teacher.getByText("请选择有效且晚于现在的后续时间。", { exact: true }).first().waitFor();
   await teacher.getByLabel("后续时间").fill("2027-01-05T14:00");
   await teacher.getByRole("button", { name: "确认协调结案" }).click();
-  await teacher.getByText("协调结案", { exact: false }).first().waitFor();
+  await teacher.getByRole("heading", { name: "协调结案", exact: true }).waitFor({ state: "detached" });
+  assert.equal((await api("/repairs/" + id)).repair.status, "coordinated_closed");
   await student.goto(pages.student.origin + "/student/leaves");
   await student.getByText("本科生请假", { exact: false }).waitFor();
   await student.getByLabel("开始时间").fill("2027-01-06T09:00");

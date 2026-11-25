@@ -360,7 +360,7 @@ function LoginScreen({
         <div>
           <span className="portal-label">后勤端</span>
           <h2>维修调度登录</h2>
-          <p>使用后勤演示账号进入工作台。</p>
+          <p>使用已分配的后勤账号进入工作台。</p>
         </div>
         {error && <div className="form-error" role="alert">{error}</div>}
         <label>
@@ -385,7 +385,7 @@ function LoginScreen({
         <button className="primary-button" disabled={busy}>
           {busy ? '正在登录…' : '进入后勤维修台'}
         </button>
-        <p className="demo-hint">演示账号：logistics / 123456</p>
+        <p className="demo-hint">测试账号与密码请向本次试用负责人领取。</p>
       </form>
     </main>
   )
