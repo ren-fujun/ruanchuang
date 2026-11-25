@@ -1,9 +1,12 @@
 import { chromium } from 'playwright'
+import { mkdirSync } from 'node:fs'
 
 const browser = await chromium.launch({
   executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
   headless: true,
 })
+const evidenceDir = '.tmp/ux-audit'
+mkdirSync(evidenceDir, { recursive: true })
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
 const observations = []
 
@@ -22,7 +25,7 @@ observations.push({
   hasAIEntry: beforeHome.includes('AI 问答'),
 })
 await page.screenshot({
-  path: 'output/ux-student-home.png',
+  path: `${evidenceDir}/student-home.png`,
   fullPage: true,
 })
 
@@ -49,7 +52,7 @@ observations.push({
   showsNextStep: detail.includes('等待后勤分配') || detail.includes('下一步'),
 })
 await page.screenshot({
-  path: 'output/ux-repair-detail.png',
+  path: `${evidenceDir}/repair-detail.png`,
   fullPage: true,
 })
 
@@ -72,7 +75,7 @@ observations.push({
   apiRepairCount: apiRepairs.body?.items?.length ?? -1,
 })
 await page.screenshot({
-  path: 'output/ux-home-after-repair.png',
+  path: `${evidenceDir}/home-after-repair.png`,
   fullPage: true,
 })
 
@@ -85,7 +88,7 @@ observations.push({
   repairVisibleUnderRepairs: repairList.includes('水电 · 学生公寓 3 号楼 412'),
 })
 await page.screenshot({
-  path: 'output/ux-repair-list.png',
+  path: `${evidenceDir}/repair-list.png`,
   fullPage: true,
 })
 
