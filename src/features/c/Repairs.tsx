@@ -31,6 +31,20 @@ interface Repair {
 const send = (path: string, body: unknown) =>
   request(path, { method: "POST", body: JSON.stringify(body) });
 const when = (date: string) => new Date(date).toLocaleString("zh-CN");
+const repairNextSteps: Record<string, string> = {
+    pending_assignment: "等待后勤在责任范围内领取，目前无需重复提交。",
+    processing: "后勤正在处理，请保持联系方式畅通；有新结果会显示在这里。",
+    awaiting_feedback:
+      "请确认维修是否解决。若满意请确认；仍未解决可提交一次异议并说明原因。",
+    objection_pending_response:
+      "异议已送达后勤，等待书面说明；辅导员可以查看进度。",
+    pending_coordination: "双方记录已齐备，等待辅导员核对并协调结案。",
+    satisfied: "你已确认问题解决，本次报修已结束。",
+    coordinated_closed:
+      "辅导员已记录协调结论。如需再次现场服务，请按后续安排新建关联任务。",
+};
+const nextRepairStep = (status: string) =>
+  repairNextSteps[status] || "请查看当前状态，有疑问可通过试用反馈联系团队。";
 export function RepairList({ role }: { role: PortalRole }) {
   const resource = useCData<{ items: Repair[] }>("/repairs");
   const [filter, setFilter] = useState("all"),
@@ -271,6 +285,10 @@ export function RepairDetail({ role }: { role: PortalRole }) {
                 {r.statusLabel}
                 {r.responseOverdue ? " · 异议回应已超时" : ""}
               </p>
+              <div className="repair-next-step">
+                <strong>下一步</strong>
+                <span>{nextRepairStep(r.status)}</span>
+              </div>
               <p>{r.description}</p>
               <p>
                 提交时间：{when(r.createdAt)} · 后勤：

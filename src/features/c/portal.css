@@ -16,6 +16,26 @@
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
 }
+
+.repair-next-step {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-left: 3px solid #8dbd45;
+  border-radius: 0 8px 8px 0;
+  background: #f4f8ed;
+}
+
+.repair-next-step strong {
+  color: #28513d;
+  font-size: 13px;
+}
+
+.repair-next-step span {
+  color: #536157;
+  line-height: 1.65;
+}
 .c-shell a {
   text-decoration: none;
   color: inherit;
