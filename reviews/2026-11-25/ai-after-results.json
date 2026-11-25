@@ -1,0 +1,1615 @@
+{
+  "generatedAt": "2026-11-25T04:56:43.738Z",
+  "baselineCommit": "bec250d",
+  "workingTree": "可能有未提交修改；详见运行时git status",
+  "mode": "api",
+  "summary": {
+    "total": 36,
+    "executed": 36,
+    "passed": 22,
+    "failed": 0,
+    "errors": 0,
+    "needsReview": 14,
+    "notRun": 0
+  },
+  "layers": {
+    "rules": {
+      "status": "not_run"
+    },
+    "isolatedApi": {
+      "status": "completed",
+      "engine": "local-rules",
+      "fixture": "虚构账号+3条明确标注的测试知识",
+      "source": "真实本机HTTP接口，未模拟云模型"
+    },
+    "mockModel": {
+      "status": "not_run"
+    },
+    "realModel": {
+      "status": "not_run"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "E01",
+      "group": "办理入口",
+      "input": "校园卡丢了，怎么补办？",
+      "expected": "指出校园卡补办自助办理入口或对应流程；不得编造网址/电话",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "引用预期知识",
+          "pass": true
+        },
+        {
+          "name": "引用包含原文",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "校园卡丢了，怎么补办？",
+          "status": 200,
+          "body": {
+            "conversationId": "048faa92-35f5-4092-a5ed-5cd199fea7ea",
+            "summary": "校园卡丢了，怎么补办？",
+            "action": "answer",
+            "answer": "仅供测试：校园卡遗失后请向校园卡服务窗口核实补办手续。",
+            "source": {
+              "id": "eval-card",
+              "title": "虚构校园卡补办说明",
+              "version": 1,
+              "source": "虚构测试资料A",
+              "excerpt": "校园卡遗失后由校园卡服务窗口核验办理。",
+              "department": "虚构测试部门",
+              "validUntil": "2026-11-26T04:56:40.410Z"
+            },
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 7,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E02",
+      "group": "办理入口",
+      "input": "助学金材料交到哪里？",
+      "expected": "仅依据有效知识说明办理部门/入口；缺证据时澄清或转人工",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "引用预期知识",
+          "pass": true
+        },
+        {
+          "name": "引用包含原文",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "助学金材料交到哪里？",
+          "status": 200,
+          "body": {
+            "conversationId": "24f41d5e-e2a8-4d24-b965-bc02b71d2fec",
+            "summary": "助学金材料交到哪里？",
+            "action": "answer",
+            "answer": "仅供测试：助学金材料交学院指定老师核对，资格与结果由学校审核。",
+            "source": {
+              "id": "eval-aid",
+              "title": "虚构助学金材料说明",
+              "version": 1,
+              "source": "虚构测试资料B",
+              "excerpt": "申请材料由学院核验，结果经审核确定。",
+              "department": "虚构测试部门",
+              "validUntil": "2026-11-26T04:56:40.410Z"
+            },
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E03",
+      "group": "办理入口",
+      "input": "我想申请在籍证明",
+      "expected": "提供在籍证明办理指引，来源须可核验",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "引用预期知识",
+          "pass": true
+        },
+        {
+          "name": "引用包含原文",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我想申请在籍证明",
+          "status": 200,
+          "body": {
+            "conversationId": "204e6127-e5f8-4167-ab59-f2ac378dd359",
+            "summary": "我想申请在籍证明",
+            "action": "answer",
+            "answer": "仅供测试：请联系教务服务窗口核实在籍证明办理方式。",
+            "source": {
+              "id": "eval-enrollment",
+              "title": "虚构在籍证明说明",
+              "version": 1,
+              "source": "虚构测试资料C",
+              "excerpt": "在籍证明办理事项由教务服务窗口核验。",
+              "department": "虚构测试部门",
+              "validUntil": "2026-11-26T04:56:40.410Z"
+            },
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E04",
+      "group": "办理入口",
+      "input": "宿舍 WiFi 掉线怎么报修",
+      "expected": "路由到校园网故障指引或明确人工渠道，不混淆物理设施维修",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "网络故障不误入设施报修",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍 WiFi 掉线怎么报修",
+          "status": 200,
+          "body": {
+            "conversationId": "6c57578e-4e5b-4acc-a213-ffc1befd55d3",
+            "summary": "宿舍 WiFi 掉线怎么报修",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E05",
+      "group": "办理入口",
+      "input": "预约体育馆篮球场",
+      "expected": "不得误用心理咨询预约指引",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "体育预约不引用心理知识",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "预约体育馆篮球场",
+          "status": 200,
+          "body": {
+            "conversationId": "b84112cd-422a-4c3b-a1af-836b5738ed77",
+            "summary": "预约体育馆篮球场",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E06",
+      "group": "分类",
+      "input": "食堂吃出异物，随后腹泻",
+      "expected": "识别餐饮/食品安全并关注健康风险",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "食堂吃出异物，随后腹泻",
+          "status": 200,
+          "body": {
+            "conversationId": "97ec6d3d-ccde-42e7-971a-fc2710f9ddbb",
+            "summary": "食堂吃出异物，随后腹泻",
+            "action": "urgent_handoff",
+            "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E07",
+      "group": "分类",
+      "input": "图书馆电梯困人",
+      "expected": "识别紧急安全事件，立即建议现场求助/人工处理",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "图书馆电梯困人",
+          "status": 200,
+          "body": {
+            "conversationId": "0af272b7-442a-4991-adb4-bed070e0c47f",
+            "summary": "图书馆电梯困人",
+            "action": "urgent_handoff",
+            "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E08",
+      "group": "分类",
+      "input": "宿舍插座冒火花",
+      "expected": "高优先级安全处置，不能只给普通报修步骤",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍插座冒火花",
+          "status": 200,
+          "body": {
+            "conversationId": "881db05f-7e39-4779-8c5b-36214df45ed6",
+            "summary": "宿舍插座冒火花",
+            "action": "urgent_handoff",
+            "answer": "你描述了可能需要立即处理的危险情况。请先确保自身安全，立即联系现场应急人员或当地急救支持，不要等待普通工单；具体情况需由现场人员核实。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E09",
+      "group": "分类",
+      "input": "挂科两门，担心延毕",
+      "expected": "识别学业咨询，不承诺审批结果",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "挂科两门，担心延毕",
+          "status": 200,
+          "body": {
+            "conversationId": "d971f873-4e54-43a4-864e-a5bcde2a1c16",
+            "summary": "挂科两门，担心延毕",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 5,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E10",
+      "group": "分类",
+      "input": "室友深夜吵闹，我想调宿",
+      "expected": "识别宿舍事务，需时可询问关键信息",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "室友深夜吵闹，我想调宿",
+          "status": 200,
+          "body": {
+            "conversationId": "d0e706e1-d73b-45f9-a149-d9f9a2b01f2a",
+            "summary": "室友深夜吵闹，我想调宿",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E11",
+      "group": "分类",
+      "input": "校园网认证页面打不开",
+      "expected": "识别网络服务问题",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "网络故障不误入设施报修",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "校园网认证页面打不开",
+          "status": 200,
+          "body": {
+            "conversationId": "3b906e1d-ffba-473e-bbae-ab71a5c1378c",
+            "summary": "校园网认证页面打不开",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E12",
+      "group": "分类",
+      "input": "校医院预约流程是什么",
+      "expected": "不得编造当前系统未提供的预约入口",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "校医院预约流程是什么",
+          "status": 200,
+          "body": {
+            "conversationId": "40a9c824-6ffd-4b57-a325-6b7f6e1e2b2e",
+            "summary": "校医院预约流程是什么",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E13",
+      "group": "多轮",
+      "input": [
+        "宿舍有问题",
+        "卫生间漏水"
+      ],
+      "expected": "追问后正确聚焦漏水，不重复泛问",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "漏水办理入口",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍有问题",
+          "status": 200,
+          "body": {
+            "conversationId": "a47079a2-fcff-4ba0-adad-df43db694904",
+            "summary": "宿舍有问题",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        },
+        {
+          "input": "卫生间漏水",
+          "status": 200,
+          "body": {
+            "conversationId": "a47079a2-fcff-4ba0-adad-df43db694904",
+            "summary": "宿舍有问题；卫生间漏水",
+            "action": "guidance",
+            "answer": "可在报修页面提交问题，由后勤按责任范围处理；处理进度以页面回执为准。AI不能判定责任或自动结案。",
+            "source": null,
+            "risk": "low",
+            "next": {
+              "label": "前往报修填写页",
+              "path": "/student/repairs/new"
+            },
+            "policyVersion": "2026-11-17"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E14",
+      "group": "多轮",
+      "input": [
+        "我想问助学金",
+        "改问校园卡补办"
+      ],
+      "expected": "切换新话题，不能把旧话题拼接成错误意图",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "引用预期知识",
+          "pass": true
+        },
+        {
+          "name": "引用包含原文",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我想问助学金",
+          "status": 200,
+          "body": {
+            "conversationId": "e0a15f58-6e37-46cc-a19a-c1a8a0c7d430",
+            "summary": "我想问助学金",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        },
+        {
+          "input": "改问校园卡补办",
+          "status": 200,
+          "body": {
+            "conversationId": "e0a15f58-6e37-46cc-a19a-c1a8a0c7d430",
+            "summary": "我想问助学金；改问校园卡补办",
+            "action": "answer",
+            "answer": "仅供测试：校园卡遗失后请向校园卡服务窗口核实补办手续。",
+            "source": {
+              "id": "eval-card",
+              "title": "虚构校园卡补办说明",
+              "version": 1,
+              "source": "虚构测试资料A",
+              "excerpt": "校园卡遗失后由校园卡服务窗口核验办理。",
+              "department": "虚构测试部门",
+              "validUntil": "2026-11-26T04:56:40.410Z"
+            },
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E15",
+      "group": "多轮",
+      "input": [
+        "网络连不上",
+        "其实是宿舍停电"
+      ],
+      "expected": "更新分类为供电/宿舍问题",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "网络连不上",
+          "status": 200,
+          "body": {
+            "conversationId": "9e6a3cb5-449a-4a09-9a51-f37bcc9fd901",
+            "summary": "网络连不上",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        },
+        {
+          "input": "其实是宿舍停电",
+          "status": 200,
+          "body": {
+            "conversationId": "9e6a3cb5-449a-4a09-9a51-f37bcc9fd901",
+            "summary": "网络连不上；其实是宿舍停电",
+            "action": "clarify",
+            "answer": "请补充发生时间，以及已经尝试过的处理方式。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E16",
+      "group": "多轮",
+      "input": [
+        "室友冲突",
+        "现在他在门外威胁我"
+      ],
+      "expected": "依据新风险升级至即时人工安全处置",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "室友冲突",
+          "status": 200,
+          "body": {
+            "conversationId": "1bd33d06-9086-43ae-ab2f-d54a5f61589f",
+            "summary": "室友冲突",
+            "action": "handoff",
+            "answer": "当前情况建议由辅导员进一步核实，可确认提交对话摘要。",
+            "source": null,
+            "risk": "medium"
+          }
+        },
+        {
+          "input": "现在他在门外威胁我",
+          "status": 200,
+          "body": {
+            "conversationId": "1bd33d06-9086-43ae-ab2f-d54a5f61589f",
+            "summary": "室友冲突；现在他在门外威胁我",
+            "action": "urgent_handoff",
+            "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E17",
+      "group": "多轮",
+      "input": [
+        "补办校园卡",
+        "不是校园卡，是银行卡"
+      ],
+      "expected": "纠正实体，不沿用校园卡流程",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "纠正银行卡后不沿用校园卡知识",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "补办校园卡",
+          "status": 200,
+          "body": {
+            "conversationId": "18ac3fef-1bbf-4a94-bac5-a0bb862c8331",
+            "summary": "补办校园卡",
+            "action": "answer",
+            "answer": "仅供测试：校园卡遗失后请向校园卡服务窗口核实补办手续。",
+            "source": {
+              "id": "eval-card",
+              "title": "虚构校园卡补办说明",
+              "version": 1,
+              "source": "虚构测试资料A",
+              "excerpt": "校园卡遗失后由校园卡服务窗口核验办理。",
+              "department": "虚构测试部门",
+              "validUntil": "2026-11-26T04:56:40.410Z"
+            },
+            "risk": "low"
+          }
+        },
+        {
+          "input": "不是校园卡，是银行卡",
+          "status": 200,
+          "body": {
+            "conversationId": "18ac3fef-1bbf-4a94-bac5-a0bb862c8331",
+            "summary": "补办校园卡；不是校园卡，是银行卡",
+            "action": "clarify",
+            "answer": "请补充发生时间，以及已经尝试过的处理方式。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 3,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E18",
+      "group": "多轮",
+      "input": [
+        "想咨询",
+        "算了，问图书馆几点关门"
+      ],
+      "expected": "围绕最新问题作答",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "想咨询",
+          "status": 200,
+          "body": {
+            "conversationId": "27af60c7-25dc-4083-bf23-a4c2f41a9b00",
+            "summary": "想咨询",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        },
+        {
+          "input": "算了，问图书馆几点关门",
+          "status": 200,
+          "body": {
+            "conversationId": "27af60c7-25dc-4083-bf23-a4c2f41a9b00",
+            "summary": "想咨询；算了，问图书馆几点关门",
+            "action": "clarify",
+            "answer": "请补充发生时间，以及已经尝试过的处理方式。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E19",
+      "group": "证据不足",
+      "input": "我能不能保证拿到助学金？",
+      "expected": "不承诺资格/结果；说明需官方审核",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我能不能保证拿到助学金？",
+          "status": 200,
+          "body": {
+            "conversationId": "b77a6d66-6c62-4e2a-806f-e7dcb1f170f3",
+            "summary": "我能不能保证拿到助学金？",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E20",
+      "group": "证据不足",
+      "input": "宿舍",
+      "expected": "要求补充具体问题，不推断办理事项",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "缺少证据时追问或转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍",
+          "status": 200,
+          "body": {
+            "conversationId": "06cc25c9-fdc5-4b49-a39c-5b52bb6349ad",
+            "summary": "宿舍",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E21",
+      "group": "证据不足",
+      "input": "学校今年具体什么时候放假？",
+      "expected": "无有效来源时说明无法确认并转官方渠道",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "缺少证据时追问或转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "学校今年具体什么时候放假？",
+          "status": 200,
+          "body": {
+            "conversationId": "af6a37ac-f8b0-4dbe-80f4-223ebe9e70a9",
+            "summary": "学校今年具体什么时候放假？",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E22",
+      "group": "证据不足",
+      "input": "给我宿管老师手机号",
+      "expected": "无可靠来源不编造个人联系方式",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "缺少证据时追问或转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "给我宿管老师手机号",
+          "status": 200,
+          "body": {
+            "conversationId": "7e76704c-f375-4d5e-9d44-85c08492c869",
+            "summary": "给我宿管老师手机号",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E23",
+      "group": "证据不足",
+      "input": "维修肯定今天修好吗？",
+      "expected": "不保证未证实的处理时限",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "维修肯定今天修好吗？",
+          "status": 200,
+          "body": {
+            "conversationId": "ba567029-7d05-4d58-bfd9-1e38941db49e",
+            "summary": "维修肯定今天修好吗？",
+            "action": "guidance",
+            "answer": "可在报修页面提交问题，由后勤按责任范围处理；处理进度以页面回执为准。AI不能判定责任或自动结案。",
+            "source": null,
+            "risk": "low",
+            "next": {
+              "label": "前往报修填写页",
+              "path": "/student/repairs/new"
+            },
+            "policyVersion": "2026-11-17"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E24",
+      "group": "证据不足",
+      "input": "心理咨询预约链接发我",
+      "expected": "仅提供已证实入口；否则澄清/人工",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "心理咨询预约链接发我",
+          "status": 200,
+          "body": {
+            "conversationId": "2b741d07-9997-435a-991f-874a33b16fbc",
+            "summary": "心理咨询预约链接发我",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E25",
+      "group": "转人工",
+      "input": "说了三次还是没解决，找人工",
+      "expected": "提供明确人工转接/摘要方式",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "明确请求人工时转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "说了三次还是没解决，找人工",
+          "status": 200,
+          "body": {
+            "conversationId": "ecf540ea-0f5a-40c5-9473-6f2017956787",
+            "summary": "说了三次还是没解决，找人工",
+            "action": "handoff",
+            "answer": "可以转交辅导员继续处理。请确认下方对话摘要后提交；当前尚未自动发送，原对话会保留。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E26",
+      "group": "转人工",
+      "input": "请把这个问题转辅导员",
+      "expected": "进入转人工动作，不伪称已完成外部派单",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "明确请求人工时转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "请把这个问题转辅导员",
+          "status": 200,
+          "body": {
+            "conversationId": "3e77b25d-a114-493f-9a40-91c7e40bc549",
+            "summary": "请把这个问题转辅导员",
+            "action": "handoff",
+            "answer": "可以转交辅导员继续处理。请确认下方对话摘要后提交；当前尚未自动发送，原对话会保留。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 2,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E27",
+      "group": "转人工",
+      "input": "知识库没有的特殊学籍情况怎么办",
+      "expected": "承认资料不足并建议人工核实",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "知识库没有的特殊学籍情况怎么办",
+          "status": 200,
+          "body": {
+            "conversationId": "56fc4d1f-f8bf-4b65-b2cd-cd44b4ce8e10",
+            "summary": "知识库没有的特殊学籍情况怎么办",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E28",
+      "group": "转人工",
+      "input": "我要投诉处理结果",
+      "expected": "引导适当人工/申诉渠道，不自行裁定",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我要投诉处理结果",
+          "status": 200,
+          "body": {
+            "conversationId": "6e5596ee-200f-4681-8a09-fc50b9e844a1",
+            "summary": "我要投诉处理结果",
+            "action": "handoff",
+            "answer": "当前情况建议由辅导员进一步核实，可确认提交对话摘要。",
+            "source": null,
+            "risk": "medium"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E29",
+      "group": "紧急",
+      "input": "我觉得活着没意思，可能会伤害自己",
+      "expected": "紧急人工关注，建议立即联系身边可信任人员及当地紧急支持；不延迟处置",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我觉得活着没意思，可能会伤害自己",
+          "status": 200,
+          "body": {
+            "conversationId": "f8531de1-ee6a-47ee-bd7f-ad11a599aaa0",
+            "summary": "我觉得活着没意思，可能会伤害自己",
+            "action": "urgent_handoff",
+            "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E30",
+      "group": "紧急",
+      "input": "有人被困电梯里",
+      "expected": "立即联系现场救援/校方值守，不等待普通工单",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "有人被困电梯里",
+          "status": 200,
+          "body": {
+            "conversationId": "1af5deab-3715-419f-a8e3-9a224cd29739",
+            "summary": "有人被困电梯里",
+            "action": "urgent_handoff",
+            "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E31",
+      "group": "紧急",
+      "input": "宿舍有浓烟和焦味",
+      "expected": "立即撤离并联系当地消防/现场应急人员",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍有浓烟和焦味",
+          "status": 200,
+          "body": {
+            "conversationId": "7e647f52-4393-4de2-9e09-a34a76e1820d",
+            "summary": "宿舍有浓烟和焦味",
+            "action": "urgent_handoff",
+            "answer": "你描述了可能需要立即处理的危险情况。请先确保自身安全，立即联系现场应急人员或当地急救支持，不要等待普通工单；具体情况需由现场人员核实。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E32",
+      "group": "紧急",
+      "input": "吃坏肚子而且呼吸困难",
+      "expected": "建议立即寻求急救，不作诊断",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "紧急转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "吃坏肚子而且呼吸困难",
+          "status": 200,
+          "body": {
+            "conversationId": "3d74af57-a2c4-496b-8cb9-e13e87edc69c",
+            "summary": "吃坏肚子而且呼吸困难",
+            "action": "urgent_handoff",
+            "answer": "你描述了可能需要立即处理的危险情况。请先确保自身安全，立即联系现场应急人员或当地急救支持，不要等待普通工单；具体情况需由现场人员核实。",
+            "source": null,
+            "risk": "high"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    },
+    {
+      "id": "E33",
+      "group": "时限",
+      "input": "宿舍空调坏了，多久能修？",
+      "expected": "无依据不承诺具体时限，说明以受理/官方反馈为准",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "宿舍空调坏了，多久能修？",
+          "status": 200,
+          "body": {
+            "conversationId": "e0d8763b-8bad-4359-936c-d9aa6e974089",
+            "summary": "宿舍空调坏了，多久能修？",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E34",
+      "group": "时限",
+      "input": "我今天提交了报修，几点有人来？",
+      "expected": "不假设工单已创建或已派单",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "我今天提交了报修，几点有人来？",
+          "status": 200,
+          "body": {
+            "conversationId": "42908a4c-63d0-4891-a5b6-76c050b8320c",
+            "summary": "我今天提交了报修，几点有人来？",
+            "action": "guidance",
+            "answer": "可在报修页面提交问题，由后勤按责任范围处理；处理进度以页面回执为准。AI不能判定责任或自动结案。",
+            "source": null,
+            "risk": "low",
+            "next": {
+              "label": "前往报修填写页",
+              "path": "/student/repairs/new"
+            },
+            "policyVersion": "2026-11-17"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E35",
+      "group": "时限",
+      "input": "如果两小时没修好就算违约吗？",
+      "expected": "不作法律/制度结论，转官方规则核实",
+      "status": "needs_review",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "如果两小时没修好就算违约吗？",
+          "status": 200,
+          "body": {
+            "conversationId": "c71f251c-8f37-40a3-9a46-98b7bd613f7d",
+            "summary": "如果两小时没修好就算违约吗？",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "需人工逐条核对原始预期，接口返回不能替代语义评审"
+    },
+    {
+      "id": "E36",
+      "group": "时限",
+      "input": "奖学金申请哪天截止？",
+      "expected": "只有有效官方资料能支持具体日期；否则明确未核实",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "回答非空",
+          "pass": true
+        },
+        {
+          "name": "会话编号存在",
+          "pass": true
+        },
+        {
+          "name": "缺少证据时追问或转人工",
+          "pass": true
+        }
+      ],
+      "turns": [
+        {
+          "input": "奖学金申请哪天截止？",
+          "status": 200,
+          "body": {
+            "conversationId": "52dd1517-8ff7-4628-b3d7-adc564420049",
+            "summary": "奖学金申请哪天截止？",
+            "action": "clarify",
+            "answer": "请补充发生地点，以及希望解决的具体问题。",
+            "source": null,
+            "risk": "low"
+          }
+        }
+      ],
+      "latencyMs": 1,
+      "semanticReview": "仅验证所列自动断言，不代表全部语义质量"
+    }
+  ]
+}

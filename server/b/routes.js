@@ -5,6 +5,7 @@ import { mountLeaves } from './leaves.js'
 import { mountCollaboration, caseView } from './collaboration.js'
 import { operation } from './operations.js'
 import { workflowGuidance } from './policy.js'
+import { consultationFocus, requestsHuman, immediateDanger } from './consultation.js'
 const id = () => crypto.randomUUID(),
   now = () => new Date().toISOString()
 export function mountB(app, { db, save, requireAuth }) {
@@ -355,10 +356,11 @@ export function mountB(app, { db, save, requireAuth }) {
     }
     c.turns.push(text)
     const combined = c.turns.join('；')
+    const focus = consultationFocus(c.turns)
     const risk = scanRisk({ text: combined })
     const guidance = workflowGuidance(text, req.user)
     const score = (k) =>
-      k.keywords.reduce((n, w) => n + (combined.includes(w) ? w.length : 0), 0)
+      k.keywords.reduce((n, w) => n + (focus.includes(w) ? w.length : 0), 0)
     const matches = state.knowledge
       .filter(
         (k) =>
@@ -377,10 +379,17 @@ export function mountB(app, { db, save, requireAuth }) {
       source: null,
       risk: risk.level || risk.label,
     }
-    if (risk.label === 'high' || risk.level === 'high') {
+    if (immediateDanger(text)) {
+      result.action = 'urgent_handoff'
+      result.risk = 'high'
+      result.answer = '你描述了可能需要立即处理的危险情况。请先确保自身安全，立即联系现场应急人员或当地急救支持，不要等待普通工单；具体情况需由现场人员核实。'
+    } else if (risk.label === 'high' || risk.level === 'high') {
       result.answer =
         '这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。'
       result.action = 'urgent_handoff'
+    } else if (requestsHuman(text)) {
+      result.action = 'handoff'
+      result.answer = '可以转交辅导员继续处理。请确认下方对话摘要后提交；当前尚未自动发送，原对话会保留。'
     } else if (guidance) {
       result = { ...result, action: 'guidance', ...guidance, policyVersion: '2026-11-17', source: null }
     } else if (risk.level !== 'low') {
