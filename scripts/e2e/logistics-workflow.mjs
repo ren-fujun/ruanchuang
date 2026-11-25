@@ -46,12 +46,14 @@ data.users.push(
 await writeFile(dataFile, JSON.stringify(data, null, 2))
 
 async function freePort() {
-  const probe = createNetServer()
-  probe.listen(0, '127.0.0.1')
-  await once(probe, 'listening')
-  const port = probe.address().port
-  await new Promise((resolve) => probe.close(resolve))
-  return port
+  for (;;) {
+    const probe = createNetServer()
+    probe.listen(0, '127.0.0.1')
+    await once(probe, 'listening')
+    const port = probe.address().port
+    await new Promise((resolve) => probe.close(resolve))
+    if (port >= 10000) return port
+  }
 }
 
 const apiPort = await freePort()

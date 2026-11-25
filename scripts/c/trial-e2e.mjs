@@ -17,12 +17,14 @@ stu.educationLevel = "undergraduate";
 stu.counselorIds = [cou.id];
 await writeFile(path.join(dir, "store.json"), JSON.stringify(data));
 async function freePort() {
-  const s = netServer();
-  s.listen(0, "127.0.0.1");
-  await once(s, "listening");
-  const p = s.address().port;
-  await new Promise((r) => s.close(r));
-  return p;
+  for (;;) {
+    const s = netServer();
+    s.listen(0, "127.0.0.1");
+    await once(s, "listening");
+    const p = s.address().port;
+    await new Promise((r) => s.close(r));
+    if (p >= 10000) return p;
+  }
 }
 const port = await freePort(),
   base = "http://127.0.0.1:" + port;

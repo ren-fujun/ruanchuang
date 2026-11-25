@@ -16,12 +16,14 @@ const file = path.join(out, 'store.json')
 await writeFile(file, JSON.stringify(fivePortalFixture(), null, 2))
 await writeFile(path.join(out, 'scenarios.json'), JSON.stringify(scenarios, null, 2))
 async function freePort() {
-  const probe = netServer()
-  probe.listen(0, '127.0.0.1')
-  await once(probe, 'listening')
-  const port = probe.address().port
-  await new Promise(resolve => probe.close(resolve))
-  return port
+  for (;;) {
+    const probe = netServer()
+    probe.listen(0, '127.0.0.1')
+    await once(probe, 'listening')
+    const port = probe.address().port
+    await new Promise(resolve => probe.close(resolve))
+    if (port >= 10000) return port
+  }
 }
 const port = await freePort()
 const base = `http://127.0.0.1:${port}`

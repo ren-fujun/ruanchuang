@@ -24,12 +24,14 @@ assert.equal(generated.status, 0, generated.stderr)
 console.log(generated.stdout.trim())
 
 async function freePort() {
-  const server = createNetServer()
-  server.listen(0, '127.0.0.1')
-  await once(server, 'listening')
-  const port = server.address().port
-  await new Promise((resolve) => server.close(resolve))
-  return port
+  for (;;) {
+    const server = createNetServer()
+    server.listen(0, '127.0.0.1')
+    await once(server, 'listening')
+    const port = server.address().port
+    await new Promise((resolve) => server.close(resolve))
+    if (port >= 10000) return port
+  }
 }
 
 const apiPort = await freePort()

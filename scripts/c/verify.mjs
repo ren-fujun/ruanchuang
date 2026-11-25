@@ -10,7 +10,10 @@ const freePort = () =>
     const s = net.createServer();
     s.listen(0, "127.0.0.1", () => {
       const port = s.address().port;
-      s.close(() => resolve(port));
+      s.close(() => {
+        if (port >= 10000) resolve(port);
+        else void freePort().then(resolve);
+      });
     });
   });
 const out = path.resolve(".tmp/c-verification/" + Date.now());
