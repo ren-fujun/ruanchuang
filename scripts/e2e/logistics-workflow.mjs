@@ -134,7 +134,9 @@ async function createRepair(student, description) {
   return (
     await call('/repairs', student, {
       repairType: '水电',
-      location: '学生公寓 3 号楼 412',
+      campus: '主校区',
+      buildingId: 'dorm-3',
+      room: '412',
       description,
       requestId: requestId(),
     }, 'POST')
@@ -157,7 +159,9 @@ try {
   const idempotentRequestId = requestId()
   const idempotentBody = {
     repairType: '门窗',
-    location: '图书馆 1F 东门',
+    campus: '主校区',
+    buildingId: 'library',
+    room: '1F 东门',
     description: '门把手松动，需要紧固。',
     requestId: idempotentRequestId,
   }
@@ -179,6 +183,8 @@ try {
   const repair = await createRepair(student, '洗手池下方持续漏水，地面已经积水。')
   assert.equal(repair.status, 'pending_assignment')
   assert.equal(repair.claimantId, null, '学生直达后不应经过辅导员审核')
+  assert.equal(repair.location, '学生公寓 3 号楼 · 412')
+  assert.ok(new Date(repair.claimDueAt).getTime() > Date.now())
 
   const counselorQueue = await call('/repairs', counselor)
   assert.equal(counselorQueue.items.some((item) => item.id === repair.id), true)

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { request } from "../../lib/api";
 import { LoadState, Panel, useAction, useCData } from "./ui";
@@ -16,6 +16,9 @@ interface Repair {
   createdAt: string;
   claimantName: string | null;
   responseOverdue: boolean;
+  claimDueAt?: string | null;
+  minutesUntilClaim?: number | null;
+  claimOverdue?: boolean;
   terminal: boolean;
   result: { text: string } | null;
   feedback: { decision: string; reason: string } | null;
@@ -157,15 +160,32 @@ export function RepairList({ role }: { role: PortalRole }) {
   );
 }
 export function RepairCreate() {
-  const meta = useCData<{ repairTypes: string[]; campus: string }>(
+  const meta = useCData<{
+    repairTypes: string[];
+    campus: string;
+    claimMinutes: number;
+    locations: {
+      campus: string;
+      buildings: { id: string; name: string; rooms: string[] }[];
+    }[];
+  }>(
       "/repairs/meta",
     ),
     action = useAction();
   const [type, setType] = useState(""),
-    [location, setLocation] = useState(""),
+    [campus, setCampus] = useState(""),
+    [buildingId, setBuildingId] = useState(""),
+    [room, setRoom] = useState(""),
     [description, setDescription] = useState("");
   const key = useRef(crypto.randomUUID()),
     navigate = useNavigate();
+  const campusEntry = meta.data?.locations.find((item) => item.campus === campus);
+  const building = campusEntry?.buildings.find((item) => item.id === buildingId);
+  useEffect(() => {
+    if (meta.data?.locations.length && !campus) {
+      setCampus(meta.data.locations[0].campus);
+    }
+  }, [campus, meta.data?.locations]);
   return (
     <div className="c-page">
       <h1>提交报修</h1>
@@ -178,7 +198,9 @@ export function RepairCreate() {
               void action.run(async () => {
                 const result = (await send("/repairs", {
                   repairType: type,
-                  location,
+                  campus,
+                  buildingId,
+                  room,
                   description,
                   requestId: key.current,
                 })) as { repair: Repair };
@@ -187,7 +209,7 @@ export function RepairCreate() {
               }, "报修已提交");
             }}
           >
-            <p>提交后将进入后勤待分配队列。校区：{meta.data?.campus}</p>
+            <p>提交后将进入后勤待分配队列，预计 {meta.data?.claimMinutes || 30} 分钟内有人接单。</p>
             <label>
               报修类型
               <select
@@ -205,16 +227,55 @@ export function RepairCreate() {
               </select>
             </label>
             <label>
-              报修地点
-              <input
+              校区
+              <select
                 required
-                maxLength={120}
-                value={location}
+                value={campus}
                 onChange={(e) => {
-                  setLocation(e.target.value);
+                  setCampus(e.target.value);
+                  setBuildingId("");
+                  setRoom("");
                   key.current = crypto.randomUUID();
                 }}
-              />
+              >
+                {meta.data?.locations.map((item) => (
+                  <option key={item.campus} value={item.campus}>{item.campus}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              楼栋
+              <select
+                required
+                value={buildingId}
+                onChange={(e) => {
+                  setBuildingId(e.target.value);
+                  setRoom("");
+                  key.current = crypto.randomUUID();
+                }}
+              >
+                <option value="">请选择楼栋</option>
+                {campusEntry?.buildings.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              房间或区域
+              <select
+                required
+                disabled={!building}
+                value={room}
+                onChange={(e) => {
+                  setRoom(e.target.value);
+                  key.current = crypto.randomUUID();
+                }}
+              >
+                <option value="">请选择房间或区域</option>
+                {building?.rooms.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </select>
             </label>
             <label>
               故障描述
@@ -232,7 +293,12 @@ export function RepairCreate() {
             <button
               className="c-primary"
               disabled={
-                action.busy || !type || !location.trim() || !description.trim()
+                action.busy ||
+                !type ||
+                !campus ||
+                !buildingId ||
+                !room ||
+                !description.trim()
               }
             >
               确认提交
@@ -289,6 +355,15 @@ export function RepairDetail({ role }: { role: PortalRole }) {
                 <strong>下一步</strong>
                 <span>{nextRepairStep(r.status)}</span>
               </div>
+              {role === "student" && r.status === "pending_assignment" && (
+                <p className="claim-estimate">
+                  {r.claimOverdue
+                    ? "已超过预计接单时间，系统已将事项保留在后勤待办中。"
+                    : `预计 ${r.minutesUntilClaim ?? 30} 分钟内接单${
+                        r.claimDueAt ? `，最晚约 ${new Date(r.claimDueAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : ""
+                      }。`}
+                </p>
+              )}
               <p>{r.description}</p>
               <p>
                 提交时间：{when(r.createdAt)} · 后勤：

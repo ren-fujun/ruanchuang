@@ -70,6 +70,7 @@ export function createRepair({
   description,
   campus,
   requestId,
+  claimMinutes = 30,
 }) {
   if (student?.role !== 'student') {
     throw new RepairWorkflowError('只有学生可以提交报修', 403)
@@ -85,7 +86,11 @@ export function createRepair({
     return existing
   }
 
-  const now = new Date().toISOString()
+  const issuedAt = new Date()
+  const now = issuedAt.toISOString()
+  const claimDueAt = new Date(
+    issuedAt.getTime() + claimMinutes * 60_000,
+  ).toISOString()
   const repair = {
     id: nextRepairId(repairs),
     status: REPAIR_STATUS.PENDING_ASSIGNMENT,
@@ -106,6 +111,7 @@ export function createRepair({
     coordination: null,
     createdAt: now,
     updatedAt: now,
+    claimDueAt,
     terminalAt: null,
     history: [
       historyEntry('created', student, {

@@ -37,10 +37,12 @@ const form = await page.locator('body').innerText()
 observations.push({
   step: 'repair-form',
   copyExplainsDirectLogistics: form.includes('直接') || form.includes('后勤'),
-  fields: ['报修类型', '报修地点', '故障描述'].filter((label) => form.includes(label)),
+  fields: ['报修类型', '校区', '楼栋', '房间或区域', '故障描述'].filter((label) => form.includes(label)),
 })
 await page.getByLabel('报修类型').selectOption('水电')
-await page.getByLabel('报修地点').fill('学生公寓 3 号楼 412')
+await page.getByLabel('校区').selectOption('主校区')
+await page.getByLabel('楼栋').selectOption('dorm-3')
+await page.getByLabel('房间或区域').selectOption('412')
 await page.getByLabel('故障描述').fill('体验测试：洗手池下方持续渗水，需要后勤检查。')
 await page.getByRole('button', { name: '确认提交', exact: true }).click()
 await page.waitForURL('**/student/repairs/**')

@@ -36,6 +36,12 @@
   color: #536157;
   line-height: 1.65;
 }
+
+.claim-estimate {
+  margin: 8px 0 12px !important;
+  color: #6c5a1b !important;
+  font-size: 13px;
+}
 .c-shell a {
   text-decoration: none;
   color: inherit;
