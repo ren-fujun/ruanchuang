@@ -34,11 +34,15 @@
 ```json
 {
   "repairType": "水电",
-  "location": "学生公寓 3 号楼 412",
+  "campus": "A",
+  "buildingId": "b1",
+  "room": "1室",
   "description": "洗手池持续漏水。",
   "requestId": "UUID"
 }
 ```
+
+服务端按地点字典校验校区、楼栋和房间，并生成统一的 `location`。创建结果同时包含 `claimDueAt` 和 `minutesUntilClaim`，用于展示预计接单时间。
 
 后勤领取：
 

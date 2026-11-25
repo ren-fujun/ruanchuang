@@ -12,6 +12,7 @@ import {
   submitRepairFeedback,
   submitRepairResult,
 } from './repair-workflow.js'
+import { REPAIR_LOCATIONS, resolveRepairLocation } from './repair-locations.js'
 
 const REPAIR_TYPES = ['水电', '门窗', '空调采暖', '网络设施', '公共设施', '其他']
 const COUNSELOR_ROLES = ['student', 'counselor', 'logistics']
@@ -41,6 +42,13 @@ const decorateRepair = (repair) => {
   return {
     ...repair,
     statusLabel: REPAIR_STATUS_LABELS[repair.status] || repair.status,
+    minutesUntilClaim: repair.claimDueAt
+      ? Math.max(0, Math.ceil((new Date(repair.claimDueAt).getTime() - Date.now()) / 60_000))
+      : null,
+    claimOverdue:
+      repair.status === REPAIR_STATUS.PENDING_ASSIGNMENT &&
+      Boolean(repair.claimDueAt) &&
+      new Date(repair.claimDueAt).getTime() <= Date.now(),
     responseDueAt,
     responseOverdue:
       repair.status === REPAIR_STATUS.OBJECTION_PENDING_RESPONSE &&
@@ -85,6 +93,11 @@ export function mountRepairRoutes(
     Number(process.env.REPAIR_RESPONSE_MINUTES) >= 0
       ? Number(process.env.REPAIR_RESPONSE_MINUTES)
       : 1440
+  const claimMinutes =
+    Number.isFinite(Number(process.env.REPAIR_CLAIM_MINUTES)) &&
+    Number(process.env.REPAIR_CLAIM_MINUTES) > 0
+      ? Number(process.env.REPAIR_CLAIM_MINUTES)
+      : 30
   const router = express.Router()
   router.use(requireAuth)
 
@@ -127,7 +140,9 @@ export function mountRepairRoutes(
     res.json({
       repairTypes: REPAIR_TYPES,
       campus: req.user.campus || null,
+      locations: REPAIR_LOCATIONS,
       responseMinutes,
+      claimMinutes,
     })
   })
 
@@ -180,16 +195,28 @@ export function mountRepairRoutes(
           user.role === 'counselor' &&
           user.studentIds?.includes(req.user.id),
       )
+      const structuredLocation = req.body?.buildingId && req.body?.room
+        ? resolveRepairLocation(req.body.campus, req.body.buildingId, req.body.room)
+        : null
+      if (req.body?.buildingId && !structuredLocation) {
+        return res.status(400).json({ message: '报修地点不在当前校区可办理范围内。' })
+      }
       const repair = createRepair({
         repairs: db.repairs,
         student: req.user,
         counselorId: counselor?.id || null,
         repairType: req.body?.repairType,
-        location: req.body?.location,
+        location: structuredLocation?.label || req.body?.location,
         description: req.body?.description,
-        campus: req.user.campus,
+        campus: structuredLocation?.campus || req.user.campus,
         requestId: requestIdOf(req.body),
+        claimMinutes,
       })
+      if (structuredLocation) {
+        repair.buildingId = structuredLocation.buildingId
+        repair.buildingName = structuredLocation.buildingName
+        repair.room = structuredLocation.room
+      }
       const exists = db.repairs.some((item) => item.id === repair.id)
       if (!exists) {
         repair.history.at(-1).requestFingerprint = fingerprint(req)

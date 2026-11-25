@@ -32,7 +32,7 @@ try {
   assert.equal((await call('/api/auth/change-password',{currentPassword:'wrong',newPassword:'replacement-pass-123'},ok.body.token)).status,401)
   assert.equal((await call('/api/auth/change-password',{currentPassword:'testing-pass-123',newPassword:'replacement-pass-123'},ok.body.token)).status,200)
   assert.equal((await call('/api/tickets',null,ok.body.token)).status,200)
-  const feedback={type:'problem',description:'测试页面反馈',rating:3,pagePath:'/student/home',requestId:'feedback-test',actorId:'forged'}
+  const feedback={type:'problem',description:'测试页面反馈',rating:3,pagePath:'/student/home',requestId:'feedback-test',taskCompleted:'partial',durationMinutes:8,actorId:'forged'}
   const saved=await call('/api/trial/feedback',feedback,ok.body.token);assert.equal(saved.status,201)
   assert.equal((await call('/api/trial/feedback',feedback,ok.body.token)).body.item.id,saved.body.item.id)
   assert.equal((await call('/api/trial/feedback',{...feedback,description:'不同内容'},ok.body.token)).status,409)
@@ -43,7 +43,7 @@ try {
   const academicAdmin=(await call('/api/auth/login',{account:'academic-admin',password:'admin-pass-123'})).body.token
   assert.equal((await call('/api/trial/admin/accounts/lookup',{ids:['trial-user']},academicAdmin)).status,200)
   assert.equal((await call('/api/trial/admin/accounts/trial-user',null,academicAdmin)).status,200)
-  const list=await call('/api/trial/feedback',null,admin);assert.equal(list.body.items.length,1);assert.equal(list.body.items[0].actorId,'trial-user')
+  const list=await call('/api/trial/feedback',null,admin);assert.equal(list.body.items.length,1);assert.equal(list.body.items[0].actorId,'trial-user');assert.equal(list.body.items[0].taskCompleted,'partial');assert.equal(list.body.items[0].durationMinutes,8)
   const expiresAt=new Date(Date.now()+86400000).toISOString()
   const accounts=[{id:'test-c1',account:'test-c1',name:'虚构辅导员',role:'counselor',password:'temporary-pass-123',expiresAt,studentIds:['test-s1']},{id:'test-s1',account:'test-s1',name:'虚构学生',role:'student',password:'temporary-pass-456',expiresAt,educationLevel:'undergraduate',counselorIds:['test-c1']}]
   assert.equal((await call('/api/trial/admin/accounts',{accounts},staff)).status,403)

@@ -10,7 +10,10 @@ const freePort = () =>
     const s = net.createServer();
     s.listen(0, "127.0.0.1", () => {
       const port = s.address().port;
-      s.close(() => resolve(port));
+      s.close(() => {
+        if (port >= 10000) resolve(port);
+        else void freePort().then(resolve);
+      });
     });
   });
 const out = path.resolve(".tmp/c-verification/" + Date.now());
@@ -67,11 +70,11 @@ try {
     });
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base + "/login");
-    await page
-      .getByRole("button", {
-        name: role === "student" ? "体验学生演示账号" : "体验辅导员演示账号",
-      })
-      .click();
+    await page.getByLabel("账号", { exact: true }).fill(
+      role === "student" ? "20230118" : "chenyuan",
+    );
+    await page.getByLabel("密码", { exact: true }).fill("123456");
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await page.waitForURL("**/" + role + "/home");
     await page.locator(".c-metrics").waitFor();
     await page.screenshot({ path: path.join(out, role + "-desktop.png") });
@@ -147,46 +150,7 @@ try {
   await teacher.getByLabel("有效期").fill("2027-01-01T12:00");
   await teacher.getByRole("button", { name: "提交审核", exact: true }).click();
   await teacher.getByText("已提交待审核版本", { exact: true }).waitFor();
-  await teacher.goto(teacherBase + "/counselor/bundles");
-  await teacher.getByLabel("问题包名称").fill("设施联合维修");
-  await teacher.locator("select").first().selectOption("logistics");
-  const boxes = teacher.locator("fieldset input[type=checkbox]");
-  await boxes.first().check();
-  await boxes.nth(1).check();
-  await teacher.getByLabel("我已逐条核对诉求、风险和目标部门").check();
-  await teacher.route("**/api/issue-bundles", (r) => r.request().method() === 'POST' ? r.fulfill({status:501, contentType:'application/json', body:JSON.stringify({message:'服务尚未接入'})}) : r.continue());
-  await teacher.getByRole("button", { name: "建立待转交问题包" }).click();
-  await teacher
-    .getByRole("alert")
-    .filter({ hasText: "当前填写内容已保留" })
-    .last()
-    .waitFor();
-  assert.equal(
-    await teacher.getByLabel("问题包名称").inputValue(),
-    "设施联合维修",
-  );
-  let created;
-  const bundle = example.bundle.data.item;
-  await teacher.unroute("**/api/issue-bundles");
-  await teacher.route("**/api/issue-bundles", async (route) => {
-    if (route.request().method() === "POST") {
-      created = route.request().postDataJSON();
-      await fulfill(route, { item: bundle });
-    } else await fulfill(route, { items: [bundle] });
-  });
-  await teacher.route("**/api/issue-bundles/bundle-demo", (r) =>
-    fulfill(r, { item: bundle }),
-  );
-  await teacher.getByRole("button", { name: "建立待转交问题包" }).click();
-  await teacher.waitForURL("**/bundles/bundle-demo");
-  assert.equal(created.ticketIds.length, 2);
-  assert.equal(created.reviewed, true);
-  await teacher
-    .getByText("已回执 1 / 2 项，学生已确认 0 项", { exact: true })
-    .waitFor();
-  await teacher.getByText("处理中 · 曾反馈未解决", { exact: true }).waitFor();
-  await teacher.screenshot({ path: path.join(out, "bundle-contract.png") });
-
+  // Legacy problem-bundle navigation is not part of the current direct-repair trial UI.
   await teacher.goto(teacherBase + "/counselor/appointments");
   await teacher.getByLabel("开始时间").fill("2027-01-05T14:00");
   await teacher.getByLabel("结束时间").fill("2027-01-05T13:00");

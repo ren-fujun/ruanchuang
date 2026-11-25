@@ -10,12 +10,14 @@ import { chromium } from "playwright";
 import { bTrialFixture } from "../fixtures/b-trial.mjs";
 import { hashPassword } from "../../server/trial-auth.js";
 async function freePort() {
-  const s = netServer();
-  s.listen(0, "127.0.0.1");
-  await once(s, "listening");
-  const port = s.address().port;
-  await new Promise((r) => s.close(r));
-  return port;
+  for (;;) {
+    const s = netServer();
+    s.listen(0, "127.0.0.1");
+    await once(s, "listening");
+    const port = s.address().port;
+    await new Promise((r) => s.close(r));
+    if (port >= 10000) return port;
+  }
 }
 const data = bTrialFixture();
 for (const u of data.users) {
@@ -85,6 +87,8 @@ try {
     const feedback = page.locator(".trial-feedback");
     await feedback.getByRole("button", { name: "试用反馈" }).click();
     await feedback.getByLabel("描述").fill(role + " 端联调反馈。");
+    await feedback.getByLabel("任务是否完成").selectOption("yes");
+    await feedback.getByLabel("完成耗时（分钟）").fill("5");
     await feedback.getByRole("button", { name: "提交反馈" }).click();
     await feedback.getByText("反馈已提交").waitFor();
     assert.equal(

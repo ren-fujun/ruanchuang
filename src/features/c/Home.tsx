@@ -77,6 +77,46 @@ function TicketRows({
     </div>
   );
 }
+
+function RepairRows({
+  repairs,
+}: {
+  repairs: {
+    id: string;
+    location: string;
+    repairType: string;
+    status: string;
+    statusLabel: string;
+    responseOverdue: boolean;
+  }[];
+}) {
+  return (
+    <div>
+      {repairs.slice(0, 3).map((repair) => (
+        <Link
+          className="c-row"
+          key={repair.id}
+          to={"/student/repairs/" + repair.id}
+        >
+          <span className="c-icon">
+            <Wrench />
+          </span>
+          <span className="c-grow">
+            <strong>
+              {repair.repairType} · {repair.location}
+            </strong>
+            <small>
+              {repair.statusLabel}
+              {repair.responseOverdue ? " · 异议回应超时" : ""}
+            </small>
+          </span>
+          <span className="c-outline">查看进度</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 export function PortalHome({ role }: { role: PortalRole }) {
   const student = role === "student";
   const dashboard = useApi<StudentHomeData | CounselorDashboard>(
@@ -93,7 +133,7 @@ export function PortalHome({ role }: { role: PortalRole }) {
       responseOverdue: boolean;
       studentName: string;
     }[];
-  }>(student ? null : "/repairs");
+  }>("/repairs");
   const leaves = useCData<{
     items: { id: string; studentName: string; status: string }[];
   }>(student ? null : "/b/leaves");
@@ -115,9 +155,21 @@ export function PortalHome({ role }: { role: PortalRole }) {
     c = data as CounselorDashboard;
   const metrics = student
     ? [
-        [s.stats.total, "我的诉求"],
-        [s.stats.active, "正在跟进"],
-        [s.stats.completed, "已完成"],
+        [s.stats.total + (repairs.data?.items.length || 0), "我的诉求"],
+        [
+          s.stats.active +
+            (repairs.data?.items.filter((item) =>
+              !["satisfied", "coordinated_closed"].includes(item.status),
+            ).length || 0),
+          "正在跟进",
+        ],
+        [
+          s.stats.completed +
+            (repairs.data?.items.filter((item) =>
+              ["satisfied", "coordinated_closed"].includes(item.status),
+            ).length || 0),
+          "已完成",
+        ],
       ]
     : [
         [c.stats.pending, "待审核"],
@@ -267,6 +319,15 @@ export function PortalHome({ role }: { role: PortalRole }) {
             </section>
           )}
           <Panel title={student ? "正在跟进" : "重点待办"}>
+            {student && repairs.data?.items.some(
+              (item) => !["satisfied", "coordinated_closed"].includes(item.status),
+            ) && (
+              <RepairRows
+                repairs={repairs.data.items.filter(
+                  (item) => !["satisfied", "coordinated_closed"].includes(item.status),
+                )}
+              />
+            )}
             <TicketRows
               role={role}
               tickets={student ? s.activeTickets : c.queue}

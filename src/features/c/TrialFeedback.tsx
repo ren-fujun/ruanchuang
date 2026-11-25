@@ -1,5 +1,5 @@
 import "./trial-feedback.css";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { request } from "../../lib/api";
 
 export function TrialFeedback({
@@ -10,10 +10,24 @@ export function TrialFeedback({
   const [open, setOpen] = useState(false),
     [type, setType] = useState("problem"),
     [description, setDescription] = useState(""),
-    [rating, setRating] = useState(3);
+    [rating, setRating] = useState(3),
+    [taskCompleted, setTaskCompleted] = useState("yes"),
+    [durationMinutes, setDurationMinutes] = useState(5),
+    [enabled, setEnabled] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const key = useRef(crypto.randomUUID());
+  const authHeaders = () => ({
+    Authorization: "Bearer " + (localStorage.getItem(tokenKey) || ""),
+  });
+  useEffect(() => {
+    request<{ enabled: boolean }>("/trial/status", {
+      headers: authHeaders(),
+    })
+      .then((result) => setEnabled(result.enabled))
+      .catch(() => setEnabled(false));
+  }, [tokenKey]);
+  if (!enabled) return null;
   return (
     <div className="trial-feedback">
       <p>试用测试系统，非学校正式办理入口</p>
@@ -37,6 +51,8 @@ export function TrialFeedback({
                 type,
                 description,
                 rating,
+                taskCompleted,
+                durationMinutes,
                 pagePath: window.location.pathname,
                 requestId: key.current,
               }),
@@ -79,6 +95,34 @@ export function TrialFeedback({
                 </option>
               ))}
             </select>
+          </label>
+          <label>
+            任务是否完成
+            <select
+              value={taskCompleted}
+              onChange={(e) => {
+                setTaskCompleted(e.target.value);
+                key.current = crypto.randomUUID();
+              }}
+            >
+              <option value="yes">已完成</option>
+              <option value="partial">部分完成</option>
+              <option value="no">未完成</option>
+            </select>
+          </label>
+          <label>
+            完成耗时（分钟）
+            <input
+              type="number"
+              min={1}
+              max={240}
+              required
+              value={durationMinutes}
+              onChange={(e) => {
+                setDurationMinutes(Number(e.target.value));
+                key.current = crypto.randomUUID();
+              }}
+            />
           </label>
           <label>
             描述

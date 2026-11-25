@@ -17,12 +17,14 @@ stu.educationLevel = "undergraduate";
 stu.counselorIds = [cou.id];
 await writeFile(path.join(dir, "store.json"), JSON.stringify(data));
 async function freePort() {
-  const s = netServer();
-  s.listen(0, "127.0.0.1");
-  await once(s, "listening");
-  const p = s.address().port;
-  await new Promise((r) => s.close(r));
-  return p;
+  for (;;) {
+    const s = netServer();
+    s.listen(0, "127.0.0.1");
+    await once(s, "listening");
+    const p = s.address().port;
+    await new Promise((r) => s.close(r));
+    if (p >= 10000) return p;
+  }
 }
 const port = await freePort(),
   base = "http://127.0.0.1:" + port;
@@ -74,7 +76,9 @@ try {
   await student.getByRole("button", { name: "前往报修填写页" }).click();
   await student.waitForURL("**/student/repairs/new");
   await student.getByLabel("报修类型").selectOption("水电");
-  await student.getByLabel("报修地点").fill("学生公寓 3 号楼 412");
+  await student.getByLabel("校区").selectOption("A");
+  await student.getByLabel("楼栋").selectOption("b1");
+  await student.getByLabel("房间或区域").selectOption("1室");
   await student.getByLabel("故障描述").fill("洗手池持续漏水，请协助维修。");
   await student.getByRole("button", { name: "确认提交" }).click();
   await student.waitForURL((url) =>

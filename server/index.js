@@ -178,7 +178,7 @@ const requireAuth = (req, res, next) => {
   }
   const academicBatchPath = user.role === 'academic' && /^\/api\/academic\/batches(?:\/preview|\/[^/]+\/(?:dispatch|correct|cancel))?$/.test(req.path)
   const trialAdminPath = user.trialAdmin === true && /^\/api\/trial\/admin\/accounts(?:\/[^/]+(?:\/(?:status|reset-password|relations|academic-scope))?)?$/.test(req.path)
-  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !trialAdminPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
+  if (['mentor', 'academic'].includes(user.role) && !req.originalUrl.startsWith('/api/b/') && !academicBatchPath && !trialAdminPath && !['/api/auth/logout', '/api/auth/change-password', '/api/me', '/api/trial/status', '/api/trial/feedback'].includes(req.path)) return res.status(403).json({message: '该身份不能访问其他端接口'})
   if (trialMode && user.mustChangePassword === true && !['/api/auth/change-password','/api/auth/logout','/api/me'].includes(req.path)) return res.status(403).json({message:'请先修改初始密码。'})
   req.user = user
   next()

@@ -263,7 +263,7 @@ export const userProfiles = [
     password: '123456',
     title: '后勤保障处 · 维修调度',
     department: '后勤保障处',
-    repairScopes: ['主校区'],
+    repairScopes: ['A', 'B', 'C', 'D', 'E', 'F'],
   },
 ]
 

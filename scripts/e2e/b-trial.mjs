@@ -10,7 +10,16 @@ import { bTrialFixture } from '../fixtures/b-trial.mjs'
 await mkdir('.tmp/b-trial-tests', { recursive: true })
 const dir = await mkdtemp(path.resolve('.tmp/b-trial-tests/run-')), file = path.join(dir, 'store.json')
 await writeFile(file, JSON.stringify(bTrialFixture()))
-async function freePort() { const s = netServer(); s.listen(0, '127.0.0.1'); await once(s, 'listening'); const port = s.address().port; await new Promise(r => s.close(r)); return port }
+async function freePort() {
+  for (;;) {
+    const s = netServer();
+    s.listen(0, '127.0.0.1');
+    await once(s, 'listening');
+    const port = s.address().port;
+    await new Promise(r => s.close(r));
+    if (port >= 10000) return port;
+  }
+}
 const port = await freePort(), base = `http://127.0.0.1:${port}/api`
 const child = spawn(process.execPath, ['server/index.js'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
   env: { ...process.env, PORT: String(port), B_DEMO: 'false', ZHIHUI_DATA_FILE: file, DEEPSEEK_API_KEY: '' } })
