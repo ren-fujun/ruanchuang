@@ -34,9 +34,9 @@
 ```json
 {
   "repairType": "水电",
-  "campus": "主校区",
-  "buildingId": "dorm-3",
-  "room": "412",
+  "campus": "A",
+  "buildingId": "b1",
+  "room": "1室",
   "description": "洗手池持续漏水。",
   "requestId": "UUID"
 }

@@ -31,7 +31,7 @@ data.users.push(
     account: 'logistics-other',
     password: '123456',
     department: '后勤保障处',
-    repairScopes: ['主校区'],
+    repairScopes: ['A', 'B', 'C', 'D', 'E', 'F'],
   },
   {
     id: 'logistics-outside',
@@ -40,7 +40,7 @@ data.users.push(
     account: 'logistics-outside',
     password: '123456',
     department: '后勤保障处',
-    repairScopes: ['异地校区'],
+    repairScopes: ['Z'],
   },
 )
 await writeFile(dataFile, JSON.stringify(data, null, 2))
@@ -134,9 +134,9 @@ async function createRepair(student, description) {
   return (
     await call('/repairs', student, {
       repairType: '水电',
-      campus: '主校区',
-      buildingId: 'dorm-3',
-      room: '412',
+      campus: 'A',
+      buildingId: 'b1',
+      room: '1室',
       description,
       requestId: requestId(),
     }, 'POST')
@@ -159,9 +159,9 @@ try {
   const idempotentRequestId = requestId()
   const idempotentBody = {
     repairType: '门窗',
-    campus: '主校区',
-    buildingId: 'library',
-    room: '1F 东门',
+    campus: 'B',
+    buildingId: 'b2',
+    room: '2室',
     description: '门把手松动，需要紧固。',
     requestId: idempotentRequestId,
   }
@@ -183,13 +183,13 @@ try {
   const repair = await createRepair(student, '洗手池下方持续漏水，地面已经积水。')
   assert.equal(repair.status, 'pending_assignment')
   assert.equal(repair.claimantId, null, '学生直达后不应经过辅导员审核')
-  assert.equal(repair.location, '学生公寓 3 号楼 · 412')
+  assert.equal(repair.location, 'A校区 · 1栋 · 1室')
   assert.ok(new Date(repair.claimDueAt).getTime() > Date.now())
 
   const counselorQueue = await call('/repairs', counselor)
   assert.equal(counselorQueue.items.some((item) => item.id === repair.id), true)
   const outsideQueue = await call('/repairs', outsideLogistics)
-  assert.equal(outsideQueue.items.length, 0, '异地校区后勤不能读取主校区报修')
+  assert.equal(outsideQueue.items.length, 0, '无责任范围后勤不能读取报修')
 
   const vitePort = await freePort()
   process.env.PORTAL_API_URL = apiBase

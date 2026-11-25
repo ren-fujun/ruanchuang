@@ -114,9 +114,9 @@ try {
   })
   await student.goto(`${origins.student}/student/repairs/new`)
   await student.getByLabel('报修类型').selectOption('水电')
-  await student.getByLabel('校区').selectOption('主校区')
-  await student.getByLabel('楼栋').selectOption('dorm-3')
-  await student.getByLabel('房间或区域').selectOption('412')
+  await student.getByLabel('校区').selectOption('A')
+  await student.getByLabel('楼栋').selectOption('b1')
+  await student.getByLabel('房间或区域').selectOption('1室')
   await student.getByLabel('故障描述').fill('演示彩排：洗手池水管持续漏水，需要后勤处理。')
   await student.getByRole('button', { name: '确认提交', exact: true }).click()
   await student.waitForURL('**/student/repairs/**')
@@ -143,7 +143,7 @@ try {
 
   const logistics = await login('logistics', 'logistics')
   await logistics.getByText('后勤维修工作台', { exact: false }).waitFor()
-  await logistics.getByText('学生公寓 3 号楼 412', { exact: false }).waitFor()
+  await logistics.getByText('A校区 · 1栋 · 1室', { exact: false }).waitFor()
   await logistics.screenshot({
     path: path.join(evidenceDir, 'demo-logistics.png'),
     fullPage: true,

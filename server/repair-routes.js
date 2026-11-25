@@ -140,9 +140,7 @@ export function mountRepairRoutes(
     res.json({
       repairTypes: REPAIR_TYPES,
       campus: req.user.campus || null,
-      locations: REPAIR_LOCATIONS.filter(
-        (item) => !req.user.campus || item.campus === req.user.campus,
-      ),
+      locations: REPAIR_LOCATIONS,
       responseMinutes,
       claimMinutes,
     })
@@ -198,7 +196,7 @@ export function mountRepairRoutes(
           user.studentIds?.includes(req.user.id),
       )
       const structuredLocation = req.body?.buildingId && req.body?.room
-        ? resolveRepairLocation(req.user.campus, req.body.buildingId, req.body.room)
+        ? resolveRepairLocation(req.body.campus, req.body.buildingId, req.body.room)
         : null
       if (req.body?.buildingId && !structuredLocation) {
         return res.status(400).json({ message: '报修地点不在当前校区可办理范围内。' })
@@ -210,7 +208,7 @@ export function mountRepairRoutes(
         repairType: req.body?.repairType,
         location: structuredLocation?.label || req.body?.location,
         description: req.body?.description,
-        campus: req.user.campus,
+        campus: structuredLocation?.campus || req.user.campus,
         requestId: requestIdOf(req.body),
         claimMinutes,
       })

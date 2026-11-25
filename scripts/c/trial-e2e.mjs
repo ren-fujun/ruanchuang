@@ -76,9 +76,9 @@ try {
   await student.getByRole("button", { name: "前往报修填写页" }).click();
   await student.waitForURL("**/student/repairs/new");
   await student.getByLabel("报修类型").selectOption("水电");
-  await student.getByLabel("校区").selectOption("主校区");
-  await student.getByLabel("楼栋").selectOption("dorm-3");
-  await student.getByLabel("房间或区域").selectOption("412");
+  await student.getByLabel("校区").selectOption("A");
+  await student.getByLabel("楼栋").selectOption("b1");
+  await student.getByLabel("房间或区域").selectOption("1室");
   await student.getByLabel("故障描述").fill("洗手池持续漏水，请协助维修。");
   await student.getByRole("button", { name: "确认提交" }).click();
   await student.waitForURL((url) =>
