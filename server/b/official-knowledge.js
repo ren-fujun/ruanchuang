@@ -1,4 +1,5 @@
 import entries from './official-knowledge.json' with { type: 'json' }
+import importedEntries from './imported-knowledge.json' with { type: 'json' }
 
 // Maintained by the project team from verified school publications, not user-submitted data.
 export function validateOfficialKnowledge(items) {
@@ -16,4 +17,6 @@ export function validateOfficialKnowledge(items) {
     return { id: `official-${item.id}`, title: item.title.trim(), answer: item.answer.trim(), sourceExcerpt: item.sourceExcerpt.trim(), department: item.department.trim(), source: url.href, keywords: item.keywords.map(x => x.trim()), validUntil: item.validUntil, status: 'published', version: 1 }
   })
 }
-export const officialKnowledge = validateOfficialKnowledge(entries)
+// `official-knowledge.json` is for hand-curated records; imported entries are
+// generated from team-maintained source files by `npm run knowledge:import`.
+export const officialKnowledge = validateOfficialKnowledge([...entries, ...importedEntries])

@@ -37,7 +37,8 @@
     "test:b": "node scripts/e2e/b-workflows.mjs",
     "test:five-portals": "node scripts/e2e/five-portals.mjs",
     "test:b-trial": "node scripts/e2e/b-trial.mjs",
-    "demo:b-trial": "node scripts/demo-b-trial.mjs"
+    "demo:b-trial": "node scripts/demo-b-trial.mjs",
+    "knowledge:import": "node scripts/import-knowledge.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",
