@@ -16,9 +16,9 @@ export function requestsHuman(text) {
 }
 export function immediateDanger(text) {
   return text.split(/[。！？；\n]/).some(part => {
-    const match=part.match(/(?:插座|插排|电线).{0,8}(?:冒火花|火花)|浓烟|呼吸困难/)
+    const match=part.match(/(?:插座|插排|电线).{0,8}?(?:冒火花|火花|起火|着火|冒烟)|浓烟|呼吸困难/)
     if (!match) return false
     const before=part.slice(Math.max(0,match.index-5),match.index)
-    return !/(没有|并无|不是|未见)\s*$/.test(before)
+    return !/(没有|并无|不是|未见)\s*$/.test(before) && !/(没有|并无|不是|未见)\s*(?:冒火花|火花|起火|着火|冒烟)/.test(match[0])
   })
 }

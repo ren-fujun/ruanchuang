@@ -12,6 +12,8 @@ test('explicit handoff and immediate dangers have narrow negative controls',()=>
  assert.equal(requestsHuman('说了三次，找人工'),true)
  assert.equal(requestsHuman('不要转人工'),false)
  for(const text of ['宿舍插座冒火花','宿舍有浓烟和焦味','吃坏肚子而且呼吸困难'])assert.equal(immediateDanger(text),true)
+ for(const text of ['宿舍电线起火了','插座正在冒烟'])assert.equal(immediateDanger(text),true)
+ assert.equal(immediateDanger('插座没有冒烟'),false)
  assert.equal(immediateDanger('现场没有浓烟'),false)
  assert.equal(immediateDanger('空调不制冷'),false)
 })
