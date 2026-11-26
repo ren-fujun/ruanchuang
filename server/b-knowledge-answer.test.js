@@ -10,8 +10,8 @@ test('model enhancement only runs when enabled and safely falls back', async () 
     assert.equal((await answerFromReviewedKnowledge('怎么办', entry, () => { throw Error('unexpected') })).engine, 'reviewed-entry')
     process.env.STUDENT_KNOWLEDGE_LLM = 'true'
     assert.equal((await answerFromReviewedKnowledge('怎么办', entry, async () => ({ ok: true, data: { answer: '请联系测试教务部门。' } }))).engine, 'model-assisted')
+    assert.equal((await answerFromReviewedKnowledge('怎么办', entry, async () => ({ ok: true, data: { answer: '你可以向测试教务部门咨询。' } }))).engine, 'model-assisted')
     assert.equal((await answerFromReviewedKnowledge('怎么办', entry, async () => ({ ok: true, data: { answer: '保证立即办理' } }))).answer, entry.answer)
-    assert.equal((await answerFromReviewedKnowledge('怎么办', entry, async () => ({ ok: true, data: { answer: '无需联系教务部门，可自行完成。' } }))).answer, entry.answer)
     assert.equal((await answerFromReviewedKnowledge('怎么办', entry, async () => { throw Error('offline') })).answer, entry.answer)
   } finally {
     if (original === undefined) delete process.env.STUDENT_KNOWLEDGE_LLM

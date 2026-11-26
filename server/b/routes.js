@@ -8,6 +8,7 @@ import { workflowGuidance } from './policy.js'
 import { consultationFocus, requestsHuman, immediateDanger } from './consultation.js'
 import { makeKnowledgeDrafts } from './knowledge-import.js'
 import { answerFromReviewedKnowledge } from './knowledge-answer.js'
+import { officialKnowledge } from './official-knowledge.js'
 const id = () => crypto.randomUUID(),
   now = () => new Date().toISOString()
 export function mountB(app, { db, save, requireAuth }) {
@@ -377,7 +378,7 @@ export function mountB(app, { db, save, requireAuth }) {
     const guidance = workflowGuidance(text, req.user)
     const score = (k) =>
       k.keywords.reduce((n, w) => n + (focus.includes(w) ? w.length : 0), 0)
-    const matches = state.knowledge
+    const matches = [...state.knowledge, ...officialKnowledge]
       .filter(
         (k) =>
           k.status === 'published' && Date.parse(k.validUntil) > Date.now(),
