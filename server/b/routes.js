@@ -7,6 +7,7 @@ import { operation } from './operations.js'
 import { workflowGuidance } from './policy.js'
 import { consultationFocus, requestsHuman, immediateDanger } from './consultation.js'
 import { makeKnowledgeDrafts } from './knowledge-import.js'
+import { answerFromReviewedKnowledge } from './knowledge-answer.js'
 const id = () => crypto.randomUUID(),
   now = () => new Date().toISOString()
 export function mountB(app, { db, save, requireAuth }) {
@@ -351,7 +352,8 @@ export function mountB(app, { db, save, requireAuth }) {
     audit(req, 'knowledge_withdraw', k.id)
     res.json({ item: k })
   })
-  r.post('/assistant', allowed(['student']), (req, res) => {
+  r.post('/assistant', allowed(['student']), async (req, res, next) => {
+    try {
     const text = String(req.body.text || '').trim()
     if (text.length < 2 || text.length > 2000)
       return fail(res, '请输入2至2000字')
@@ -410,10 +412,12 @@ export function mountB(app, { db, save, requireAuth }) {
       result.answer = '当前情况建议由辅导员进一步核实，可确认提交对话摘要。'
     } else if (certain) {
       const k = matches[0].k
+      const generated = await answerFromReviewedKnowledge(focus, k)
       result = {
         ...result,
         action: 'answer',
-        answer: k.answer,
+        answer: generated.answer,
+        engine: generated.engine,
         source: {
           id: k.id,
           title: k.title,
@@ -434,6 +438,7 @@ export function mountB(app, { db, save, requireAuth }) {
     c.last = result
     save()
     res.json(result)
+    } catch (error) { next(error) }
   })
   app.use('/api/b', r)
 }
