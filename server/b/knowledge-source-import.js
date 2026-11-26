@@ -17,7 +17,7 @@ const readUtf8Source = (sourceDir, file) => {
   if (!resolvedFile.startsWith(`${resolvedDir}${path.sep}`)) throw new Error('资料正文路径无效')
   if (!fs.existsSync(resolvedFile)) throw new Error(`找不到资料正文：${file}`)
   const text = fs.readFileSync(resolvedFile, 'utf8').replace(/^\uFEFF/, '').trim()
-  if (!text || text.length > 20000) throw new Error(`资料正文 ${file} 须为 1 至 20000 字`)
+  if (!text || text.length > 60000) throw new Error(`资料正文 ${file} 须为 1 至 60000 字`)
   return text
 }
 

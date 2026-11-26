@@ -1,1 +1,2023 @@
-[]
+[
+  {
+    "id": "csu-evaluation-policy-01",
+    "title": "计算机学院综测细则：适用范围与测评流程",
+    "file": "csu-evaluation-policy-01.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "综测流程",
+      "综合测评",
+      "公示期",
+      "适用年级"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-policy-02",
+    "title": "计算机学院综测细则：总分公式与德美劳智育",
+    "file": "csu-evaluation-policy-02.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "综测总分",
+      "综合测评公式",
+      "智育素质分",
+      "德美劳素质分"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-policy-03",
+    "title": "计算机学院综测细则：体育素质分",
+    "file": "csu-evaluation-policy-03.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "体育素质分",
+      "体育测评",
+      "综测体育"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-policy-04",
+    "title": "计算机学院综测细则：综合素质加分规则",
+    "file": "csu-evaluation-policy-04.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "综测加分",
+      "加分上限",
+      "突出贡献",
+      "竞赛加分"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-policy-05",
+    "title": "计算机学院综测细则：学生干部和其他加减分",
+    "file": "csu-evaluation-policy-05.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学生干部加分",
+      "综测减分",
+      "志愿活动",
+      "CCF-CSP"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-policy-06",
+    "title": "计算机学院综测细则：复核与异议",
+    "file": "csu-evaluation-policy-06.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "综测异议",
+      "综合测评申诉",
+      "公示期"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件1：综合测评实施细则 PDF"
+  },
+  {
+    "id": "csu-evaluation-form-moral",
+    "title": "德美劳素质分申请表",
+    "file": "csu-evaluation-form-moral.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "德美劳素质分申请表",
+      "德美劳申请表",
+      "德育素质分",
+      "德美劳签字"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件3：计算机学院综测德育（德美劳）素质分申请表.docx"
+  },
+  {
+    "id": "csu-evaluation-form-adjust",
+    "title": "个人综测加减分申请表",
+    "file": "csu-evaluation-form-adjust.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "加减分申请表",
+      "证明材料",
+      "加分类别"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件4：计算机学院综测加减分申请表 (1).docx"
+  },
+  {
+    "id": "csu-evaluation-form-sports",
+    "title": "体育素质分申请表",
+    "file": "csu-evaluation-form-sports.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "体育申请表",
+      "体育素质分",
+      "体育签字"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件5：计算机学院综测体育素质分申请表.docx"
+  },
+  {
+    "id": "csu-evaluation-score-example",
+    "title": "智育与体育课程分计算参考样表",
+    "file": "csu-evaluation-score-example.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "智育计算样表",
+      "体育基础分",
+      "课程成绩计算"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件2：2023、2024、2025级学生综合素质评价智育素质分、体育素质基础分（课程成绩）计算【参考样表】.xls"
+  },
+  {
+    "id": "csu-evaluation-summary-1",
+    "title": "班级综测总表：2022级版本",
+    "file": "csu-evaluation-summary-1.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "班级综测总表",
+      "2022级",
+      "综测公式"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件6：计算机学院（班级）2025-2026学年综合测评一览表.xlsx"
+  },
+  {
+    "id": "csu-evaluation-summary-2",
+    "title": "班级综测总表：2023级、2024级版本",
+    "file": "csu-evaluation-summary-2.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "班级综测总表",
+      "2023级、2024级",
+      "综测公式"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "附件6：计算机学院（班级）2025-2026学年综合测评一览表.xlsx"
+  },
+  {
+    "id": "csu-official-link-001",
+    "title": "中南大学学生服务总入口",
+    "file": "csu-official-link-001.md",
+    "source": "https://www.csu.edu.cn/jsfl/xs.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生服务",
+      "总入口"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-002",
+    "title": "中南大学网上办事大厅",
+    "file": "csu-official-link-002.md",
+    "source": "https://ehall.csu.edu.cn/",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学网上办事",
+      "大厅"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-003",
+    "title": "中南大学信息公开目录",
+    "file": "csu-official-link-003.md",
+    "source": "https://xxgk.csu.edu.cn/xxgkml.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学信息公开",
+      "目录"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-004",
+    "title": "本科生院学生办事指南",
+    "file": "csu-official-link-004.md",
+    "source": "https://bksy.csu.edu.cn/bszn/zyys11.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生院学生办事",
+      "指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-005",
+    "title": "研究生院培养管理工作流程",
+    "file": "csu-official-link-005.md",
+    "source": "https://gra.csu.edu.cn/bszn/pygz.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生院培养管理",
+      "工作流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-006",
+    "title": "中南大学学生工作网",
+    "file": "csu-official-link-006.md",
+    "source": "https://xgw.csu.edu.cn/",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生工作"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-007",
+    "title": "中南大学计算机学院官网",
+    "file": "csu-official-link-007.md",
+    "source": "https://cse.csu.edu.cn/",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学计算机学",
+      "院官网"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-008",
+    "title": "中南大学常用电话号码表",
+    "file": "csu-official-link-008.md",
+    "source": "https://www.csu.edu.cn/info/1050/5129.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学常用电话",
+      "号码表"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-009",
+    "title": "2026-2027学年第一学期校历",
+    "file": "csu-official-link-009.md",
+    "source": "https://www.csu.edu.cn/info/1050/108359.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学年第一学期校历"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-010",
+    "title": "中南大学本科生学籍管理规定",
+    "file": "csu-official-link-010.md",
+    "source": "https://xxgk.csu.edu.cn/info/1099/1449.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学本科生学",
+      "籍管理规定"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-011",
+    "title": "中南大学学生学籍异动申请表2021版",
+    "file": "csu-official-link-011.md",
+    "source": "https://bksy.csu.edu.cn/info/1327/4716.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生学籍",
+      "异动申请表"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-012",
+    "title": "本科生学生证补办流程",
+    "file": "csu-official-link-012.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/5414.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生学生证补办",
+      "流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-013",
+    "title": "中英文成绩单在读证明及排名证明办理流程",
+    "file": "csu-official-link-013.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/4362.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中英文成绩单在读",
+      "证明及排名证明办",
+      "理流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-014",
+    "title": "本科生毕业证明书与学位证明书办理流程",
+    "file": "csu-official-link-014.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/4675.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生毕业证明书",
+      "与学位证明书办理",
+      "流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-015",
+    "title": "往届生换发毕业证或补授学位程序",
+    "file": "csu-official-link-015.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/3138.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "往届生换发毕业证",
+      "或补授学位程序"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-016",
+    "title": "学信网学历学位认证流程",
+    "file": "csu-official-link-016.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/5854.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学信网学历学位认",
+      "证流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-017",
+    "title": "2025级本科学生转专业工作通知",
+    "file": "csu-official-link-017.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=D6331351E9514568A6F11E983DF13E5D",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "级本科学生转专业",
+      "工作通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-018",
+    "title": "2026年本科学生转专业工作补充通知",
+    "file": "csu-official-link-018.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=17E0C57C47544B4D86C72D0D26F64B39",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年本科学生转专业",
+      "工作补充通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-019",
+    "title": "2026年辅修专业与辅修学士学位教育报名通知",
+    "file": "csu-official-link-019.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=7544065E0D8541C8B778E9BC7981CF84",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年辅修专业与辅修",
+      "学士学位教育报名",
+      "通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-020",
+    "title": "2026年辅修专业和辅修学位学业完成情况审核通知",
+    "file": "csu-official-link-020.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=A898F588DAA546729A40CDA74985BB23",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年辅修专业和辅修",
+      "学位学业完成情况",
+      "审核通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-021",
+    "title": "2027届优秀应届本科毕业生推免工作预通知",
+    "file": "csu-official-link-021.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=1B072F9539DC4429811EDED243F9FB93",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "届优秀应届本科毕",
+      "业生推免工作预通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-022",
+    "title": "2027届推免推荐指标下达通知",
+    "file": "csu-official-link-022.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=1AF0D86C0E8D4BABAE194E1F8CD160E2",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "届推免推荐指标下",
+      "达通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-023",
+    "title": "2026届本科毕业论文设计工作通知",
+    "file": "csu-official-link-023.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=60B55E6F1D38415C9AD80C42B76551BF",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "届本科毕业论文设",
+      "计工作通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-024",
+    "title": "2026届本科毕业论文设计学术诚信检测通知",
+    "file": "csu-official-link-024.md",
+    "source": "https://oa.csu.edu.cn/con/PDFPage?YWMC=ZNDX_ZHBG_GGTZ&JLNM=BA6A313869F540A0A55DE063D09492D0",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "届本科毕业论文设",
+      "计学术诚信检测通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-025",
+    "title": "中南大学学生纪律处分规定",
+    "file": "csu-official-link-025.md",
+    "source": "https://xxgk.csu.edu.cn/info/1097/1442.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生纪律",
+      "处分规定"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-026",
+    "title": "中南大学学生申诉处理办法",
+    "file": "csu-official-link-026.md",
+    "source": "https://xxgk.csu.edu.cn/info/1098/5602.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生申诉",
+      "处理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-027",
+    "title": "中南大学预防和处理学术不端行为办法",
+    "file": "csu-official-link-027.md",
+    "source": "https://xxgk.csu.edu.cn/info/1143/4634.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学预防和处",
+      "理学术不端行为办"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-028",
+    "title": "中南大学诚信应考教育宣传片",
+    "file": "csu-official-link-028.md",
+    "source": "https://xgw.csu.edu.cn/info/1104/16569.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学诚信应考",
+      "教育宣传片"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-029",
+    "title": "计算机学院关于做好诚信考试教育的通知",
+    "file": "csu-official-link-029.md",
+    "source": "https://cse.csu.edu.cn/info/1111/5906.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院关于做",
+      "好诚信考试教育的",
+      "通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-030",
+    "title": "本科生国家奖学金评审办法",
+    "file": "csu-official-link-030.md",
+    "source": "https://xxgk.csu.edu.cn/info/1091/5628.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生国家奖学金",
+      "评审办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-031",
+    "title": "本科生国家励志奖学金评审办法",
+    "file": "csu-official-link-031.md",
+    "source": "https://xxgk.csu.edu.cn/info/1091/5627.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生国家励志奖",
+      "学金评审办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-032",
+    "title": "本科生国家助学金评审办法",
+    "file": "csu-official-link-032.md",
+    "source": "https://xxgk.csu.edu.cn/info/1091/5626.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科生国家助学金",
+      "评审办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-033",
+    "title": "2025-2026学年国家奖学金和国家励志奖学金评定通知",
+    "file": "csu-official-link-033.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16911.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学年国家奖学金和",
+      "国家励志奖学金评",
+      "定通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-034",
+    "title": "2026-2027学年本科生国家助学金评定通知",
+    "file": "csu-official-link-034.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16991.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学年本科生国家助",
+      "学金评定通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-035",
+    "title": "2026-2027学年家庭经济困难学生认定通知",
+    "file": "csu-official-link-035.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16891.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学年家庭经济困难",
+      "学生认定通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-036",
+    "title": "2026年生源地国家助学贷款回执录入和学费缓缴通知",
+    "file": "csu-official-link-036.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16576.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年生源地国家助学",
+      "贷款回执录入和学",
+      "费缓缴通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-037",
+    "title": "2026年中国银行国家助学贷款和学费缓缴通知",
+    "file": "csu-official-link-037.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16577.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年中国银行国家助",
+      "学贷款和学费缓缴",
+      "通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-038",
+    "title": "2026年服兵役和直招士官学生国家教育资助申请通知",
+    "file": "csu-official-link-038.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16575.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年服兵役和直招士",
+      "官学生国家教育资",
+      "助申请通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-039",
+    "title": "智慧学工系统勤工助学启用及2026修订细则",
+    "file": "csu-official-link-039.md",
+    "source": "https://xgw.csu.edu.cn/info/1268/16880.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "智慧学工系统勤工",
+      "助学启用及",
+      "修订细则"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-040",
+    "title": "中南大学心理咨询服务指南",
+    "file": "csu-official-link-040.md",
+    "source": "https://xgw.csu.edu.cn/info/1264/16360.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学心理咨询",
+      "服务指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-041",
+    "title": "2026年下半年心理咨询值班表",
+    "file": "csu-official-link-041.md",
+    "source": "https://xgw.csu.edu.cn/info/1264/16919.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年下半年心理咨询",
+      "值班表"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-042",
+    "title": "2026级新生心理普测通知",
+    "file": "csu-official-link-042.md",
+    "source": "https://xgw.csu.edu.cn/info/1263/17010.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "级新生心理普测通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-043",
+    "title": "计算机学院心理健康栏目",
+    "file": "csu-official-link-043.md",
+    "source": "https://cse.csu.edu.cn/xsgz/xljk.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院心理健",
+      "康栏目"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-044",
+    "title": "中南大学在校参保学生医保指南",
+    "file": "csu-official-link-044.md",
+    "source": "https://zgyy.csu.edu.cn/info/1011/1934.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学在校参保",
+      "学生医保指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-045",
+    "title": "2027年度大学生医保缴费指南",
+    "file": "csu-official-link-045.md",
+    "source": "https://zgyy.csu.edu.cn/info/1011/2184.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年度大学生医保缴",
+      "费指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-046",
+    "title": "2027年长沙市大学生医疗保障政策问答",
+    "file": "csu-official-link-046.md",
+    "source": "https://zgyy.csu.edu.cn/info/1012/2182.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年长沙市大学生医",
+      "疗保障政策问答"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-047",
+    "title": "就业信息网学生服务总页",
+    "file": "csu-official-link-047.md",
+    "source": "https://career.csu.edu.cn/link/page/id/29936",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业信息网学生服",
+      "务总页"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-048",
+    "title": "中南大学签约与解约流程",
+    "file": "csu-official-link-048.md",
+    "source": "https://career.csu.edu.cn/news/view/aid/196351/tag/tzgg",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学签约与解",
+      "约流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-049",
+    "title": "就业问答电子签约解约户档专题",
+    "file": "csu-official-link-049.md",
+    "source": "https://career.csu.edu.cn/question",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业问答电子签约",
+      "解约户档专题"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-050",
+    "title": "启用2027届毕业生就业协议网络签约系统的通知",
+    "file": "csu-official-link-050.md",
+    "source": "https://career.csu.edu.cn/news/view/aid/204974/tag/tzgg",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "启用",
+      "届毕业生就业协议",
+      "网络签约系统的通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-051",
+    "title": "就业指导中心防范求职诈骗提示",
+    "file": "csu-official-link-051.md",
+    "source": "https://career.csu.edu.cn/news/view/aid/205344/tag/tzgg",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业指导中心防范",
+      "求职诈骗提示"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-052",
+    "title": "关于加强毕业生就业工作的意见",
+    "file": "csu-official-link-052.md",
+    "source": "https://career.csu.edu.cn/news/view/aid/203854/tag/tzgg",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "关于加强毕业生就",
+      "业工作的意见"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-053",
+    "title": "毕业生档案查询",
+    "file": "csu-official-link-053.md",
+    "source": "https://career.csu.edu.cn/affair/file",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "毕业生档案查询"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-054",
+    "title": "毕业生档案转递",
+    "file": "csu-official-link-054.md",
+    "source": "https://career.csu.edu.cn/affair/inspect",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "毕业生档案转递"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-055",
+    "title": "毕业生报到证查询",
+    "file": "csu-official-link-055.md",
+    "source": "https://career.csu.edu.cn/affair/binfo",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "毕业生报到证查询"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-056",
+    "title": "后勤保障部规章制度",
+    "file": "csu-official-link-056.md",
+    "source": "https://hqbzb.csu.edu.cn/fwdh/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "后勤保障部规章制"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-057",
+    "title": "后勤保障部办事流程",
+    "file": "csu-official-link-057.md",
+    "source": "https://hqbzb.csu.edu.cn/fwdh/bslc.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "后勤保障部办事流"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-058",
+    "title": "零星维修服务流程",
+    "file": "csu-official-link-058.md",
+    "source": "https://hqbzb.csu.edu.cn/info/1023/2036.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "零星维修服务流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-059",
+    "title": "学生宿舍退房流程",
+    "file": "csu-official-link-059.md",
+    "source": "https://hqbzb.csu.edu.cn/info/1023/2019.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学生宿舍退房流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-060",
+    "title": "水电服务流程",
+    "file": "csu-official-link-060.md",
+    "source": "https://hqbzb.csu.edu.cn/info/1023/2017.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "水电服务流程"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-061",
+    "title": "学生自行在外租房居住申请表",
+    "file": "csu-official-link-061.md",
+    "source": "https://hqbzb.csu.edu.cn/__local/4/FD/DF/4531CF3723756D562C6424B85B1_EA0D661F_5E00.doc?e=.doc",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学生自行在外租房",
+      "居住申请表"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-062",
+    "title": "信息与网络中心学生服务",
+    "file": "csu-official-link-062.md",
+    "source": "https://nic.csu.edu.cn/bsfw/xsfw1.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "信息与网络中心学",
+      "生服务"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-063",
+    "title": "学生有线网络服务及常见问题",
+    "file": "csu-official-link-063.md",
+    "source": "https://nic.csu.edu.cn/bsfw/wlfw/xswlfw/yxwl.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学生有线网络服务",
+      "及常见问题"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-064",
+    "title": "中南大学VPN使用手册",
+    "file": "csu-official-link-064.md",
+    "source": "https://nic.csu.edu.cn/info/1100/2406.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学",
+      "使用手册"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-065",
+    "title": "VPN连接失败问题处理",
+    "file": "csu-official-link-065.md",
+    "source": "https://nic.csu.edu.cn/info/1100/2281.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "连接失败问题处理"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-066",
+    "title": "校园卡服务指南",
+    "file": "csu-official-link-066.md",
+    "source": "https://nic.csu.edu.cn/info/1011/1012.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "校园卡服务指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-067",
+    "title": "学校邮箱服务指南",
+    "file": "csu-official-link-067.md",
+    "source": "https://nic.csu.edu.cn/info/1011/1008.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学校邮箱服务指南"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-068",
+    "title": "信息与网络中心资料下载",
+    "file": "csu-official-link-068.md",
+    "source": "https://nic.csu.edu.cn/info/1068/1544.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "信息与网络中心资",
+      "料下载"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-069",
+    "title": "网络与信息通信故障受理",
+    "file": "csu-official-link-069.md",
+    "source": "https://nic.csu.edu.cn/info/1011/1001.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "网络与信息通信故",
+      "障受理"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-070",
+    "title": "中南大学研究生学籍管理规定",
+    "file": "csu-official-link-070.md",
+    "source": "https://xxgk.csu.edu.cn/info/1099/1448.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学研究生学",
+      "籍管理规定"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-071",
+    "title": "研究生院学籍管理与注册通知栏目",
+    "file": "csu-official-link-071.md",
+    "source": "https://gra.csu.edu.cn/xjjz/xjgl.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生院学籍管理",
+      "与注册通知栏目"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-072",
+    "title": "2026-2027学年第一学期在校研究生学籍注册通知",
+    "file": "csu-official-link-072.md",
+    "source": "https://gra.csu.edu.cn/info/1124/40980.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "学年第一学期在校",
+      "研究生学籍注册通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-073",
+    "title": "2026级研究生报到资格审查与学籍注册通知",
+    "file": "csu-official-link-073.md",
+    "source": "https://gra.csu.edu.cn/info/1124/40981.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "级研究生报到资格",
+      "审查与学籍注册通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-074",
+    "title": "2026年超基本学制未毕业研究生延期学习申请",
+    "file": "csu-official-link-074.md",
+    "source": "https://gra.csu.edu.cn/info/1124/40979.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年超基本学制未毕",
+      "业研究生延期学习",
+      "申请"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-075",
+    "title": "2026年已达最长学习年限未毕业研究生结业申请",
+    "file": "csu-official-link-075.md",
+    "source": "https://gra.csu.edu.cn/info/1124/40978.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年已达最长学习年",
+      "限未毕业研究生结",
+      "业申请"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-076",
+    "title": "2026级研究生学信网学籍信息自查",
+    "file": "csu-official-link-076.md",
+    "source": "https://gra.csu.edu.cn/info/1124/41035.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "级研究生学信网学",
+      "籍信息自查"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-077",
+    "title": "研究生奖助管理通知栏目",
+    "file": "csu-official-link-077.md",
+    "source": "https://gra.csu.edu.cn/xjjz/jzgl.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生奖助管理通",
+      "知栏目"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-078",
+    "title": "研究生奖学金申报资格学分要求线上控制",
+    "file": "csu-official-link-078.md",
+    "source": "https://gra.csu.edu.cn/info/1125/40988.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生奖学金申报",
+      "资格学分要求线上",
+      "控制"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-079",
+    "title": "研究生奖助学金发放及银行卡绑定说明",
+    "file": "csu-official-link-079.md",
+    "source": "https://gra.csu.edu.cn/info/1125/40989.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生奖助学金发",
+      "放及银行卡绑定说"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-080",
+    "title": "2026年11月研究生助学金发放通知",
+    "file": "csu-official-link-080.md",
+    "source": "https://gra.csu.edu.cn/info/1125/41068.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "月研究生助学金发",
+      "放通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-081",
+    "title": "研究生学籍奖助表格下载",
+    "file": "csu-official-link-081.md",
+    "source": "https://gra.csu.edu.cn/xzzq/xjjz.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生学籍奖助表",
+      "格下载"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-082",
+    "title": "计算机学院规章制度",
+    "file": "csu-official-link-082.md",
+    "source": "https://cse.csu.edu.cn/xxfw/gzzd.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院规章制"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-083",
+    "title": "计算机学院考勤和请假管理规定",
+    "file": "csu-official-link-083.md",
+    "source": "https://cse.csu.edu.cn/info/1032/4907.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院考勤和",
+      "请假管理规定"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-084",
+    "title": "公共计算资源使用及服务器托管管理办法",
+    "file": "csu-official-link-084.md",
+    "source": "https://cse.csu.edu.cn/info/1032/5746.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "公共计算资源使用",
+      "及服务器托管管理",
+      "办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-085",
+    "title": "开放创新实验室管理办法",
+    "file": "csu-official-link-085.md",
+    "source": "https://cse.csu.edu.cn/info/1032/5745.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "开放创新实验室管",
+      "理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-086",
+    "title": "实验室安全环保管理办法",
+    "file": "csu-official-link-086.md",
+    "source": "https://cse.csu.edu.cn/info/1032/6274.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "实验室安全环保管",
+      "理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-087",
+    "title": "计算机学院研究生奖助学金量化评分细则",
+    "file": "csu-official-link-087.md",
+    "source": "https://cse.csu.edu.cn/info/1056/11444.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院研究生",
+      "奖助学金量化评分",
+      "细则"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-088",
+    "title": "2026年本科生教育基金会奖励金评选通知",
+    "file": "csu-official-link-088.md",
+    "source": "https://cse.csu.edu.cn/info/1040/11569.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年本科生教育基金",
+      "会奖励金评选通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-089",
+    "title": "2026年研究生教育基金会奖励金评选通知",
+    "file": "csu-official-link-089.md",
+    "source": "https://cse.csu.edu.cn/info/1040/11568.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "年研究生教育基金",
+      "会奖励金评选通知"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-090",
+    "title": "研究生学术报告发布和打卡说明",
+    "file": "csu-official-link-090.md",
+    "source": "https://cse.csu.edu.cn/info/1056/9236.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生学术报告发",
+      "布和打卡说明"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-091",
+    "title": "研究生开题报告工作安排",
+    "file": "csu-official-link-091.md",
+    "source": "https://cse.csu.edu.cn/info/1056/11655.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "研究生开题报告工",
+      "作安排"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-092",
+    "title": "博士生中期考核及培养环节管理办法",
+    "file": "csu-official-link-092.md",
+    "source": "https://cse.csu.edu.cn/info/1056/11656.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "博士生中期考核及",
+      "培养环节管理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-093",
+    "title": "博士生资格考试通知",
+    "file": "csu-official-link-093.md",
+    "source": "https://cse.csu.edu.cn/info/1056/11447.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "博士生资格考试通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-094",
+    "title": "优秀博士硕士学位论文评选工作安排",
+    "file": "csu-official-link-094.md",
+    "source": "https://cse.csu.edu.cn/info/1056/11708.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "优秀博士硕士学位",
+      "论文评选工作安排"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-095",
+    "title": "计算机学院学业服务与发展",
+    "file": "csu-official-link-095.md",
+    "source": "https://cse.csu.edu.cn/xsgz/xyfwyfz.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院学业服",
+      "务与发展"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-096",
+    "title": "计算机学院学工通知",
+    "file": "csu-official-link-096.md",
+    "source": "https://cse.csu.edu.cn/xsgz/xue_gong_tong_z.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院学工通"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-097",
+    "title": "计算机学院就业信息",
+    "file": "csu-official-link-097.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机学院就业信"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-098",
+    "title": "中南大学本科生转专业实施办法",
+    "file": "csu-official-link-098.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/3910.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学本科生转",
+      "专业实施办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-099",
+    "title": "中南大学推免资格管理办法",
+    "file": "csu-official-link-099.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/4278.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学推免资格",
+      "管理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-100",
+    "title": "中南大学本科课程考核管理办法",
+    "file": "csu-official-link-100.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/3377.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学本科课程",
+      "考核管理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-101",
+    "title": "中南大学学生考试规则",
+    "file": "csu-official-link-101.md",
+    "source": "https://bksy.csu.edu.cn/info/1270/3145.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生考试",
+      "规则"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-102",
+    "title": "中南大学本科毕业论文设计管理办法",
+    "file": "csu-official-link-102.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/3362.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学本科毕业",
+      "论文设计管理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-103",
+    "title": "本科毕业论文设计作假行为处理办法",
+    "file": "csu-official-link-103.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/3364.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "本科毕业论文设计",
+      "作假行为处理办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-104",
+    "title": "中南大学本科生辅修专业与辅修学士学位教育暂行办法",
+    "file": "csu-official-link-104.md",
+    "source": "https://bksy.csu.edu.cn/info/1168/3375.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学本科生辅",
+      "修专业与辅修学士",
+      "学位教育暂行办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-official-link-105",
+    "title": "中南大学学生评优实施办法",
+    "file": "csu-official-link-105.md",
+    "source": "https://xxgk.csu.edu.cn/info/1096/1439.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "中南大学学生评优",
+      "实施办法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "办事官方文件链接汇总.docx"
+  },
+  {
+    "id": "csu-career-guide-01",
+    "title": "计算机就业发展参考：就业方向",
+    "file": "csu-career-guide-01.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-02",
+    "title": "计算机就业发展参考：一、专业就业方向全景",
+    "file": "csu-career-guide-02.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-03",
+    "title": "计算机就业发展参考：（一）软件开发与工程类",
+    "file": "csu-career-guide-03.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "后端开发工程师",
+      "后端开发",
+      "前端开发",
+      "软件开发"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-04",
+    "title": "计算机就业发展参考：（二）人工智能与算法类",
+    "file": "csu-career-guide-04.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "人工智能",
+      "算法"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-05",
+    "title": "计算机就业发展参考：（三）大数据与云计算类",
+    "file": "csu-career-guide-05.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "大数据"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-06",
+    "title": "计算机就业发展参考：（四）网络安全与信创类",
+    "file": "csu-career-guide-06.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "网络安全"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-07",
+    "title": "计算机就业发展参考：（五）产品与运营类",
+    "file": "csu-career-guide-07.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-08",
+    "title": "计算机就业发展参考：（六）金融科技类",
+    "file": "csu-career-guide-08.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-09",
+    "title": "计算机就业发展参考：（七）智能制造与硬科技类",
+    "file": "csu-career-guide-09.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-10",
+    "title": "计算机就业发展参考：（八）教育科研与公共服务类",
+    "file": "csu-career-guide-10.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-11",
+    "title": "计算机就业发展参考：二、专业优势分析",
+    "file": "csu-career-guide-11.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-12",
+    "title": "计算机就业发展参考：（一）国家规划层面的优势行业",
+    "file": "csu-career-guide-12.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-13",
+    "title": "计算机就业发展参考：（二）区域经济布局（湖南长沙）层面的优势行业",
+    "file": "csu-career-guide-13.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-14",
+    "title": "计算机就业发展参考：（三）产业发展角度的优势行业",
+    "file": "csu-career-guide-14.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-15",
+    "title": "计算机就业发展参考：（四）优势企业名单",
+    "file": "csu-career-guide-15.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-16",
+    "title": "计算机就业发展参考：（五）优势岗位及岗位胜任力要求",
+    "file": "csu-career-guide-16.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-17",
+    "title": "计算机就业发展参考：三、榜样（校友）人物",
+    "file": "csu-career-guide-17.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-18",
+    "title": "计算机就业发展参考：（一）学术科研榜样",
+    "file": "csu-career-guide-18.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-19",
+    "title": "计算机就业发展参考：（二）产业界榜样",
+    "file": "csu-career-guide-19.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-20",
+    "title": "计算机就业发展参考：（三）基层就业榜样",
+    "file": "csu-career-guide-20.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-21",
+    "title": "计算机就业发展参考：（四）在校优秀学子",
+    "file": "csu-career-guide-21.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-22",
+    "title": "计算机就业发展参考：四、成长建议",
+    "file": "csu-career-guide-22.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-23",
+    "title": "计算机就业发展参考：（一）明确职业目标：结合专业，知己知彼",
+    "file": "csu-career-guide-23.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-24",
+    "title": "计算机就业发展参考：（二）制定成长计划：对标目标，补齐短板",
+    "file": "csu-career-guide-24.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-25",
+    "title": "计算机就业发展参考：（三）树立正确择业观：小我融入大我",
+    "file": "csu-career-guide-25.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-26",
+    "title": "计算机就业发展参考：（四）善用资源：学校+社会双轮驱动",
+    "file": "csu-career-guide-26.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-27",
+    "title": "计算机就业发展参考：五、中南大学计算机专业重点方向和领域",
+    "file": "csu-career-guide-27.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-28",
+    "title": "计算机就业发展参考：（一）人工智能与机器学习",
+    "file": "csu-career-guide-28.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "人工智能"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-29",
+    "title": "计算机就业发展参考：（二）生物信息学",
+    "file": "csu-career-guide-29.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-30",
+    "title": "计算机就业发展参考：（三）计算机网络与信息安全",
+    "file": "csu-career-guide-30.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-31",
+    "title": "计算机就业发展参考：（四）大数据与分布式计算",
+    "file": "csu-career-guide-31.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "大数据"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-32",
+    "title": "计算机就业发展参考：（五）计算机系统结构",
+    "file": "csu-career-guide-32.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-33",
+    "title": "计算机就业发展参考：（六）理论计算机科学",
+    "file": "csu-career-guide-33.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-34",
+    "title": "计算机就业发展参考：（七）计算机应用技术",
+    "file": "csu-career-guide-34.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-35",
+    "title": "计算机就业发展参考：六、多元出口方向",
+    "file": "csu-career-guide-35.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-36",
+    "title": "计算机就业发展参考：（一）直接就业",
+    "file": "csu-career-guide-36.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-37",
+    "title": "计算机就业发展参考：（二）读研深造",
+    "file": "csu-career-guide-37.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "读研"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-38",
+    "title": "计算机就业发展参考：（三）考公考编",
+    "file": "csu-career-guide-38.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "考公"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-39",
+    "title": "计算机就业发展参考：（四）出国（境）深造",
+    "file": "csu-career-guide-39.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  },
+  {
+    "id": "csu-career-guide-40",
+    "title": "计算机就业发展参考：（五）其他发展路径",
+    "file": "csu-career-guide-40.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "department": "中南大学计算机学院",
+    "keywords": [
+      "计算机就业"
+    ],
+    "validUntil": "2027-12-31",
+    "originFile": "中南大学计算机科学与技术专业就业方向与发.docx"
+  }
+]
