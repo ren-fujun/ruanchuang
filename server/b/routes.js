@@ -413,6 +413,9 @@ export function mountB(app, { db, save, requireAuth }) {
     } else if (certain) {
       const k = matches[0].k
       const generated = await answerFromReviewedKnowledge(focus, k)
+      if (k.status !== 'published' || Date.parse(k.validUntil) <= Date.now()) {
+        result.answer = '相关资料已更新或过期，请重新咨询或联系辅导员核实。'
+      } else {
       result = {
         ...result,
         action: 'answer',
@@ -427,6 +430,7 @@ export function mountB(app, { db, save, requireAuth }) {
           department: k.department,
           validUntil: k.validUntil,
         },
+      }
       }
     } else if (c.turns.length < 3) {
       result.action = 'clarify'
