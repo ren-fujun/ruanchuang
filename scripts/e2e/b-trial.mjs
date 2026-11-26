@@ -31,6 +31,18 @@ try {
   while (!logs.includes('已启动')) { if (Date.now() > end || child.exitCode !== null) throw Error(logs || '启动超时'); await new Promise(r => setTimeout(r, 100)) }
   const student = await login('20230118'), graduate = await login('graduate'), counselor = await login('chenyuan'),
     mentor = await login('mentor'), other = await login('mentor-other'), academic = await login('academic'), unknown = await login('unconfigured')
+  const reviewer = await login('reviewer')
+  const imported = { title: '虚构学业说明', source: '虚构测试文件', department: '测试部门', validUntil: '2099-01-01', text: '虚构政策：测试学生应联系测试部门。' }
+  await call('/b/knowledge/import-text', student, imported, 403)
+  const draft = (await call('/b/knowledge/import-text', counselor, imported, 201)).items[0]
+  await call(`/b/knowledge/${draft.id}/review`, reviewer, { action: 'publish', note: '测试审核' }, 400)
+  const before = await call('/b/assistant', student, { text: '虚构政策如何处理' })
+  ok(before.action !== 'answer', '未审核知识不能被学生检索')
+  const ready = (await call('/b/knowledge', counselor, { title: draft.title, answer: draft.answer, keywords: ['虚构政策'], source: draft.source, sourceExcerpt: draft.sourceExcerpt, department: draft.department, validUntil: draft.validUntil, parentId: draft.id }, 201)).item
+  await call(`/b/knowledge/${ready.id}/review`, counselor, { action: 'publish', note: '本人不能审核' }, 403)
+  await call(`/b/knowledge/${ready.id}/review`, reviewer, { action: 'publish', note: '已核对虚构原文' })
+  const after = await call('/b/assistant', student, { text: '虚构政策如何处理' })
+  ok(after.action === 'answer' && after.source.excerpt === imported.text, '已审核知识可检索且保留原文')
   await call('/b/leaves', null, undefined, 401)
   await call('/b/leaves', academic, undefined, 403)
   ok((await call('/b/leaves/approvers', student)).items[0].id === 'cou-chen')

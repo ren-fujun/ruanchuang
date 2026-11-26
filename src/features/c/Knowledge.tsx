@@ -33,6 +33,7 @@ export function KnowledgeCorrections() {
   const action = useAction(resource.reload);
   const [draft, setDraft] = useState(empty);
   const [note, setNote] = useState("");
+  const [imported, setImported] = useState({ title: "", source: "", department: "", validUntil: "", text: "" });
   const labels = {
     title: "标准答案标题",
     answer: "答案内容",
@@ -56,6 +57,20 @@ export function KnowledgeCorrections() {
   return (
     <div className="c-page">
       <h1>知识纠错与版本</h1>
+      <Panel title="从文件正文生成草稿">
+        <p>请先从文件复制正文并粘贴。系统按空行分段生成草稿；需补充关键词并由另一位审核人员核对原文后发布。</p>
+        <form className="c-form" onSubmit={(e) => {
+          e.preventDefault();
+          if (!(Date.parse(imported.validUntil) > Date.now())) return;
+          void action.run(() => write("/b/knowledge/import-text", { ...imported, validUntil: new Date(imported.validUntil).toISOString() }), "已生成草稿，请在下方修订并补充关键词", () => setImported({ title: "", source: "", department: "", validUntil: "", text: "" }));
+        }}>
+          {([["title", "文件名称"], ["source", "文件来源"], ["department", "责任部门"], ["validUntil", "有效期"]] as const).map(([key, label]) => <label key={key}>{label}<input required maxLength={300} type={key === "validUntil" ? "datetime-local" : "text"} value={imported[key]} onChange={(e) => setImported({ ...imported, [key]: e.target.value })} /></label>)}
+          <label>文件正文<textarea required maxLength={20000} value={imported.text} onChange={(e) => setImported({ ...imported, text: e.target.value })} /></label>
+          <p>最多20段，每段最多4000字。当前支持粘贴文本，请勿将虚构示例当作学校规定发布。</p>
+          {action.feedback}
+          <button className="c-primary" disabled={action.busy || !(Date.parse(imported.validUntil) > Date.now())}>生成待完善草稿</button>
+        </form>
+      </Panel>
       <Panel title={draft.parentId ? "提交修订版本" : "提出标准答案"}>
         <form
           className="c-form"

@@ -6,6 +6,7 @@ import { mountCollaboration, caseView } from './collaboration.js'
 import { operation } from './operations.js'
 import { workflowGuidance } from './policy.js'
 import { consultationFocus, requestsHuman, immediateDanger } from './consultation.js'
+import { makeKnowledgeDrafts } from './knowledge-import.js'
 const id = () => crypto.randomUUID(),
   now = () => new Date().toISOString()
 export function mountB(app, { db, save, requireAuth }) {
@@ -246,6 +247,17 @@ export function mountB(app, { db, save, requireAuth }) {
       ),
     }),
   )
+  r.post('/knowledge/import-text', allowed(['counselor']), (req, res) => {
+    let items
+    try {
+      items = makeKnowledgeDrafts({ ...req.body, authorId: req.user.id, makeId: id })
+    } catch (error) {
+      return fail(res, error.message)
+    }
+    state.knowledge.push(...items)
+    audit(req, 'knowledge_import_text', items.map(item => item.id).join(','))
+    res.status(201).json({ items, message: '已生成草稿；请补充关键词并由另一位审核人员审核。' })
+  })
   r.post('/knowledge', allowed(['counselor']), (req, res) => {
     const {
       title,
@@ -316,6 +328,8 @@ export function mountB(app, { db, save, requireAuth }) {
       return fail(res, '需提供审核决定和意见')
     if (req.body.action === 'publish' && Date.parse(k.validUntil) <= Date.now())
       return fail(res, '过期版本不能发布')
+    if (req.body.action === 'publish' && (!Array.isArray(k.keywords) || !k.keywords.length))
+      return fail(res, '请先补充检索关键词，导入草稿可通过修订生成完整版本')
     if (req.body.action === 'publish')
       state.knowledge
         .filter((x) => x.family === k.family && x.status === 'published')
