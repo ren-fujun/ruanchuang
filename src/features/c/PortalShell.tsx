@@ -31,6 +31,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
         ["tickets", "进度", ClipboardList],
         ["messages", "消息", Bell],
         ["academic", "学业支持", GraduationCap],
+        ["appointments", "预约沟通", CalendarDays],
         ["leaves", "我的请假", ClipboardList],
         ["repairs", "报修", CalendarDays],
         ["profile", "我的", UserRound],
@@ -40,6 +41,7 @@ export function PortalShell({ role }: { role: PortalRole }) {
         ["tickets", "工单", ClipboardList],
         ["repairs", "报修监督", Layers],
         ["academic", "学业跟进", BookOpen],
+        ["appointments", "预约排班", CalendarDays],
         ["leaves", "请假审批", ClipboardList],
         ["insights", "协同洞察", ChartNoAxesColumn],
         ["knowledge", "知识纠错", BookOpen],
@@ -48,8 +50,8 @@ export function PortalShell({ role }: { role: PortalRole }) {
       ] as const);
   const dock = items.filter(([path]) =>
     student
-      ? ["home", "tickets", "messages", "profile"].includes(path)
-      : ["home", "tickets", "repairs", "profile"].includes(path),
+      ? ["home", "tickets", "appointments", "messages", "profile"].includes(path)
+      : ["home", "tickets", "appointments", "repairs", "profile"].includes(path),
   );
   return (
     <div className={"c-shell c-" + role}>

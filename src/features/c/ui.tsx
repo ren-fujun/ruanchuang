@@ -138,6 +138,7 @@ export const statusLabel = (s: string) =>
     completed: "已完成",
     reopened: "重新办理",
     scheduled: "已预约",
+    waitlisted: "候补中",
     cancelled: "已取消",
     pending_contact: "待联系",
     contacted: "已联系",

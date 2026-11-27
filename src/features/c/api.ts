@@ -34,6 +34,8 @@ export interface Appointment {
   startsAt: string;
   endsAt: string;
   ownerName: string;
+  studentName: string;
+  unread: number;
 }
 export interface AcademicCase {
   id: string;
