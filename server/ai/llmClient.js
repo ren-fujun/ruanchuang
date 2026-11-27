@@ -22,6 +22,10 @@ const DEFAULT_CIRCUIT_COOLDOWN_MS = 60000
 const DEFAULT_MAX_CONCURRENCY = 4
 const DEFAULT_CACHE_TTL_MS = 600000
 const CACHE_LIMIT = 200
+const emptyUsage = () => ({
+  attempts: 0, responsesWithUsage: 0, responsesWithCacheBreakdown: 0,
+  inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, uncachedInputTokens: 0,
+})
 
 const num = (value, fallback, minimum = 0) => {
   const parsed = Number(value)
@@ -59,6 +63,7 @@ const runtime = {
   cacheHits: 0,
   /** 故障注入：null | timeout | offline | bad-json | http-500 */
   faultMode: null,
+  providerUsage: emptyUsage(),
   /** 指标 */
   metrics: {
     calls: 0,
@@ -186,12 +191,31 @@ const parseJson = (content) => {
 
 const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504])
 
+const isTokenCount = value => Number.isSafeInteger(value) && value >= 0
+
+function recordProviderUsage(usage, totals) {
+  const { prompt_tokens: input, completion_tokens: output } = usage || {}
+  if (!isTokenCount(input) || !isTokenCount(output)) return
+  totals.responsesWithUsage += 1
+  totals.inputTokens += input
+  totals.outputTokens += output
+  const cached = usage.prompt_cache_hit_tokens ?? usage.prompt_tokens_details?.cached_tokens
+  const uncached = usage.prompt_cache_miss_tokens ?? (isTokenCount(cached) ? input - cached : null)
+  if (isTokenCount(cached) && isTokenCount(uncached) && cached + uncached === input) {
+    totals.responsesWithCacheBreakdown += 1
+    totals.cachedInputTokens += cached
+    totals.uncachedInputTokens += uncached
+  }
+}
+
 const callOnce = async ({ prompt, payload, temperature, cfg }) => {
   const { apiKey, baseUrl, model, timeoutMs } = cfg
   const built = prompt.build(payload)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const totals = runtime.providerUsage
   try {
+    totals.attempts += 1
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       signal: controller.signal,
@@ -199,6 +223,7 @@ const callOnce = async ({ prompt, payload, temperature, cfg }) => {
       body: JSON.stringify({
         model,
         temperature: temperature ?? prompt.temperature ?? 0.2,
+        ...(prompt.maxTokens ? { max_tokens: prompt.maxTokens } : {}),
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: built.system },
@@ -214,6 +239,7 @@ const callOnce = async ({ prompt, payload, temperature, cfg }) => {
     }
     try {
       const body = await response.json()
+      recordProviderUsage(body?.usage, totals)
       return parseJson(body?.choices?.[0]?.message?.content)
     } catch (cause) {
       if (!(cause instanceof SyntaxError)) throw cause
@@ -403,6 +429,7 @@ export const llmStatus = () => {
       degraded: runtime.metrics.degraded,
       retries: runtime.metrics.retries,
       timeouts: runtime.metrics.timeouts,
+      providerUsage: { ...runtime.providerUsage },
       avgLatencyMs: avg,
       p95LatencyMs: percentile(samples, 0.95),
       reasonCounts: { ...runtime.metrics.reasonCounts },
@@ -429,6 +456,7 @@ export const resetLlmRuntime = () => {
   runtime.metrics.degraded = 0
   runtime.metrics.retries = 0
   runtime.metrics.timeouts = 0
+  runtime.providerUsage = emptyUsage()
   runtime.metrics.lastError = null
   runtime.metrics.lastSuccessAt = null
   runtime.metrics.lastFailureAt = null
