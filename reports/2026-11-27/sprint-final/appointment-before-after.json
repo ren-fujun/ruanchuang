@@ -1,0 +1,19 @@
+{
+  "baselineCommit": "2254f53",
+  "currentFileSha256": "fb287a1c34546d8beb42482d8228623d099604d8f780d3d419432f0b25b11d1f",
+  "scope": "相同20个合成请求，每项5分钟，提供两个30分钟意向窗口；旧模块仅支持slotId，新模块支持slotIds。内存路由对照，不是HTTP性能或真实用户结果。",
+  "baseline": {
+    "requests": 20,
+    "confirmed": 6,
+    "waitlisted": 14,
+    "allocatedMinutes": 30,
+    "duplicateOccupancies": 0
+  },
+  "current": {
+    "requests": 20,
+    "confirmed": 12,
+    "waitlisted": 8,
+    "allocatedMinutes": 60,
+    "duplicateOccupancies": 0
+  }
+}

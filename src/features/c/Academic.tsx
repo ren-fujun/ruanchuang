@@ -49,6 +49,7 @@ export function Academic({ role }: { role: PortalRole }) {
                     : "未通过，继续跟进"
                   : "等待回写"}
               </p>
+              {role === "student" && c.status !== "completed" && <Link className="c-outline" to={'/student/appointments?topic=' + encodeURIComponent('学业面谈：' + c.course)}>申请学业约谈</Link>}
               {c.records.map((r, i) => (
                 <p key={i}>
                   {statusLabel(r.type)} ·{" "}

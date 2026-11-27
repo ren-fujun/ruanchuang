@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mountAppointments } from './appointments.js'
 
 test('开放窗口内排班、候补、补位、幂等与访问范围', async () => {
-  const handlers = new Map(), app = { get: (p, ...f) => handlers.set('GET '+p, f.at(-1)), post: (p, ...f) => handlers.set('POST '+p, f.at(-1)) }
+  const handlers = new Map(), app = { get: (p, ...f) => handlers.set('GET '+p, f.at(-1)), post: (p, ...f) => handlers.set('POST '+p, f.at(-1)), patch: (p, ...f) => handlers.set('PATCH '+p, f.at(-1)) }
   const teacher = { id: 'c', role: 'counselor', studentIds: ['s1','s2','s3','s4'] }, students = teacher.studentIds.map(id => ({id, role: 'student'}))
   const db = { users: [teacher, ...students, {id: 'other', role:'student'}] }
   mountAppointments(app, {db, save() {}, requireAuth() {}})

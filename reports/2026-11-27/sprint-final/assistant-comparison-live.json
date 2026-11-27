@@ -1,0 +1,1795 @@
+{
+  "mode": "live-comparison",
+  "evaluatedAt": "2026-11-27T09:00:51.255Z",
+  "notes": [
+    "12 个固定合成案例，三组使用相同问题及账户类别。规则与护栏组走实际学生咨询 API。",
+    "模型直接回答组复用相同供应商但不加载知识，在评测进程直接计时。对照覆盖业务路由、人工入口及固定答案判据，不作为通用模型准确率。",
+    "按轮统计，每千轮费用基于供应商返回的实际 Token 和本轮提供的单价，最终账单以供应商为准。"
+  ],
+  "groups": {
+    "rules": {
+      "scenariosPassed": 10,
+      "scenarios": 12,
+      "turnsPassed": 15,
+      "turns": 17,
+      "correctEntries": 7,
+      "entryCases": 9,
+      "incorrectGuidance": 0,
+      "correctHandoffs": 4,
+      "handoffCases": 4,
+      "modelTurns": 0,
+      "failedModelTurns": 0,
+      "p50Ms": 2,
+      "p95Ms": 7,
+      "results": [
+        {
+          "id": "N01",
+          "group": "常规识别",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 7
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "group": "报修追问",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 3
+            },
+            {
+              "text": "补救无效",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs",
+                "answer": "提出一次异议",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "先打开「报修进度」查看原单。\n1. 还没报过：从报修页提交，写明故障及现场变化。\n2. 已报但无人接单：普通报修超过 4 小时，可带单号联系楼栋宿管值班室；漏水持续扩大时立即联系值班室。\n3. 后勤已回填结果但问题仍在：打开原单，选择「提出一次异议」，补充未解决的位置与现状。无需重复报单。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "S03",
+          "group": "跨话题和转人工",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            },
+            {
+              "text": "换个问题，校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 3
+            },
+            {
+              "text": "那去哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K02",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "校车接驳办法是什么",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K03",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "实验室钥匙领取在哪里",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K06",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            },
+            {
+              "text": "这个去哪里办",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "R01",
+          "group": "风险和信息不足",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水而且插座漏电",
+              "expected": {
+                "action": "urgent_handoff",
+                "next": null,
+                "source": null,
+                "answer": "紧急"
+              },
+              "actual": {
+                "action": "urgent_handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "W01",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "本科生怎么请假",
+              "expected": {
+                "action": "guidance",
+                "next": "/student/leaves",
+                "answer": "辅导员",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "本科生请假由你选择的所属辅导员审批，请到“我的请假”提交。AI不能替老师批假。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            },
+            {
+              "text": "那找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属辅导员"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "本科生请假由你选择的所属辅导员审批，请到“我的请假”提交。AI不能替老师批假。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "W02",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "我是研究生，请假找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属班导师"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "研究生请假由你选择的所属班导师审批，请到“我的请假”提交。学业导师不自动具有班导师审批权限，AI不能批假。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "W08",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "想找人工，宿舍漏水情况还不太好说",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "可以转交辅导员。请核对对话摘要，确认后提交。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "P01",
+          "group": "口语难例",
+          "ok": false,
+          "turns": [
+            {
+              "text": "导员最近的空档怎么找，我想见一面",
+              "expected": {
+                "action": "guidance",
+                "topic": "appointment",
+                "next": "/student/appointments"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [
+                "action",
+                "topic",
+                "next"
+              ],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "group": "口语难例",
+          "ok": false,
+          "turns": [
+            {
+              "text": "有些情况，想跟学院反映一下",
+              "expected": {
+                "action": "guidance",
+                "topic": "request",
+                "next": "/student/new"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [
+                "action",
+                "topic",
+                "next"
+              ],
+              "latencyMs": 1
+            }
+          ]
+        }
+      ],
+      "appointment": {
+        "passed": 9,
+        "total": 9,
+        "modelSuggestions": 0,
+        "rows": [
+          {
+            "topic": "我就找老师签个字",
+            "expected": {
+              "category": "signing",
+              "durationMinutes": 5
+            },
+            "actual": {
+              "category": "signing",
+              "label": "签字盖章",
+              "durationMinutes": 5,
+              "reason": "签字或盖章通常可在短时段内办理。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "帮忙盖一下章",
+            "expected": {
+              "category": "signing",
+              "durationMinutes": 5
+            },
+            "actual": {
+              "category": "signing",
+              "label": "签字盖章",
+              "durationMinutes": 5,
+              "reason": "签字或盖章通常可在短时段内办理。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "想问问奖学金需要什么手续",
+            "expected": {
+              "category": "consultation",
+              "durationMinutes": 15
+            },
+            "actual": {
+              "category": "consultation",
+              "label": "普通咨询",
+              "durationMinutes": 15,
+              "reason": "预留时间说明情况和确认下一步。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "咨询班级材料提交的流程",
+            "expected": {
+              "category": "consultation",
+              "durationMinutes": 15
+            },
+            "actual": {
+              "category": "consultation",
+              "label": "普通咨询",
+              "durationMinutes": 15,
+              "reason": "预留时间说明情况和确认下一步。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "想谈一下学业预警之后的计划",
+            "expected": {
+              "category": "academic",
+              "durationMinutes": 20
+            },
+            "actual": {
+              "category": "academic",
+              "label": "学业面谈",
+              "durationMinutes": 20,
+              "reason": "预留时间交流学业情况和商量后续安排，可按需要改为 30 分钟。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "挂科了，想和老师聊聊怎么补考",
+            "expected": {
+              "category": "academic",
+              "durationMinutes": 20
+            },
+            "actual": {
+              "category": "academic",
+              "label": "学业面谈",
+              "durationMinutes": 20,
+              "reason": "预留时间交流学业情况和商量后续安排，可按需要改为 30 分钟。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "要签字，也想聊学业预警",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          },
+          {
+            "topic": "有点事",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          },
+          {
+            "topic": "找老师确认一张单，学号我到了再说",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          }
+        ]
+      }
+    },
+    "modelDirect": {
+      "scenariosPassed": 1,
+      "scenarios": 12,
+      "turnsPassed": 1,
+      "turns": 17,
+      "correctEntries": 7,
+      "entryCases": 9,
+      "incorrectGuidance": 5,
+      "correctHandoffs": 3,
+      "handoffCases": 4,
+      "modelTurns": 17,
+      "failedModelTurns": 0,
+      "p50Ms": 1132,
+      "p95Ms": 1620,
+      "results": [
+        {
+          "id": "N01",
+          "group": "常规识别",
+          "ok": false,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "dorm_water_leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "请尽快在报修系统提交宿舍漏水报修，写明楼栋、房间号和漏水情况，便于后勤安排处理。"
+              },
+              "failures": [
+                "topic",
+                "policy"
+              ],
+              "latencyMs": 1357
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "group": "报修追问",
+          "ok": false,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "dorm_water_leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "请尽快在报修系统提交宿舍漏水报修，写明楼栋房间号和漏水情况；若漏水严重或影响用电安全，请立即联系宿管或后勤值班人员处理。"
+              },
+              "failures": [
+                "topic",
+                "policy"
+              ],
+              "latencyMs": 1337
+            },
+            {
+              "text": "补救无效",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs",
+                "answer": "提出一次异议",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "repair_followup",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "如果之前的报修处理无效，请重新提交报修并注明“补救无效”，补充楼栋房间号、漏水现状和上次报修时间；若仍无响应，请联系宿管或后勤值班人员跟进。"
+              },
+              "failures": [
+                "topic",
+                "next",
+                "answer",
+                "policy"
+              ],
+              "latencyMs": 1279
+            }
+          ]
+        },
+        {
+          "id": "S03",
+          "group": "跨话题和转人工",
+          "ok": false,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "dorm_repair",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "宿舍漏水请尽快在报修系统提交维修申请，填写宿舍楼栋、房间号和漏水情况，后勤会安排处理。若漏水严重或影响用电安全，请立即联系宿管或楼长。"
+              },
+              "failures": [
+                "topic",
+                "policy"
+              ],
+              "latencyMs": 1132
+            },
+            {
+              "text": "换个问题，校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": "campus_card_replacement",
+                "next": "/student/tickets",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "校园卡补办一般需到校园卡服务中心办理，建议先在“学生服务-工单”提交校园卡补办咨询，确认具体地点和所需材料；如急需用卡，可同时联系辅导员协助。"
+              },
+              "failures": [
+                "source",
+                "answer"
+              ],
+              "latencyMs": 1188
+            },
+            {
+              "text": "那去哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "dorm_repair",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "宿舍漏水请到“学生服务-报修”提交维修申请，填写楼栋、房间号和漏水情况；若漏水严重或影响用电安全，请立即联系宿管或楼长。"
+              },
+              "failures": [
+                "action",
+                "source",
+                "answer"
+              ],
+              "latencyMs": 929
+            }
+          ]
+        },
+        {
+          "id": "K02",
+          "group": "知识依据",
+          "ok": false,
+          "turns": [
+            {
+              "text": "校车接驳办法是什么",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": "school_bus_policy",
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "校车接驳的具体办法需要以学校后勤或交通管理部门发布的正式规定为准，我目前没有可引用的校方依据。建议你联系后勤保障部门或查看学校官网通知；如需我帮你转接人工咨询，请告知。"
+              },
+              "failures": [
+                "answer"
+              ],
+              "latencyMs": 1620
+            }
+          ]
+        },
+        {
+          "id": "K03",
+          "group": "知识依据",
+          "ok": false,
+          "turns": [
+            {
+              "text": "实验室钥匙领取在哪里",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": "lab_key_pickup",
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "实验室钥匙领取通常由所在院系实验室管理处或导师/实验室负责人发放，具体地点各院系不同。建议先联系你的实验课老师或院系教务/实验室管理办公室确认领取地点和时间。"
+              },
+              "failures": [
+                "action",
+                "answer"
+              ],
+              "latencyMs": 1081
+            }
+          ]
+        },
+        {
+          "id": "K06",
+          "group": "知识依据",
+          "ok": false,
+          "turns": [
+            {
+              "text": "校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": "campus_card_replacement",
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "校园卡补办一般到校园卡服务中心或学生事务大厅办理，建议先通过学校官网或咨询辅导员确认具体地点和所需材料。"
+              },
+              "failures": [
+                "source",
+                "answer"
+              ],
+              "latencyMs": 706
+            },
+            {
+              "text": "这个去哪里办",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": "campus_card_replacement",
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "校园卡补办一般到校园卡服务中心或学生事务大厅办理。建议先通过学校官网或咨询辅导员确认具体地点和所需材料。"
+              },
+              "failures": [
+                "source",
+                "answer"
+              ],
+              "latencyMs": 587
+            }
+          ]
+        },
+        {
+          "id": "R01",
+          "group": "风险和信息不足",
+          "ok": false,
+          "turns": [
+            {
+              "text": "宿舍漏水而且插座漏电",
+              "expected": {
+                "action": "urgent_handoff",
+                "next": null,
+                "source": null,
+                "answer": "紧急"
+              },
+              "actual": {
+                "action": "urgent_handoff",
+                "topic": "dorm_safety_hazard",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "插座漏电有触电和火灾风险，请立即停止使用该插座并远离积水区域，必要时拉闸断电。请马上联系宿管或拨打校园安全电话报告险情，同时可在报修页面提交紧急维修单。"
+              },
+              "failures": [
+                "next"
+              ],
+              "latencyMs": 1127
+            }
+          ]
+        },
+        {
+          "id": "W01",
+          "group": "跨流程指引",
+          "ok": false,
+          "turns": [
+            {
+              "text": "本科生怎么请假",
+              "expected": {
+                "action": "guidance",
+                "next": "/student/leaves",
+                "answer": "辅导员",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "本科生请假请进入“请假”页面提交申请，填写请假事由、起止时间等信息。如涉及较长假期或需院系审批，请按页面提示操作；具体审批要求以学校规定为准。"
+              },
+              "failures": [
+                "answer",
+                "policy"
+              ],
+              "latencyMs": 1477
+            },
+            {
+              "text": "那找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属辅导员"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave_contact",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "请假申请直接在“请假”页面提交即可，系统会按流程流转到辅导员或院系审批，无需自己找审批人。若页面提示需线下审批或你不知该找哪位老师，可联系辅导员确认；具体审批要求以学校规定为准。"
+              },
+              "failures": [
+                "topic",
+                "answer"
+              ],
+              "latencyMs": 1287
+            }
+          ]
+        },
+        {
+          "id": "W02",
+          "group": "跨流程指引",
+          "ok": false,
+          "turns": [
+            {
+              "text": "我是研究生，请假找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属班导师"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": "leave_approval",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "研究生请假请通过“学生请假”页面提交申请，由你的导师和所在学院审批；具体审批人可在页面中查看。如遇特殊情况需人工处理，请联系学院研究生秘书。"
+              },
+              "failures": [
+                "action",
+                "topic",
+                "answer"
+              ],
+              "latencyMs": 1139
+            }
+          ]
+        },
+        {
+          "id": "W08",
+          "group": "跨流程指引",
+          "ok": false,
+          "turns": [
+            {
+              "text": "想找人工，宿舍漏水情况还不太好说",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": "dorm_leak_repair",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "宿舍漏水建议先在线提交报修，写清楼栋房间和漏水位置，方便维修人员上门判断。如需人工协助，可提交后联系宿管或维修中心跟进。"
+              },
+              "failures": [
+                "next",
+                "answer"
+              ],
+              "latencyMs": 1036
+            }
+          ]
+        },
+        {
+          "id": "P01",
+          "group": "口语难例",
+          "ok": true,
+          "turns": [
+            {
+              "text": "导员最近的空档怎么找，我想见一面",
+              "expected": {
+                "action": "guidance",
+                "topic": "appointment",
+                "next": "/student/appointments"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "appointment",
+                "next": "/student/appointments",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "可在“预约”页面查看导员可预约时段并提交见面申请；若无可选空档，请直接联系导员或学院办公室确认。"
+              },
+              "failures": [],
+              "latencyMs": 846
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "group": "口语难例",
+          "ok": false,
+          "turns": [
+            {
+              "text": "有些情况，想跟学院反映一下",
+              "expected": {
+                "action": "guidance",
+                "topic": "request",
+                "next": "/student/new"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "feedback_to_college",
+                "next": "/student/tickets",
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "model-direct",
+                "answer": "可以通过提交工单向学院反映情况，请点击进入工单页面填写具体内容。"
+              },
+              "failures": [
+                "topic",
+                "next"
+              ],
+              "latencyMs": 648
+            }
+          ]
+        }
+      ],
+      "usage": {
+        "model": "deepseek-chat",
+        "attempts": 17,
+        "responsesWithUsage": 17,
+        "responsesWithCacheBreakdown": 17,
+        "inputTokens": 3149,
+        "outputTokens": 1081,
+        "cachedInputTokens": 128,
+        "uncachedInputTokens": 3021,
+        "retries": 0,
+        "timeouts": 0,
+        "reasonCounts": {},
+        "currency": "CNY",
+        "perMillion": {
+          "cached_input": null,
+          "uncached_input": null,
+          "output": null
+        },
+        "status": "missing-rates",
+        "estimatedCost": null,
+        "estimatedCostPer1000Turns": null
+      }
+    },
+    "modelGrounded": {
+      "scenariosPassed": 12,
+      "scenarios": 12,
+      "turnsPassed": 17,
+      "turns": 17,
+      "correctEntries": 9,
+      "entryCases": 9,
+      "incorrectGuidance": 0,
+      "correctHandoffs": 4,
+      "handoffCases": 4,
+      "modelTurns": 5,
+      "failedModelTurns": 0,
+      "p50Ms": 2,
+      "p95Ms": 840,
+      "results": [
+        {
+          "id": "N01",
+          "group": "常规识别",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "deepseek+rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 576
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "group": "报修追问",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "deepseek+rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 793
+            },
+            {
+              "text": "补救无效",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs",
+                "answer": "提出一次异议",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "先打开「报修进度」查看原单。\n1. 还没报过：从报修页提交，写明故障及现场变化。\n2. 已报但无人接单：普通报修超过 4 小时，可带单号联系楼栋宿管值班室；漏水持续扩大时立即联系值班室。\n3. 后勤已回填结果但问题仍在：打开原单，选择「提出一次异议」，补充未解决的位置与现状。无需重复报单。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "S03",
+          "group": "跨话题和转人工",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水怎么办",
+              "expected": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "answer": "后勤",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leak",
+                "next": "/student/repairs/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "deepseek+rules",
+                "answer": "1. 远离积水附近的插座和电器，移走安全范围内的物品。漏水持续扩大时，立即找本楼宿管值班室。\n2. 打开学生端「报修」，选「水电」，填写楼栋、房间、漏水位置和开始时间，提交给后勤。\n3. 在「报修进度」查看接单。普通报修提交 4 小时仍未接单，可带单号联系宿管值班室。4 小时是跟进建议，实际响应以回执和学校通知为准。"
+              },
+              "failures": [],
+              "latencyMs": 840
+            },
+            {
+              "text": "换个问题，校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            },
+            {
+              "text": "那去哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K02",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "校车接驳办法是什么",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K03",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "实验室钥匙领取在哪里",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "暂未找到足够可靠的有效资料，可携带对话摘要转交辅导员。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "K06",
+          "group": "知识依据",
+          "ok": true,
+          "turns": [
+            {
+              "text": "校园卡补办在哪里",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            },
+            {
+              "text": "这个去哪里办",
+              "expected": {
+                "action": "answer",
+                "source": "card",
+                "answer": "服务大厅"
+              },
+              "actual": {
+                "action": "answer",
+                "topic": null,
+                "next": null,
+                "source": "card",
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "请到服务大厅补办。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "R01",
+          "group": "风险和信息不足",
+          "ok": true,
+          "turns": [
+            {
+              "text": "宿舍漏水而且插座漏电",
+              "expected": {
+                "action": "urgent_handoff",
+                "next": null,
+                "source": null,
+                "answer": "紧急"
+              },
+              "actual": {
+                "action": "urgent_handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "这条诉求需要优先由人工关注，请联系学校确认的紧急支持渠道。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "W01",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "本科生怎么请假",
+              "expected": {
+                "action": "guidance",
+                "next": "/student/leaves",
+                "answer": "辅导员",
+                "policy": true
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "本科生请假由你选择的所属辅导员审批，请到“我的请假”提交。AI不能替老师批假。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            },
+            {
+              "text": "那找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属辅导员"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "本科生请假由你选择的所属辅导员审批，请到“我的请假”提交。AI不能替老师批假。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "W02",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "我是研究生，请假找谁",
+              "expected": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "answer": "所属班导师"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "leave",
+                "next": "/student/leaves",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "local-rules",
+                "answer": "研究生请假由你选择的所属班导师审批，请到“我的请假”提交。学业导师不自动具有班导师审批权限，AI不能批假。"
+              },
+              "failures": [],
+              "latencyMs": 1
+            }
+          ]
+        },
+        {
+          "id": "W08",
+          "group": "跨流程指引",
+          "ok": true,
+          "turns": [
+            {
+              "text": "想找人工，宿舍漏水情况还不太好说",
+              "expected": {
+                "action": "handoff",
+                "next": null,
+                "source": null,
+                "answer": "辅导员"
+              },
+              "actual": {
+                "action": "handoff",
+                "topic": null,
+                "next": null,
+                "source": null,
+                "policy": false,
+                "policyVersion": null,
+                "engine": "local-rules",
+                "answer": "可以转交辅导员。请核对对话摘要，确认后提交。"
+              },
+              "failures": [],
+              "latencyMs": 2
+            }
+          ]
+        },
+        {
+          "id": "P01",
+          "group": "口语难例",
+          "ok": true,
+          "turns": [
+            {
+              "text": "导员最近的空档怎么找，我想见一面",
+              "expected": {
+                "action": "guidance",
+                "topic": "appointment",
+                "next": "/student/appointments"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "appointment",
+                "next": "/student/appointments",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "deepseek+rules",
+                "answer": "打开“我的预约”，在周课表里选择辅导员已开放的时段，填写预约事项后提交。预约成功后可在预约记录里核对时间。没有可约时段时，可联系辅导员确认是否有其他时间。"
+              },
+              "failures": [],
+              "latencyMs": 437
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "group": "口语难例",
+          "ok": true,
+          "turns": [
+            {
+              "text": "有些情况，想跟学院反映一下",
+              "expected": {
+                "action": "guidance",
+                "topic": "request",
+                "next": "/student/new"
+              },
+              "actual": {
+                "action": "guidance",
+                "topic": "request",
+                "next": "/student/new",
+                "source": null,
+                "policy": true,
+                "policyVersion": "知行桥办理指引 v4",
+                "engine": "deepseek+rules",
+                "answer": "打开“发起诉求”，写清发生了什么、希望得到什么帮助。核对后自行提交，后续可在“我的诉求”查看办理进度。"
+              },
+              "failures": [],
+              "latencyMs": 376
+            }
+          ]
+        }
+      ],
+      "usage": {
+        "model": "deepseek-chat",
+        "attempts": 5,
+        "responsesWithUsage": 5,
+        "responsesWithCacheBreakdown": 5,
+        "inputTokens": 1400,
+        "outputTokens": 49,
+        "cachedInputTokens": 256,
+        "uncachedInputTokens": 1144,
+        "retries": 0,
+        "timeouts": 0,
+        "reasonCounts": {},
+        "currency": "CNY",
+        "perMillion": {
+          "cached_input": null,
+          "uncached_input": null,
+          "output": null
+        },
+        "status": "missing-rates",
+        "estimatedCost": null,
+        "estimatedCostPer1000Turns": null
+      },
+      "appointment": {
+        "passed": 11,
+        "total": 11,
+        "modelSuggestions": 2,
+        "rows": [
+          {
+            "topic": "我就找老师签个字",
+            "expected": {
+              "category": "signing",
+              "durationMinutes": 5
+            },
+            "actual": {
+              "category": "signing",
+              "label": "签字盖章",
+              "durationMinutes": 5,
+              "reason": "签字或盖章通常可在短时段内办理。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "帮忙盖一下章",
+            "expected": {
+              "category": "signing",
+              "durationMinutes": 5
+            },
+            "actual": {
+              "category": "signing",
+              "label": "签字盖章",
+              "durationMinutes": 5,
+              "reason": "签字或盖章通常可在短时段内办理。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "想问问奖学金需要什么手续",
+            "expected": {
+              "category": "consultation",
+              "durationMinutes": 15
+            },
+            "actual": {
+              "category": "consultation",
+              "label": "普通咨询",
+              "durationMinutes": 15,
+              "reason": "预留时间说明情况和确认下一步。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "咨询班级材料提交的流程",
+            "expected": {
+              "category": "consultation",
+              "durationMinutes": 15
+            },
+            "actual": {
+              "category": "consultation",
+              "label": "普通咨询",
+              "durationMinutes": 15,
+              "reason": "预留时间说明情况和确认下一步。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "想谈一下学业预警之后的计划",
+            "expected": {
+              "category": "academic",
+              "durationMinutes": 20
+            },
+            "actual": {
+              "category": "academic",
+              "label": "学业面谈",
+              "durationMinutes": 20,
+              "reason": "预留时间交流学业情况和商量后续安排，可按需要改为 30 分钟。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "挂科了，想和老师聊聊怎么补考",
+            "expected": {
+              "category": "academic",
+              "durationMinutes": 20
+            },
+            "actual": {
+              "category": "academic",
+              "label": "学业面谈",
+              "durationMinutes": 20,
+              "reason": "预留时间交流学业情况和商量后续安排，可按需要改为 30 分钟。",
+              "source": "rules"
+            },
+            "ok": true
+          },
+          {
+            "topic": "要签字，也想聊学业预警",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          },
+          {
+            "topic": "有点事",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          },
+          {
+            "topic": "找老师确认一张单，学号我到了再说",
+            "expected": {
+              "category": "unknown",
+              "durationMinutes": null
+            },
+            "actual": {
+              "category": "unknown",
+              "label": "请自行选择",
+              "durationMinutes": null,
+              "reason": "可以按实际沟通内容手动选择预计时长。",
+              "source": "manual"
+            },
+            "ok": true
+          },
+          {
+            "topic": "只差老师在表格末尾留下手写确认",
+            "expected": {
+              "category": "signing",
+              "durationMinutes": 5
+            },
+            "actual": {
+              "category": "signing",
+              "label": "签字盖章",
+              "durationMinutes": 5,
+              "reason": "签字或盖章通常可在短时段内办理。",
+              "source": "model"
+            },
+            "ok": true
+          },
+          {
+            "topic": "见个面聊聊这学期几门课为什么都没过",
+            "expected": {
+              "category": "academic",
+              "durationMinutes": 20
+            },
+            "actual": {
+              "category": "academic",
+              "label": "学业面谈",
+              "durationMinutes": 20,
+              "reason": "预留时间交流学业情况和商量后续安排，可按需要改为 30 分钟。",
+              "source": "model"
+            },
+            "ok": true
+          }
+        ]
+      }
+    }
+  }
+}

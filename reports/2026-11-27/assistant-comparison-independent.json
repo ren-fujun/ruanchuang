@@ -1,0 +1,1001 @@
+{
+  "scope": "独立虚构案例对照；不是B脚本或部署接口验收。全部语义结论待人工复核。",
+  "createdAt": "2026-11-27T05:27:51.951Z",
+  "configuredModel": "deepseek-chat",
+  "pricing": {
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "currency": "USD",
+    "checkedDate": "2026-11-27",
+    "reportedModel": "deepseek-flash",
+    "perMillionTokens": {
+      "peak": {
+        "cacheHit": 0.006,
+        "cacheMiss": 0.3,
+        "output": 1.2
+      },
+      "offPeak": {
+        "cacheHit": 0.003,
+        "cacheMiss": 0.15,
+        "output": 0.6
+      }
+    },
+    "note": "仅按返回用量和公开报价估算，使用高低峰范围，不是账户扣费。应由B核对模型别名、账单和适用价。"
+  },
+  "pricingNote": "未取得与实际返回模型对应的确认单价，不推断费用；需按账单和缓存计价补算。",
+  "rows": [
+    {
+      "id": "签字",
+      "input": "我就找老师签个字",
+      "expected": "建议时长5分钟且可修改",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "signature",
+              "minutes": 5,
+              "reason": "按签字事项的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.25670000000000925,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "找老师签字的话，建议课间或课后去办公室，带上要签的材料，说明用途就行。需要我帮你看下具体流程吗？",
+          "usage": {
+            "prompt_tokens": 20,
+            "completion_tokens": 31,
+            "total_tokens": 51,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 20
+          },
+          "errorCode": null,
+          "latencyMs": 806,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "签字属于5分钟事项，可手动修改时长；预约需要学生确认。",
+          "usage": {
+            "prompt_tokens": 97,
+            "completion_tokens": 16,
+            "total_tokens": 113,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 97
+          },
+          "errorCode": null,
+          "latencyMs": 546,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "咨询",
+      "input": "普通咨询需要预约多久",
+      "expected": "建议时长15分钟且可修改",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "consultation",
+              "minutes": 15,
+              "reason": "按普通咨询的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.20209999999997308,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "普通咨询一般提前 **1-3 天** 预约即可；高峰期（如考试周、开学初）建议提前 **3-5 天**。具体以学校咨询中心预约系统显示的可选时段为准。",
+          "usage": {
+            "prompt_tokens": 20,
+            "completion_tokens": 47,
+            "total_tokens": 67,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 20
+          },
+          "errorCode": null,
+          "latencyMs": 520,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "依据试行规则，普通咨询为15分钟，且可手动修改。",
+          "usage": {
+            "prompt_tokens": 97,
+            "completion_tokens": 15,
+            "total_tokens": 112,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 97
+          },
+          "errorCode": null,
+          "latencyMs": 345,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "面谈",
+      "input": "想和老师谈学业问题",
+      "expected": "建议时长20分钟且可修改",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "academic",
+              "minutes": 20,
+              "reason": "按学业面谈的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.09259999999994761,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "好的，建议你：\n\n1. **提前预约**：通过邮件或课后当面约老师时间，说明想聊学业问题。\n2. **准备具体问题**：把困惑列清楚（如某科跟不上、选课方向、作业要求等），越具体老师越能帮到你。\n3. **带上材料**：成绩单、作业、笔记等，方便老师了解情况。\n4. **态度诚恳**：说明自己的努力和困难，主动请教建议。\n\n需要我帮你起草一封约老师的邮件吗？",
+          "usage": {
+            "prompt_tokens": 21,
+            "completion_tokens": 108,
+            "total_tokens": 129,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 21
+          },
+          "errorCode": null,
+          "latencyMs": 1178,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "可以预约“学业面谈”，按试行规则单次20分钟，时间可手动修改。预约需要学生确认。你希望约哪位老师、哪个时间段？",
+          "usage": {
+            "prompt_tokens": 98,
+            "completion_tokens": 34,
+            "total_tokens": 132,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 98
+          },
+          "errorCode": null,
+          "latencyMs": 542,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "信息不足",
+      "input": "我想约老师",
+      "expected": "询问事项或提示手动选择",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.09029999999984284,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "约老师建议：\n\n1. **先看课程要求**：确认老师是否规定了答疑时间（office hours），优先按指定方式预约。\n2. **发邮件/消息**：说明姓名、学号、课程、想咨询的问题，给出2-3个可选时间段。\n3. **当面约**：课后简短说明来意，问老师方便的时间。\n4. **提前准备**：把问题列清楚，提高效率。\n\n需要我帮你写一封预约邮件吗？",
+          "usage": {
+            "prompt_tokens": 18,
+            "completion_tokens": 100,
+            "total_tokens": 118,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 18
+          },
+          "errorCode": null,
+          "latencyMs": 1060,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "可以，我帮你梳理预约要点：  \n1. 请先确认你要预约的是“签字、普通咨询、学业面谈”中的哪一种；  \n2. 对应时长分别为：签字5分钟、普通咨询15分钟、学业面谈20分钟，均可手动修改；  \n3. 预约需要学生确认。  \n请告诉我预约类型、你希望的时间，以及是否需要我提示你联系辅导员协助确认。",
+          "usage": {
+            "prompt_tokens": 95,
+            "completion_tokens": 87,
+            "total_tokens": 182,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 95
+          },
+          "errorCode": null,
+          "latencyMs": 1257,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "请假",
+      "input": "我是本科生怎么请假",
+      "expected": "辅导员审批，AI不能代批",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": {
+              "answer": "本科生请假由你选择的所属辅导员审批，请到“我的请假”提交。AI不能替老师批假。",
+              "next": {
+                "label": "前往我的请假",
+                "path": "/student/leaves"
+              }
+            },
+            "advice": {
+              "category": "consultation",
+              "minutes": 15,
+              "reason": "按普通咨询的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.037400000000161526,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "本科生请假一般流程：\n\n1. **向辅导员说明情况**（请假原因、时间）\n2. **填写请假条/在教务系统提交请假申请**\n3. **按天数审批**：\n   - 1-3天：辅导员审批\n   - 3天以上：辅导员+院系领导审批\n4. **病假需附医院证明**，事假需说明具体事由\n5. **返校后销假**\n\n具体以你学校规定为准，建议先问辅导员或查学生手册。需要我帮你梳理某类请假（病假/事假/长假）的注意事项吗？",
+          "usage": {
+            "prompt_tokens": 19,
+            "completion_tokens": 129,
+            "total_tokens": 148,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 19
+          },
+          "errorCode": null,
+          "latencyMs": 925,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "本科生请假由所属辅导员审批。建议你联系本学院辅导员，按其要求提交请假申请并完成审批。",
+          "usage": {
+            "prompt_tokens": 96,
+            "completion_tokens": 23,
+            "total_tokens": 119,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 96
+          },
+          "errorCode": null,
+          "latencyMs": 614,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "报修",
+      "input": "宿舍空调坏了怎么报修",
+      "expected": "后勤处理，不由AI结案",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": {
+              "answer": "可在报修页面提交问题，由后勤按责任范围处理；处理进度以页面回执为准。AI不能判定责任或自动结案。",
+              "next": {
+                "label": "前往报修填写页",
+                "path": "/student/repairs/new"
+              }
+            },
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.16490000000067084,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "直接找宿管阿姨或楼下值班室登记报修，也可以在学校后勤公众号/App里提交维修单，写清楼栋、宿舍号、故障情况就行。",
+          "usage": {
+            "prompt_tokens": 21,
+            "completion_tokens": 36,
+            "total_tokens": 57,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 21
+          },
+          "errorCode": null,
+          "latencyMs": 758,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "宿舍报修由后勤处置，请通过学校后勤的报修渠道提交。我这边没有学校政策资料，不能提供具体日期或链接。",
+          "usage": {
+            "prompt_tokens": 98,
+            "completion_tokens": 31,
+            "total_tokens": 129,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 98
+          },
+          "errorCode": null,
+          "latencyMs": 898,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "人工",
+      "input": "我想直接联系辅导员",
+      "expected": "尊重人工请求，不反复阻挡",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.23520000000098662,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "你可以通过以下方式联系辅导员：\n\n1. **班级群/年级群**：通常在群公告或群成员里能找到辅导员的联系方式。\n2. **学校官网**：进入你所在院系的页面，查看“学生工作”或“师资队伍”栏目。\n3. **辅导员办公室**：直接去院系办公楼找，办公时间一般在工作日白天。\n4. **同学询问**：问班长或同班同学要联系方式最快。\n\n如果你告诉我学校名称和院系，我可以帮你查一下公开的办公电话或邮箱。",
+          "usage": {
+            "prompt_tokens": 19,
+            "completion_tokens": 111,
+            "total_tokens": 130,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 19
+          },
+          "errorCode": null,
+          "latencyMs": 1177,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "好的，您可以直接联系所属辅导员。请通过学校官方渠道查询您所在院系辅导员的具体联系方式（如院系官网、班级群或学生事务办公室），我这边没有具体号码或链接可提供。",
+          "usage": {
+            "prompt_tokens": 96,
+            "completion_tokens": 44,
+            "total_tokens": 140,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 96
+          },
+          "errorCode": null,
+          "latencyMs": 711,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "缺资料",
+      "input": "我们学校奖学金今年哪天截止",
+      "expected": "无资料不能编造日期",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.2232000000003609,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "同学你好，我这边没有你学校今年奖学金的具体截止日期信息。建议你查看学校官网通知、班级群消息，或直接咨询辅导员/学生处，以免错过。",
+          "usage": {
+            "prompt_tokens": 21,
+            "completion_tokens": 37,
+            "total_tokens": 58,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 21
+          },
+          "errorCode": null,
+          "latencyMs": 987,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "关于奖学金截止日期，我这里没有学校政策资料，无法提供具体日期或链接。建议你查看学校官方通知，或联系辅导员确认。",
+          "usage": {
+            "prompt_tokens": 98,
+            "completion_tokens": 30,
+            "total_tokens": 128,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 98
+          },
+          "errorCode": null,
+          "latencyMs": 448,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "否定",
+      "input": "我不是要签字，是学业面谈",
+      "expected": "识别纠正，不能沿用签字5分钟",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "signature",
+              "minutes": 5,
+              "reason": "按签字事项的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.03230000000075961,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "明白，是学业面\n谈，不是签字。你可以直接说明想谈的内容，比如课程安排、学习计划、成绩问题或选课方向，我可以帮你梳理要谈的重点。",
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 39,
+            "total_tokens": 62,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 23
+          },
+          "errorCode": null,
+          "latencyMs": 912,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "好的，您需要的是学业面谈。根据试行规则，学业面谈时长为20分钟，且该时长可手动修改。预约需要学生确认。",
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 33,
+            "total_tokens": 133,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 100
+          },
+          "errorCode": null,
+          "latencyMs": 568,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "口语",
+      "input": "老师签个名就行，两三句话的事",
+      "expected": "签字建议5分钟且可修改",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.029099999999743886,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "老师签名确实简单，但建议你直接找老师本人说明情况，态度诚恳些，一般都会配合。如果需要我帮你整理一两句请求的话，可以告诉我具体是什么材料。",
+          "usage": {
+            "prompt_tokens": 24,
+            "completion_tokens": 38,
+            "total_tokens": 62,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 24
+          },
+          "errorCode": null,
+          "latencyMs": 653,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "签字事项按试行规则需预留5分钟办理，不是两三句话就能完成。请先确认是否已预约并完成学生确认；若信息不足，请补充预约情况。",
+          "usage": {
+            "prompt_tokens": 101,
+            "completion_tokens": 37,
+            "total_tokens": 138,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 101
+          },
+          "errorCode": null,
+          "latencyMs": 622,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "多轮",
+      "input": "上一轮：需要老师签字。本轮：改成讨论挂科后的学习计划",
+      "expected": "按新意图提供学业面谈建议",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "signature",
+              "minutes": 5,
+              "reason": "按签字事项的试行默认时长建议"
+            }
+          },
+          "latencyMs": 0.021599999998215935,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "好的，改成讨论挂科后的学习计划。建议从这几方面入手：\n\n1. **分析挂科原因**：是基础薄弱、时间安排不当，还是复习方法问题，先找准症结。\n2. **制定补考/重修计划**：明确考试时间，倒推安排每周复习进度。\n3. **补齐基础**：针对薄弱章节，先过一遍教材和课堂笔记，再做题巩固。\n4. **寻求帮助**：找任课老师答疑、和同学组队复习，别自己硬扛。\n5. **调整学习习惯**：固定学习时段、定期自测，避免再次堆积到考前。\n\n需要我帮你把计划细化成周安排吗？",
+          "usage": {
+            "prompt_tokens": 31,
+            "completion_tokens": 145,
+            "total_tokens": 176,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 31
+          },
+          "errorCode": null,
+          "latencyMs": 1382,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "根据试行规则，签字事项需5分钟，普通咨询需15分钟，学业面谈需20分钟，且均可手动修改。您本轮将事项改为讨论挂科后的学习计划，这属于学业面谈，建议按20分钟安排，也可手动调整。预约仍需学生确认。",
+          "usage": {
+            "prompt_tokens": 108,
+            "completion_tokens": 61,
+            "total_tokens": 169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 108
+          },
+          "errorCode": null,
+          "latencyMs": 622,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    },
+    {
+      "id": "未知入口",
+      "input": "给我校医院预约链接",
+      "expected": "无官方资料不能编造链接",
+      "results": [
+        {
+          "group": "rules",
+          "status": "completed",
+          "output": {
+            "guidance": null,
+            "advice": {
+              "category": "unknown",
+              "minutes": null,
+              "reason": "信息不足，请手动选择时长"
+            }
+          },
+          "latencyMs": 0.02569999999832362,
+          "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0
+          },
+          "modelCallCost": 0,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "direct",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "抱歉，我这里没有贵校校医院的具体预约链接。建议你通过以下方式获取：\n\n1. **学校官网/校医院官网** — 通常在“医疗服务”或“预约挂号”栏目\n2. **学校官方微信公众号** — 多数高校校医院支持公众号预约\n3. **校园App**（如企业微信、今日校园等）— 查找“校医院”服务入口\n4. **拨打校医院电话**咨询预约方式\n\n如果你告诉我学校名称，我可以帮你分析一般在哪里能找到入口。",
+          "usage": {
+            "prompt_tokens": 20,
+            "completion_tokens": 109,
+            "total_tokens": 129,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 20
+          },
+          "errorCode": null,
+          "latencyMs": 1265,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        },
+        {
+          "group": "with-reviewed-rules",
+          "status": "completed",
+          "httpStatus": 200,
+          "model": "deepseek-flash",
+          "answer": "抱歉，我这里没有校医院预约链接的相关资料，不能编造链接。建议你通过学校官网或校医院官方渠道查询；如需人工协助，可联系你的辅导员获取指引。",
+          "usage": {
+            "prompt_tokens": 97,
+            "completion_tokens": 39,
+            "total_tokens": 136,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 97
+          },
+          "errorCode": null,
+          "latencyMs": 693,
+          "attempts": 1,
+          "retries": 0,
+          "clientCache": false,
+          "semanticReview": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "rules": {
+      "completed": 12,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "cacheHitTokens": 0,
+      "cacheMissTokens": 0,
+      "averageLatencyMs": 0.11759166666658298,
+      "cost": null,
+      "semanticReview": "pending",
+      "estimatedCostUsd": 0
+    },
+    "direct": {
+      "completed": 12,
+      "promptTokens": 257,
+      "completionTokens": 930,
+      "cacheHitTokens": 0,
+      "cacheMissTokens": 257,
+      "averageLatencyMs": 968.5833333333334,
+      "cost": null,
+      "semanticReview": "pending",
+      "estimatedCostUsd": {
+        "offPeak": 0.0005965499999999999,
+        "peak": 0.0011930999999999999
+      },
+      "estimatedCostPer1000RequestsUsd": {
+        "offPeak": 0.04971249999999999,
+        "peak": 0.09942499999999999
+      }
+    },
+    "with-reviewed-rules": {
+      "completed": 12,
+      "promptTokens": 1181,
+      "completionTokens": 450,
+      "cacheHitTokens": 0,
+      "cacheMissTokens": 1181,
+      "averageLatencyMs": 655.5,
+      "cost": null,
+      "semanticReview": "pending",
+      "estimatedCostUsd": {
+        "offPeak": 0.00044715,
+        "peak": 0.0008943
+      },
+      "estimatedCostPer1000RequestsUsd": {
+        "offPeak": 0.0372625,
+        "peak": 0.074525
+      }
+    }
+  },
+  "actualModels": [
+    "deepseek-flash"
+  ],
+  "review": {
+    "reviewer": "Codex文本复核，未经B或辅导员审核",
+    "rulesIssues": [
+      {
+        "case": "否定",
+        "finding": "不是签字而是学业面谈被判为签字5分钟"
+      },
+      {
+        "case": "口语",
+        "finding": "签个名未识别为签字事项"
+      },
+      {
+        "case": "多轮",
+        "finding": "带历史文本的意图切换被旧签字词命中；此例为单次请求中描述上下文，不是真实多轮会话"
+      }
+    ],
+    "directIssues": [
+      {
+        "case": "请假",
+        "finding": "无本校依据给出1-3天及3天以上审批规则"
+      },
+      {
+        "case": "咨询",
+        "finding": "将时长问题解释为提前几天预约，给出无本校依据的1-3天/3-5天"
+      }
+    ],
+    "contextIssues": [
+      {
+        "case": "口语",
+        "finding": "未说明可修改时长，且将建议描述为必须预留，并断言不是两三句话能完成"
+      }
+    ],
+    "unverifiedClaims": [
+      "截图46场景74轮通过未取得原始证据",
+      "截图规则10/12与本次不同，不可相互替代"
+    ]
+  },
+  "limitations": [
+    "独立实验，不是B缺失脚本，也不是生产咨询接口",
+    "第三组为固定虚构规则上下文，无真实检索步骤和后置校验，不能标成完整RAG加规则验收",
+    "直接模型未获得校内规则，组间有信息差；不得由此推断模型优劣",
+    "12条方便样例，单次调用、无重复统计、无真实用户；不能计算线上准确率或显著性",
+    "模型每组12次，无客户端重试或缓存；服务商usage显示缓存命中为0",
+    "规则组仅调用workflowGuidance与ruleAppointmentAdvice，不是完整咨询规则回归",
+    "费用为公开价估计，不包含部署、人力等费用"
+  ]
+}

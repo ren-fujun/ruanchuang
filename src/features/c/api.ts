@@ -25,6 +25,7 @@ export interface Slot {
   endsAt: string;
   ownerName: string;
   available: boolean;
+  full?: boolean;
 }
 export interface Appointment {
   id: string;
@@ -36,6 +37,8 @@ export interface Appointment {
   ownerName: string;
   studentName: string;
   unread: number;
+  confirmDeadlineAt?: string | null;
+  outcome?: string | null;
 }
 export interface AcademicCase {
   id: string;

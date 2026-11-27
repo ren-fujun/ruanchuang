@@ -1,0 +1,17 @@
+{
+  "ui": true,
+  "status": "passed",
+  "checks": 109,
+  "requests": 20,
+  "confirmedBeforeCancel": 12,
+  "waitlistedBeforeCancel": 8,
+  "allocatedMinutes": 60,
+  "duplicateOccupancies": 0,
+  "concurrentBatchCalls": 5,
+  "duplicateRequests": 8,
+  "persistence": true,
+  "mixedDuration": true,
+  "deadlinePriority": true,
+  "outcome": true,
+  "note": "合成请求、两个30分钟窗口。无历史旧版对比，不能推断真实效率提升。"
+}

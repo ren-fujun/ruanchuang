@@ -19,6 +19,8 @@
     "e2e:critical": "node scripts/e2e/critical-checks.mjs",
     "e2e:all": "npm run e2e && npm run e2e:critical",
     "typecheck": "tsc --noEmit",
+    "test:appointments": "node --test server/appointments.test.js server/b/appointment-advice.test.js",
+    "test:appointments:e2e": "node scripts/e2e/appointment-sprint.mjs",
     "demo": "npm run build && node scripts/demo.mjs",
     "test:e2e:api": "node scripts/e2e/api.mjs",
     "test:e2e:ui": "node scripts/e2e/ui.mjs",
