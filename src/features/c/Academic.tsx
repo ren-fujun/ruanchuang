@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Panel, LoadState, statusLabel, useCData } from "./ui";
 import type { AcademicCase } from "./api";
 import type { PortalRole } from "./config";
@@ -8,12 +8,16 @@ import { useAuth } from "../../context/AuthContext";
 
 export function Academic({ role }: { role: PortalRole }) {
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const caseId = role === "counselor" ? params.get("case") : null;
   const resource = useCData<{ items: AcademicCase[] }>(
     role === "counselor" ? "/b/cases" : "/academic/cases/mine",
   );
+  const items = (resource.data?.items ?? []).filter(item => !caseId || item.id === caseId);
   return (
     <div className="c-page">
       <h1>{role === "student" ? "学业支持" : "学业跟进"}</h1>
+      {caseId && <Link className="c-outline" to="/counselor/academic">查看全部学业事项</Link>}
       {role === "student" && (
         <Panel title="学业咨询">
           <Link className="c-primary" to="/student/assistant">
@@ -35,12 +39,13 @@ export function Academic({ role }: { role: PortalRole }) {
         </div>
       )}
       <LoadState resource={resource}>
-        {resource.data?.items.length ? (
-          resource.data.items.map((c) => (
+        {items.length ? (
+          items.map((c) => (
             <Panel key={c.id} title={c.course}>
               <p>
                 {c.studentName} · {statusLabel(c.status)} · 版本 {c.version}
               </p>
+              {role === "counselor" && c.followUp && <p>{c.followUp.statusLabel} · {c.followUp.reason}</p>}
               <p>
                 教务结果　
                 {c.result
@@ -74,7 +79,7 @@ export function Academic({ role }: { role: PortalRole }) {
             </Panel>
           ))
         ) : (
-          <p className="c-state">当前没有分配给你的学业任务。</p>
+          <p className="c-state">{caseId ? "找不到该学业事项。" : "当前没有分配给你的学业任务。"}</p>
         )}
       </LoadState>
     </div>

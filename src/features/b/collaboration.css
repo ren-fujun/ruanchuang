@@ -1,0 +1,10 @@
+.collaboration-table-wrap { max-width: 100%; overflow-x: auto; }
+.collaboration-table { width: 100%; min-width: 430px; border-collapse: collapse; text-align: left; font: inherit; }
+.collaboration-table :is(th, td) { padding: 9px; border-bottom: 1px solid var(--line, #e4e1ed); }
+.collaboration-draft { display: grid; gap: 9px; }
+.collaboration-draft fieldset { min-width: 0; margin: 0; padding: 9px; border: 1px solid var(--line-strong, #dfd9ed); border-radius: 10px; }
+.collaboration-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px; align-items: end; }
+.collaboration-fields :is(label, input, select) { min-width: 0; }
+@media (min-width: 950px) {
+  .collaboration-fields { grid-template-columns: minmax(0, 1.3fr) minmax(0, .8fr) minmax(0, 1.4fr) minmax(0, .8fr) auto; }
+}

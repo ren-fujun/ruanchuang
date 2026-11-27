@@ -18,7 +18,7 @@ import { useApi } from "../../lib/useApi";
 import { useAuth } from "../../context/AuthContext";
 import type { StudentHomeData, CounselorDashboard, Ticket } from "../../types";
 import { LoadState, Panel, statusLabel, useCData } from "./ui";
-import type { Appointment, Bundle } from "./api";
+import type { AcademicCase, Appointment, Bundle } from "./api";
 import type { PortalRole } from "./config";
 
 const quickLinks = [
@@ -97,15 +97,9 @@ export function PortalHome({ role }: { role: PortalRole }) {
   const leaves = useCData<{
     items: { id: string; studentName: string; status: string }[];
   }>(student ? null : "/b/leaves");
-  const academic = useCData<{
-    items: {
-      id: string;
-      studentName: string;
-      course: string;
-      status: string;
-      collaboration?: { status: string };
-    }[];
-  }>(student ? null : "/b/cases");
+  const academic = useCData<{ items: AcademicCase[] }>(student ? null : "/b/cases");
+  const followUps = (academic.data?.items ?? []).flatMap(item => item.followUp
+    ? [{ id: item.id, course: item.course, studentName: item.studentName, ...item.followUp }] : []);
   const { user } = useAuth();
   const [text, setText] = useState("");
   const navigate = useNavigate();
@@ -204,17 +198,27 @@ export function PortalHome({ role }: { role: PortalRole }) {
                   </strong>
                 </Link>
                 <Link to="/counselor/academic">
-                  待协商学业{" "}
+                  学业待办{" "}
                   <strong>
                     {academic.data?.items.filter(
                       (x) =>
                         x.status !== "completed" &&
-                        (!x.collaboration ||
+                        (x.followUp || !x.collaboration ||
                           x.collaboration.status === "unassigned"),
                     ).length ?? "—"}
                   </strong>
                 </Link>
               </div>
+              {followUps.map(item => (
+                <Link className="c-row" key={item.id} to={"/counselor/academic?case=" + encodeURIComponent(item.id)}>
+                  <BookOpen size={18} />
+                  <span className="c-grow">
+                    <strong>{item.course} · {item.studentName}</strong>
+                    <small>{item.reason}</small>
+                  </span>
+                  <span>{item.statusLabel}</span>
+                </Link>
+              ))}
               {(leaves.error || repairs.error || academic.error) && (
                 <p role="alert">部分待办加载失败，请进入对应页面重试。</p>
               )}

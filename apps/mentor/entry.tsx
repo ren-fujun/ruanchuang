@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../shared/portal.css'
 import './mentor.css'
-import { AcademicCollaboration } from '../../src/features/b/Collaboration'
+import { AcademicCollaboration, type CaseItem } from '../../src/features/b/Collaboration'
 import { LeavePanel } from '../../src/features/b/Leaves'
 import { TrialPasswordGate } from '../../src/components/TrialPasswordGate'
 type RecordItem = {
@@ -23,15 +23,9 @@ type RecordItem = {
   scheduledAt?: string
   summary?: string
 }
-type Case = {
-  mentorId: string
-  counselorId: string
-  collaboration?: { status: string }
-  id: string
+type Case = CaseItem & {
   studentName: string
   course: string
-  status: string
-  version: number
   records: RecordItem[]
   result?: { value: string; source: string }
   referral?: { status: string }
@@ -354,9 +348,10 @@ function App() {
                   <span className="mentor-case-copy">
                     <strong>{c.studentName}</strong>
                     <small>{c.course}</small>
+                    {c.followUp && <small>{c.followUp.reason}</small>}
                   </span>
                   <span className={`mentor-status ${c.status}`}>
-                    {c.status !== 'completed' && c.collaboration?.status !== 'agreed' ? '待协商' : labels[c.status]}
+                    {c.followUp?.statusLabel || (c.status !== 'completed' && c.collaboration?.status !== 'agreed' ? '待协商' : labels[c.status])}
                   </span>
                   <ChevronRight size={17} />
                 </button>

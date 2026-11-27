@@ -96,9 +96,40 @@ try {
   c = (await call(`/b/cases/${c.id}/collaboration`, mentor, { action: 'decline', version: c.version, requestId: rid() })).item
   ok(c.collaboration.status === 'unassigned' && c.collaboration.history.length === 4)
   await call(`/b/cases/${c.id}/result`, mentor, { version: c.version, result: 'passed', source: '伪造结果' }, 403, 'PATCH')
+  const readCase = async token => (await call('/b/cases', token)).items.find(item => item.id === c.id)
+  const counselorCue = async () => (await readCase(counselor)).followUp
+  const setOfficialResult = async result => (await call(`/b/cases/${c.id}/result`, academic, {
+    version: c.version, result, source: '虚构正式结果',
+  }, 200, 'PATCH')).item
+  const collaborate = async (token, fields, status = 200) =>
+    (await call(`/b/cases/${c.id}/collaboration`, token, { ...fields, version: c.version, requestId: rid() }, status)).item
+
+  c = await setOfficialResult('failed')
+  ok(!('followUp' in c), '教务结果里不包含个人跟进提示')
+  ok((await readCase(mentor)).followUp.statusLabel === '待续跟', '导师看到未通过后的续跟')
+  ok((await counselorCue()).statusLabel === '待续跟', '辅导员工作台看到未通过后的续跟')
+  ok(!(await readCase(other)), '其他导师看不到该事项')
+  c = await collaborate(mentor, { action: 'propose', assigneeId: 'cou-chen', items: [
+    { ownerId: 'mentor-demo', title: '梳理复习重点', at: new Date(Date.now() - 60_000).toISOString(), status: 'in_progress' },
+    { ownerId: 'cou-chen', title: '回访学习计划', at: new Date(Date.now() + 60_000).toISOString(), status: 'planned' },
+  ] })
+  ok(!c.followUp && (await counselorCue()).statusLabel === '待确认', '只能由被指定人确认')
+  c = await collaborate(counselor, { action: 'accept' })
+  ok((await counselorCue()).reason === '回访学习计划', '辅导员看到自己的下一项行动')
+  ok((await readCase(mentor)).followUp.statusLabel === '计划时间已过', '超出计划时间的行动明确标注')
+  const [studyAction, visitAction] = c.collaboration.items
+  await collaborate(mentor, { action: 'update_item', itemId: visitAction.id, status: 'completed' }, 403)
+  c = await collaborate(mentor, { action: 'update_item', itemId: studyAction.id, status: 'completed' })
+  ok(!c.followUp, '导师的行动完成后不显示他人的待办')
+  c = await collaborate(counselor, { action: 'update_item', itemId: visitAction.id, status: 'completed' })
+  ok(!c.followUp && !(await readCase(mentor)).followUp, '已经跟进同一份结果时不重复提醒续跟')
+  c = await setOfficialResult('failed')
+  ok((await counselorCue()).statusLabel === '待续跟' && (await readCase(mentor)).followUp.statusLabel === '待续跟',
+    '新的未通过结果回写后，两端均提示协商下一轮')
   c = (await call(`/b/cases/${c.id}/result`, academic, { version: c.version, result: 'passed', source: '虚构正式结果' }, 200, 'PATCH')).item
+  ok(!(await readCase(mentor)).followUp && !(await counselorCue()), '通过结项后移出跟进待办')
   await call(`/b/cases/${c.id}/collaboration`, mentor, { action: 'propose', version: c.version, requestId: rid() }, 409)
-  console.log('PASS 学业协商、双方行动、隐私、版本、正式结果')
+  console.log('PASS 学业协商、角色待办、未通过续跟、通过结项、隐私与版本')
   for (const [token, text, match] of [[student, '请假找谁审批', '辅导员'], [graduate, '请假找谁审批', '班导师'], [student, '宿舍报修不满意', '后勤'], [student, '学业预警谁联系', '协商']]) {
     const a = await call('/b/assistant', token, { text }); ok(a.action === 'guidance' && a.answer.includes(match))
   }
@@ -108,6 +139,7 @@ try {
   ok(precheck.graph.primaryDept === 'logistics' && precheck.graph.dispatchPath[0].actor === '待确认')
   ok(precheck.answer.includes('后勤') && !precheck.analysis.draft.includes('已联系'))
   const uiCase = (await call('/b/cases', academic, { studentId: 'stu-lin', mentorId: 'mentor-demo', counselorId: 'cou-chen', course: '浏览器协商课程' }, 201)).item
+  await call('/b/cases/' + uiCase.id + '/result', academic, { version: uiCase.version, result: 'failed', source: '浏览器演示结果' }, 200, 'PATCH')
   process.env.PORTAL_API_URL = base.slice(0, -4)
   const origins = {}
   for (const role of ['student', 'counselor', 'mentor']) { const s = await createServer({ configFile: `apps/${role}/vite.config.mjs`, server: { port: await freePort() } }); servers.push(s); await s.listen(); origins[role] = `http://127.0.0.1:${s.httpServer.address().port}` }
@@ -143,14 +175,24 @@ try {
   await page.reload()
   await page.getByText('审批意见：浏览器同意申请', { exact: true }).waitFor()
   await staff.getByRole('button', { name: '学业跟进', exact: true }).click()
-  await staff.locator('.case-row').filter({ hasText: uiCase.course }).click()
-  await staff.getByLabel('协商安排', { exact: true }).fill('浏览器协商：本次导师牵头，双方协助')
+  const listedCase = staff.locator('.case-row').filter({ hasText: uiCase.course })
+  await listedCase.getByText('待续跟', { exact: true }).waitFor()
+  await listedCase.click()
+  await staff.getByLabel('行动项 1 时间').fill('2098-02-01T09:00')
+  await staff.getByLabel('行动项 1 事项').fill('浏览器复习计划')
   await staff.getByRole('button', { name: '提交协商安排', exact: true }).click()
   await staff.getByRole('button', { name: '接受安排', exact: true }).click()
   await staff.getByLabel('必要工作记录', { exact: true }).fill('浏览器跟进记录')
   await staff.getByRole('button', { name: '保存记录', exact: true }).click()
   await staff.getByText('浏览器跟进记录', { exact: true }).waitFor()
   await staff.screenshot({ path: path.join(dir, 'mentor-collaboration.png'), fullPage: true })
+  const updated = staff.waitForResponse(response => response.url().endsWith('/b/cases/' + uiCase.id + '/collaboration') && response.request().method() === 'POST')
+  await staff.getByLabel('浏览器复习计划状态').selectOption('completed')
+  const updateResponse = await updated
+  ok(updateResponse.ok(), '浏览器行动更新请求成功')
+  const completedPlan = (await updateResponse.json()).item
+  ok(completedPlan.collaboration.items[0].status === 'completed', '导师在页面完成行动')
+  await call('/b/cases/' + uiCase.id + '/result', academic, { version: completedPlan.version, result: 'failed', source: '第二轮浏览器演示结果' }, 200, 'PATCH')
   const under = await browser.newPage(), cou = await browser.newPage()
   for (const p of [under, cou]) p.on('pageerror', e => errors.push(e.message))
   await under.goto(origins.student + '/login')
@@ -169,6 +211,9 @@ try {
   await cou.getByLabel('密码', { exact: true }).fill('123456')
   await cou.getByRole('button', { name: '登录', exact: true }).click()
   await cou.waitForURL('**/counselor/home')
+  await cou.getByRole('link', { name: /浏览器协商课程.*待续跟/ }).click()
+  await cou.waitForURL('**/counselor/academic?case=' + uiCase.id)
+  await cou.getByRole('heading', { name: uiCase.course, exact: true }).waitFor()
   await cou.goto(origins.counselor + '/counselor/leaves')
   const underCard = cou.locator('article').filter({ hasText: '浏览器申请本科请假' })
   await underCard.getByLabel('审批意见').fill('辅导员浏览器同意')

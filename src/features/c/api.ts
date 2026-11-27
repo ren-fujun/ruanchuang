@@ -1,4 +1,5 @@
 import { request, ApiError } from "../../lib/api";
+import type { CaseItem } from "../b/Collaboration";
 
 export interface BundleItem {
   ticketId: string;
@@ -37,12 +38,9 @@ export interface Appointment {
   studentName: string;
   unread: number;
 }
-export interface AcademicCase {
-  id: string;
+export interface AcademicCase extends CaseItem {
   studentName: string;
   course: string;
-  status: string;
-  version: number;
   result: { value: 'passed' | 'failed'; source: string; at: string } | null;
   records: { type: string; at: string; actor: string }[];
 }
