@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-27",
+  "implementation": "local-code-implemented",
+  "backendTests": {
+    "passed": 68,
+    "failed": 0,
+    "evidence": "node --test server/*.test.js server/ai/consult.test.js server/ai/rag/rag.test.js server/b/appointment-advice.test.js"
+  },
+  "latestTargetedTests": {
+    "passed": 15,
+    "failed": 0
+  },
+  "appointmentApi": {
+    "checks": 103,
+    "passed": true,
+    "synthetic": true,
+    "persistence": true
+  },
+  "legacyConsultationApi": {
+    "total": 36,
+    "passed": 22,
+    "failed": 0,
+    "needsHumanReview": 14,
+    "modelCalls": false
+  },
+  "browser": {
+    "passed": true,
+    "consultationStubbed": true,
+    "widths": [
+      390,
+      412
+    ]
+  },
+  "builds": {
+    "typecheck": "passed",
+    "main": "passed-before-final-ui-edit",
+    "student": "passed",
+    "counselor": "passed"
+  },
+  "evaluation": {
+    "fixtures": 60,
+    "development": 20,
+    "test": 40,
+    "groundTruth": "synthetic-needs-human-review",
+    "realModel": "not-run",
+    "realVector": "not-run",
+    "qualityMetrics": null
+  },
+  "blockers": [
+    "Embedding service account/key not yet configured",
+    "Docker/Qdrant unavailable",
+    "More source documents require provenance and applicability review"
+  ],
+  "secretsIncluded": false
+}

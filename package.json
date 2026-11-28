@@ -40,7 +40,12 @@
     "test:five-portals": "node scripts/e2e/five-portals.mjs",
     "test:b-trial": "node scripts/e2e/b-trial.mjs",
     "demo:b-trial": "node scripts/demo-b-trial.mjs",
-    "knowledge:import": "node scripts/import-knowledge.mjs"
+    "knowledge:import": "node scripts/import-knowledge.mjs",
+    "rag:check": "node scripts/ai/rag-check.mjs",
+    "rag:import": "node scripts/ai/import-rag.mjs",
+    "rag:eval": "node scripts/ai/eval-rag.mjs",
+    "test:rag": "node --test server/ai/consult.test.js server/ai/consult-context.test.js server/ai/feedback.test.js server/ai/outcome-draft.test.js server/ai/rag/rag.test.js",
+    "test:rag:ui": "node scripts/e2e/rag-ui.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",

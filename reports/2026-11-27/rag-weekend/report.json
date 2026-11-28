@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "evidence": "browser-contract-consultation-stubbed",
+  "widths": [
+    390,
+    412
+  ],
+  "checks": [
+    "citation-object-render",
+    "session-restore",
+    "editable-draft-navigation",
+    "no-overflow",
+    "no-runtime-errors"
+  ]
+}

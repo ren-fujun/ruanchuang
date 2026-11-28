@@ -812,3 +812,8 @@
 .c-priorities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.c-priorities a{display:grid;gap:8px;border:1px solid #dbe2d4;background:#f4f7ee;border-radius:12px;padding:12px;color:#294637}.c-priorities strong{font-size:26px}.c-actions label{max-width:320px;display:grid;gap:5px}.b-leaves form,.b-collaboration form{display:grid;gap:12px}.b-leaves label,.b-collaboration label{display:grid;gap:5px}.b-leaves input,.b-leaves select,.b-leaves textarea,.b-collaboration textarea,.b-collaboration input,.b-collaboration select{padding:10px;border:1px solid #b6c5b5;border-radius:8px;background:white}.b-leaves article{padding:14px;margin:12px 0;background:#fff;border-radius:12px}
 @media(max-width:799px){.c-priorities{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .c-table-wrap{overflow-x:auto}.c-table{width:100%;border-collapse:collapse;text-align:left}.c-table th,.c-table td{border-bottom:1px solid #e4e6dc;padding:14px 10px;vertical-align:top}.c-table th{color:#536456;font-size:14px}.c-table td a{color:#175a3d;font-weight:650}.c-table td:first-child{min-width:180px}
+
+.c-outcome-editor { display: grid; grid-template-columns: minmax(0, 1fr); }
+.c-outcome-editor label { display: grid; gap: 8px; min-width: 0; }
+.c-outcome-editor textarea { box-sizing: border-box; width: 100%; min-height: 110px; padding: 12px; border: 1px solid #cbd4be; border-radius: 12px; font: inherit; resize: vertical; }
+.c-outcome-editor > button { justify-self: start; }

@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "evidence": "browser-contract-consultation-and-teacher-editor-stubbed",
+  "widths": [
+    390,
+    412
+  ],
+  "checks": [
+    "citation-object-render",
+    "session-restore",
+    "editable-draft-navigation",
+    "async-draft-keeps-new-edits",
+    "teacher-confirms-before-save",
+    "no-overflow",
+    "no-runtime-errors"
+  ]
+}

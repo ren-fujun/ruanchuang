@@ -1,0 +1,61 @@
+[
+  {
+    "id": "csu-cse-evaluation-process-2024",
+    "title": "计算机学院综测组织、公示与复核（2024版条款）",
+    "file": "rag-evaluation-process-2024.md",
+    "source": "https://cse.csu.edu.cn/info/1040/9697.htm",
+    "kind": "policy",
+    "scope": {
+      "school": "中南大学",
+      "college": "计算机学院",
+      "grades": [
+        "2023",
+        "2024",
+        "2025"
+      ]
+    },
+    "reviewed": true,
+    "reviewedAt": "2026-11-27",
+    "policyVersion": "2024",
+    "verification": {
+      "method": "Compared local supplied text to official page sections 2; 2026 notice lists 2024 rules as attachment.",
+      "relatedSource": "https://cse.csu.edu.cn/info/1040/11465.htm"
+    },
+    "note": "仅此节核对入库；不包含当年申请日期、不代表资格审批；2026级适用性未确认。"
+  },
+  {
+    "id": "csu-cse-evaluation-full",
+    "title": "计算机学院本科生综合素质测评实施细则（2024版，现行适用性待确认）",
+    "file": "csu-cse-comprehensive-evaluation-2024.md",
+    "source": "https://cse.csu.edu.cn/info/1040/9697.htm",
+    "kind": "policy",
+    "scope": {
+      "school": "中南大学",
+      "college": "计算机学院",
+      "grades": [
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ]
+    },
+    "reviewed": false,
+    "reviewedAt": null,
+    "policyVersion": "2024",
+    "note": "须核对原文直链、学院名称、适用年级和当前版本后填写reviewedAt并设reviewed=true；不得照抄旧目录有效期。"
+  },
+  {
+    "id": "csu-cse-career-reference",
+    "title": "计算机就业方向参考（团队整理，非学校政策）",
+    "file": "csu-career-guide-03.md",
+    "source": "https://cse.csu.edu.cn/xsgz/jyxx.htm",
+    "kind": "reference",
+    "scope": {
+      "school": "中南大学",
+      "college": "计算机学院"
+    },
+    "reviewed": false,
+    "reviewedAt": null,
+    "note": "待确认来源；不能用栏目页证明团队整理内容，需核查后填写对应原始来源。"
+  }
+]

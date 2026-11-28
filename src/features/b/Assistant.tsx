@@ -1,116 +1,17 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './assistant.css'
-import { api, request } from '../../lib/api'
-import { safeStudentPath } from './safe-student-path.mjs'
+import { request } from '../../lib/api'
 
+type Citation = { id: string; title: string; excerpt: string; source: string; scope?: { school?: string; college?: string; grades?: string[] } }
+type EvidenceItem = { text: string; citationIds: string[] }
+type Result = { sessionId: string; answer: string; citations: Citation[]; clarification: string | null; engine: string; traceId: string; nextSteps?: EvidenceItem[]; context?: { facts: {text:string;sourceTurn:number}[] }; actionDraft: null | { topic: string; minutes: number; durationReason?: string; summary: string; materials: (string | EvidenceItem)[]; questions: string[]; sourceTurn?: number }; action?: string }
+type Turn = { text: string; result: Result }
+const KEY = 'student-consultation-session'
 export function StudentAssistant() {
-  const [text, setText] = useState(''),
-    [reply, setReply] = useState<any>(null),
-    [history, setHistory] = useState<{ text: string; answer: string; source?: any }[]>([]),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState('')
-  const navigate = useNavigate()
-  const sending = useRef(false)
-  const send = async () => {
-    if (sending.current || history.length >= 6) return
-    sending.current = true
-    setBusy(true)
-    setError('')
-    try {
-      const data = await request<any>('/b/assistant', {
-        method: 'POST',
-        body: JSON.stringify({ text, conversationId: reply?.conversationId }),
-      })
-      setReply(data)
-      setHistory(previous => [...previous, { text, answer: data.answer, source: data.source }])
-      setText('')
-    } catch (e: any) {
-      setError(e.message)
-    } finally {
-      sending.current = false
-      setBusy(false)
-    }
-  }
-  return (
-    <div className="page b-assistant">
-      <h1>AI 咨询与追问</h1>
-      <p>根据已审核且有效的资料回答；无法确认时交给老师。</p>
-      {history.map((h, i) => (
-        <section
-          className="card"
-          style={{ padding: 16, marginTop: 16 }}
-          key={i}
-        >
-          <strong>{h.text}</strong>
-          <p>{h.answer}</p>
-          {h.source && <p>依据：{h.source.title} v{h.source.version} · {h.source.department}<br />{h.source.source}<br />{h.source.excerpt && <>审核条目中录入的文件原文：{h.source.excerpt}<br /></>}有效至 {h.source.validUntil}</p>}
-        </section>
-      ))}
-      {error && <p role="alert">{error}</p>}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          void send()
-        }}
-      >
-        <textarea
-          aria-label="咨询内容"
-          required
-          minLength={2}
-          maxLength={2000}
-          style={{ width: '100%', minHeight: 100, marginTop: 16 }}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button
-          className="primary-button"
-          disabled={busy || history.length >= 6}
-        >
-          发送
-        </button>
-      </form>
-      {history.length >= 6 && <p>本轮已达到6次提问，请新建对话或提交摘要给辅导员。</p>}
-      {reply?.action === 'guidance' && <p>业务流程提示 · {reply.policyVersion} · 不代表审批或办理结果</p>}
-      {reply?.next && <button className="primary-button" disabled={busy} onClick={() => navigate(safeStudentPath(reply.next.path))}>{reply.next.label}</button>}
-      {reply && reply.action !== 'guidance' && (
-        <button
-          className="secondary-button"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true)
-            setError('')
-            try {
-              const data = await api.createTicket({
-                description: reply.summary,
-                category: '其他',
-                location: '待补充',
-                urgency:
-                  reply.action === 'urgent_handoff' ? 'urgent' : 'normal',
-              })
-              navigate('/student/tickets/' + data.ticket.id)
-            } catch (e: any) {
-              setError(e.message)
-            } finally {
-              setBusy(false)
-            }
-          }}
-        >
-          确认将摘要提交辅导员
-        </button>
-      )}
-      <button
-        className="text-button"
-        disabled={busy}
-        onClick={() => {
-          setReply(null)
-          setHistory([])
-          setText('')
-          setError('')
-        }}
-      >
-        新建对话
-      </button>
-    </div>
-  )
+  const [text, setText] = useState(''), [sessionId, setSessionId] = useState(''), [turns, setTurns] = useState<Turn[]>([]), [busy, setBusy] = useState(Boolean(sessionStorage.getItem(KEY))), [error, setError] = useState(''), [draft, setDraft] = useState<Result['actionDraft']>(null), [feedback, setFeedback] = useState('')
+  const navigate = useNavigate(), generation = useRef(0)
+  useEffect(() => { const id = sessionStorage.getItem(KEY); if (!id) return; let active = true; request<{id:string;turns:Turn[]}>(`/ai/consult/${encodeURIComponent(id)}`).then(x => { if (active) { setSessionId(x.id); setTurns(x.turns || []); setDraft(x.turns?.at(-1)?.result.actionDraft || null) } }).catch(() => { if (active) sessionStorage.removeItem(KEY) }).finally(() => { if(active)setBusy(false) }); return () => { active = false } }, [])
+  async function send(e: React.FormEvent) { e.preventDefault(); const q=text.trim(); if (!q || busy) return; const gen=++generation.current; setBusy(true); setError(''); try { const result=await request<Result>('/ai/consult',{method:'POST',body:JSON.stringify({text:q,sessionId:sessionId||undefined})}); if(gen!==generation.current)return; setSessionId(result.sessionId); sessionStorage.setItem(KEY,result.sessionId); setTurns(v=>[...v,{text:q,result}]); setText(''); setDraft(result.actionDraft) } catch(err:any) {if(gen===generation.current)setError(err?.message||'咨询暂时不可用，请稍后重试。')} finally {if(gen===generation.current)setBusy(false)} }
+  return <div className="page b-assistant"><h1>AI 咨询与追问</h1><p>回答来自可核验资料；遇到不确定事项请联系老师。</p>{turns.map((t,i)=><section className="card" key={i}><strong>{t.text}</strong><p>{t.result.answer}</p>{t.result.clarification&&t.result.clarification!==t.result.answer&&<p>{t.result.clarification}</p>}{t.result.context?.facts?.length ? <details><summary>已整理的学生陈述</summary>{t.result.context.facts.map((f,j)=><p key={j}>{f.text}<small>（第{f.sourceTurn}轮）</small></p>)}</details> : null}{!!t.result.nextSteps?.length&&<div><strong>有依据的下一步</strong>{t.result.nextSteps.map((step,j)=><p key={j}>{step.text} {step.citationIds.map(id=>`[${t.result.citations.findIndex(c=>c.id===id)+1}]`).join(" ")}</p>)}</div>}{t.result.citations?.map(c=><details key={c.id}><summary>{c.title}</summary><p>{c.excerpt}</p><p>{[c.scope?.school,c.scope?.college,c.scope?.grades?.join("、")].filter(Boolean).join(" · ")}{c.source.startsWith("https://")&&<><br/><a href={c.source} target="_blank" rel="noreferrer">查看资料原文</a></>}</p></details>)}{t.result.action==='urgent_handoff'&&<p role="status">建议尽快联系辅导员或学校值班渠道，当前无法自动代为转接。</p>}<small>{(t.result.engine==='hybrid-rag'?'语义与关键词联合检索':t.result.engine==='grounded-bm25-degraded'?'向量服务不可用，使用关键词检索':t.result.engine==='model-clarification'?'请补充信息':t.result.engine==='safety-rule'?'建议人工优先处理':'资料不足，建议老师确认')}</small><div><button disabled={busy} onClick={async()=>{try{await request(`/ai/consult/${encodeURIComponent(sessionId)}/feedback`,{method:'POST',body:JSON.stringify({helpful:true,turn:i+1})});setFeedback('感谢反馈')}catch{setError('反馈提交失败')}}}>有帮助</button><button disabled={busy} onClick={async()=>{try{await request(`/ai/consult/${encodeURIComponent(sessionId)}/feedback`,{method:'POST',body:JSON.stringify({helpful:false,turn:i+1})});setFeedback('已记录反馈')}catch{setError('反馈提交失败')}}}>没帮助</button></div></section>)}{feedback&&<p role="status">{feedback}</p>}{error&&<p role="alert">{error}</p>}<form onSubmit={e=>void send(e)}><textarea aria-label="咨询内容" required minLength={2} maxLength={2000} value={text} onChange={e=>setText(e.target.value)} /><button className="primary-button" disabled={busy}>{busy?'正在查询…':'发送'}</button></form>{draft&&<section className="card"><h2>预约草稿（可编辑）</h2><label>事项<input value={draft.topic} maxLength={200} onChange={e=>setDraft({...draft,topic:e.target.value})}/></label><label>预计时长<input type="number" min={5} max={120} step={5} value={draft.minutes} onChange={e=>setDraft({...draft,minutes:Number(e.target.value)})}/></label>{draft.durationReason&&<p>{draft.durationReason}</p>}<label>确认给老师的诉求摘要<textarea maxLength={2000} value={draft.summary} onChange={e=>setDraft({...draft,summary:e.target.value})}/></label>{draft.materials?.map((m,i)=><p key={`material-${i}`}>依据中的材料要求：{typeof m==="string"?m:m.text}</p>)}{draft.questions.map((q,i)=><p key={i}>待确认：{q}</p>)}<p>材料要求以老师确认及原文为准，草稿不代表预约已提交。</p><button disabled={!draft.summary.trim()||!draft.topic.trim()||!Number.isFinite(draft.minutes)||draft.minutes<5||draft.minutes>120||draft.minutes%5!==0} onClick={()=>{sessionStorage.setItem(`consultation-draft:${sessionId}`,draft.summary);navigate(`/student/appointments?topic=${encodeURIComponent(draft.topic)}&minutes=${draft.minutes}&consultationSessionId=${encodeURIComponent(sessionId)}&consultationTurn=${draft.sourceTurn||turns.length}`)}}>带入预约申请</button></section>}{turns.length>0&&<button className="text-button" disabled={busy} onClick={()=>{generation.current++;sessionStorage.removeItem(KEY);setSessionId('');setTurns([]);setDraft(null);setError('');setText('');setFeedback('')}}>新建对话</button>}</div>
 }

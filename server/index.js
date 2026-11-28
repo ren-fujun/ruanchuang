@@ -1,5 +1,7 @@
 import { mountB } from './b/routes.js'
 import { mountAppointments } from './appointments.js'
+import { mountConsult } from './ai/consult.js'
+import { retrieve } from './ai/rag/index.js'
 import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -1650,6 +1652,7 @@ app.get('/api/academic/cases/mine', requireAuth, requireRole('student'), (req, r
 
 mountB(app, {db, save, requireAuth})
 mountAppointments(app, {db, save, requireAuth})
+mountConsult(app, { db, save, requireAuth, retrieve })
 mountTrialFeedback(app, {db, save, requireAuth, trialMode})
 mountTrialAdmin(app, {db, save, requireAuth, trialMode})
 mountRepairRoutes(app, { db, save, requireAuth })

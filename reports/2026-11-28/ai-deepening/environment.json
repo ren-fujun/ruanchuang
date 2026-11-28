@@ -1,0 +1,8 @@
+{
+  "os": "Windows_NT 10.0.26300",
+  "architecture": "x64",
+  "cpuModel": "Intel(R) Core(TM) Ultra 9 275HX",
+  "logicalCores": 24,
+  "totalMemoryBytes": 33752997888,
+  "nodeVersion": "v24.22.3"
+}

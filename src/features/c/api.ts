@@ -39,6 +39,7 @@ export interface Appointment {
   unread: number;
   confirmDeadlineAt?: string | null;
   outcome?: string | null;
+  consultationSummary?: { studentStatement?: string; sourceTurn?: number; facts?: {text:string;sourceTurn:number}[]; materials?: {text:string;citationIds:string[]}[]; policyReferences?: { id?: string; title: string; source: string; documentId?: string; policyVersion?: string }[]; questions?: string[]; status?: string } | null;
 }
 export interface AcademicCase {
   id: string;

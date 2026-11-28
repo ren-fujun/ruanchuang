@@ -1,0 +1,13 @@
+{
+  "generationConfigured": true,
+  "embeddingConfigured": false,
+  "model": "text-embedding-v4",
+  "dimensions": 1024,
+  "reviewedDocuments": 1,
+  "pendingDocuments": 2,
+  "chunks": 1,
+  "vectorService": "unreachable",
+  "realEmbedding": "not-run",
+  "index": false,
+  "ready": false
+}

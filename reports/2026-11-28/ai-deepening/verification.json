@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-28",
+  "evidence": "local-tests-and-explicit-model-stubs",
+  "backend": {
+    "passed": 78,
+    "failed": 0
+  },
+  "appointments": {
+    "passedChecks": 103,
+    "source": ".tmp/appointment-sprint/run-R8aVMq"
+  },
+  "legacyIsolatedApi": {
+    "passed": 22,
+    "failed": 0,
+    "needsHumanReview": 14,
+    "source": ".tmp/skill-eval-2026-11-28T02-28-01-865Z"
+  },
+  "browser": {
+    "passed": true,
+    "widths": [
+      390,
+      412
+    ],
+    "consultationAndTeacherDraft": "explicit-stubs",
+    "checks": [
+      "no-overflow",
+      "async-edit-preservation",
+      "manual-confirmation-before-complete"
+    ]
+  },
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "realModelQuality": "not-run",
+  "realVectorIntegration": "not-run",
+  "humanPolicyReview": "pending",
+  "userEfficiencyStudy": "not-run",
+  "remainingPrerequisites": [
+    "WSL/Docker engine readiness after reboot",
+    "Bailian embedding key local configuration",
+    "real vector import",
+    "policy applicability and fixed expected answer review"
+  ]
+}

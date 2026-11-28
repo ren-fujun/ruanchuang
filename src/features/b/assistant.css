@@ -26,6 +26,13 @@
 .b-assistant .card p {
   margin-top: 10px;
 }
+.b-assistant .card, .b-assistant form { min-width: 0; overflow-wrap: anywhere; }
+.b-assistant input, .b-assistant textarea { box-sizing: border-box; width: 100%; max-width: 100%; }
+.b-assistant details { margin: 10px 0; }
+.b-assistant .card > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .b-assistant .text-button {
   margin-left: 10px;
 }
+
+.b-assistant .card label { display: block; margin: 10px 0; }
+.b-assistant .card input { border: 1px solid #d9d3e7; border-radius: 10px; padding: 10px; font: inherit; }

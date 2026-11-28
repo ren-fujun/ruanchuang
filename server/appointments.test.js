@@ -2,6 +2,28 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mountAppointments } from './appointments.js'
 
+test('预约草稿轮次过期拒绝提交；有效快照不会被后续咨询改写', async () => {
+  const handlers = new Map(), app = Object.fromEntries(['get', 'post', 'patch'].map(method => [method, (path, ...fns) => handlers.set(`${method} ${path}`, fns.at(-1))]))
+  const teacher = { id: 'c', role: 'counselor', studentIds: ['s'] }, student = { id: 's', role: 'student' }
+  const start = Math.ceil((Date.now() + 3600000) / 300000) * 300000
+  const session = { id: 'session', userId: 's', turns: [{ result: { action: 'guidance' } }, { result: { action: 'guidance', citations: [{ id: 'p', title: '合成依据', source: 'https://example.org', documentId: 'doc', policyVersion: 'test' }], questions: ['老师确认'], context: { facts: [{ text: '新诉求', sourceTurn: 2 }] } } }] }
+  const db = { users: [teacher, student], aiConsultations: [session], appointmentSlots: [{ id: 'slot', counselorId: 'c', startsAt: new Date(start).toISOString(), endsAt: new Date(start + 3600000).toISOString() }] }
+  mountAppointments(app, { db, save() {}, requireAuth() {} })
+  const call = body => { let code = 200, data; const res = { status(n) { code = n; return this }, json(v) { data = v; return this } }; handlers.get('post /api/appointments')({ user: student, body }, res); return { code, data } }
+  const body = { topic: '复核', minutes: 15, slotIds: ['slot'], requestId: 'once', consultationSessionId: 'session', consultationSummary: '学生已确认', consultationTurn: 1 }
+  assert.equal(call(body).code, 409)
+  assert.deepEqual(db.appointments, [])
+  assert.equal(call({ ...body, consultationTurn: '2' }).code, 400)
+  const created = call({ ...body, consultationTurn: 2 })
+  assert.equal(created.code, 201)
+  assert.equal(created.data.item.consultationSummary.sourceTurn, 2)
+  session.turns[1].result.questions[0] = '被修改的新问题'
+  session.turns.push({ result: { action: 'guidance' } })
+  assert.deepEqual(created.data.item.consultationSummary.questions, ['老师确认'])
+  assert.equal(call({ ...body, consultationTurn: 2 }).code, 200)
+  assert.equal(call({ ...body, consultationTurn: 1 }).code, 409)
+})
+
 test('开放窗口内排班、候补、补位、幂等与访问范围', async () => {
   const handlers = new Map(), app = { get: (p, ...f) => handlers.set('GET '+p, f.at(-1)), post: (p, ...f) => handlers.set('POST '+p, f.at(-1)), patch: (p, ...f) => handlers.set('PATCH '+p, f.at(-1)) }
   const teacher = { id: 'c', role: 'counselor', studentIds: ['s1','s2','s3','s4'] }, students = teacher.studentIds.map(id => ({id, role: 'student'}))

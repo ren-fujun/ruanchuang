@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-28",
+  "targetedTests": {
+    "passed": 35,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "browser": {
+    "passed": true,
+    "widths": [
+      390,
+      412
+    ],
+    "source": ".tmp/rag-ui/run-WDaOZc",
+    "modelResponses": "explicit-stubs"
+  },
+  "changes": [
+    "correction-boundary-retained-across-followups",
+    "duplicate-summary-fragments-removed",
+    "stale-appointment-draft-rejected",
+    "feedback-updated-per-turn"
+  ],
+  "realCloudCalls": "not-run",
+  "configuration": "unchanged"
+}

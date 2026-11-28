@@ -200,6 +200,7 @@ const callOnce = async ({ prompt, payload, temperature, cfg }) => {
         model,
         temperature: temperature ?? prompt.temperature ?? 0.2,
         response_format: { type: 'json_object' },
+        ...(prompt.maxTokens ? { max_tokens: prompt.maxTokens } : {}),
         messages: [
           { role: 'system', content: built.system },
           { role: 'user', content: built.user },
@@ -214,7 +215,7 @@ const callOnce = async ({ prompt, payload, temperature, cfg }) => {
     }
     try {
       const body = await response.json()
-      return parseJson(body?.choices?.[0]?.message?.content)
+      return { data: parseJson(body?.choices?.[0]?.message?.content), usage: body?.usage || null, model: body?.model || model }
     } catch (cause) {
       if (!(cause instanceof SyntaxError)) throw cause
       const error = new Error('LLM 返回内容不是合法 JSON')
@@ -336,14 +337,15 @@ export const chatJson = async ({ prompt, payload, temperature, cacheable = true,
         lastError = fault
       } else {
         try {
-          const data = await callOnce({ prompt, payload, temperature, cfg })
+          const completion = await callOnce({ prompt, payload, temperature, cfg })
+          const data = completion.data
           onSuccess(generation)
           runtime.metrics.success += 1
           runtime.metrics.lastSuccessAt = new Date().toISOString()
           const latencyMs = Date.now() - started
           recordLatency(latencyMs)
           if (key) writeCache(key, data, cacheTtlMs)
-          return { ok: true, data, attempts, meta: { latencyMs, model, source: 'model' } }
+          return { ok: true, data, attempts, meta: { latencyMs, model: completion.model, source: 'model', usage: completion.usage } }
         } catch (error) {
           lastError = error
         }
